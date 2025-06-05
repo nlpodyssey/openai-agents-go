@@ -1,0 +1,221 @@
+// Copyright 2025 The NLP Odyssey Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package agents
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/shared/constant"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func getFunctionTool(
+	name string,
+	returnValue string,
+) FunctionTool {
+	return FunctionTool{
+		Name: name,
+		ParamsJSONSchema: map[string]any{
+			"title":                name + "_args",
+			"type":                 "object",
+			"required":             []string{},
+			"additionalProperties": false,
+			"properties":           map[string]any{},
+		},
+		OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
+			return returnValue, nil
+		},
+	}
+}
+
+func makeFunctionToolResult(agent *Agent, output string, toolName string) FunctionToolResult {
+	// Construct a FunctionToolResult with the given output using a simple function tool.
+	if toolName == "" {
+		toolName = "dummy"
+	}
+	return FunctionToolResult{
+		Tool:   getFunctionTool(toolName, output),
+		Output: output,
+		RunItem: ToolCallOutputItem{
+			Agent: agent,
+			RawItem: responses.ResponseInputItemFunctionCallOutputParam{
+				CallID: "1",
+				Output: output,
+				Type:   constant.ValueOf[constant.FunctionCallOutput](),
+			},
+			Output: output,
+			Type:   "tool_call_output_item",
+		},
+	}
+}
+
+func TestNoToolResultsReturnsNotFinalOutput(t *testing.T) {
+	// If there are no tool results at all, ToolUseBehavior should not produce a final output.
+	agent := &Agent{Name: "test"}
+	result, err := RunImpl().checkForFinalOutputFromTools(
+		agent,
+		nil,
+		runcontext.NewRunContextWrapper(nil),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, ToolsToFinalOutputResult{
+		IsFinalOutput: false,
+		FinalOutput:   optional.None[any](),
+	}, result)
+}
+
+func TestRunLlmAgainBehavior(t *testing.T) {
+	// With the default RunLLMAgain behavior, even with tools we still expect to keep running.
+	agent := &Agent{
+		Name:            "test",
+		ToolUseBehavior: RunLLMAgain{},
+	}
+	toolResults := []FunctionToolResult{
+		makeFunctionToolResult(agent, "ignored", ""),
+	}
+	result, err := RunImpl().checkForFinalOutputFromTools(
+		agent,
+		toolResults,
+		runcontext.NewRunContextWrapper(nil),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, ToolsToFinalOutputResult{
+		IsFinalOutput: false,
+		FinalOutput:   optional.None[any](),
+	}, result)
+}
+
+func TestStopOnFirstToolBehavior(t *testing.T) {
+	// When tool_use_behavior is stop_on_first_tool, we should surface first tool output as final.
+	agent := &Agent{
+		Name:            "test",
+		ToolUseBehavior: StopOnFirstTool{},
+	}
+	toolResults := []FunctionToolResult{
+		makeFunctionToolResult(agent, "first_tool_output", ""),
+		makeFunctionToolResult(agent, "ignored", ""),
+	}
+	result, err := RunImpl().checkForFinalOutputFromTools(
+		agent,
+		toolResults,
+		runcontext.NewRunContextWrapper(nil),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, ToolsToFinalOutputResult{
+		IsFinalOutput: true,
+		FinalOutput:   optional.Value[any]("first_tool_output"),
+	}, result)
+}
+
+func TestCustomToolUseBehavior(t *testing.T) {
+	// If ToolUseBehavior is a function, we should call it and propagate its return.
+	behavior := func(cw *runcontext.RunContextWrapper, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+		assert.Len(t, results, 3)
+		return ToolsToFinalOutputResult{
+			IsFinalOutput: true,
+			FinalOutput:   optional.Value[any]("custom"),
+		}, nil
+	}
+	agent := &Agent{
+		Name:            "test",
+		ToolUseBehavior: ToolsToFinalOutputFunction(behavior),
+	}
+	toolResults := []FunctionToolResult{
+		makeFunctionToolResult(agent, "ignored1", ""),
+		makeFunctionToolResult(agent, "ignored2", ""),
+		makeFunctionToolResult(agent, "ignored3", ""),
+	}
+	result, err := RunImpl().checkForFinalOutputFromTools(
+		agent,
+		toolResults,
+		runcontext.NewRunContextWrapper(nil),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, ToolsToFinalOutputResult{
+		IsFinalOutput: true,
+		FinalOutput:   optional.Value[any]("custom"),
+	}, result)
+}
+
+func TestCustomToolUseBehaviorError(t *testing.T) {
+	behaviorErr := errors.New("error")
+	behavior := func(cw *runcontext.RunContextWrapper, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+		return ToolsToFinalOutputResult{}, behaviorErr
+	}
+	agent := &Agent{
+		Name:            "test",
+		ToolUseBehavior: ToolsToFinalOutputFunction(behavior),
+	}
+	toolResults := []FunctionToolResult{
+		makeFunctionToolResult(agent, "ignored1", ""),
+		makeFunctionToolResult(agent, "ignored2", ""),
+		makeFunctionToolResult(agent, "ignored3", ""),
+	}
+	_, err := RunImpl().checkForFinalOutputFromTools(
+		agent,
+		toolResults,
+		runcontext.NewRunContextWrapper(nil),
+	)
+	require.ErrorIs(t, err, behaviorErr)
+}
+
+func TestToolNamesToStopAtBehavior(t *testing.T) {
+	agent := &Agent{
+		Name: "test",
+		Tools: []Tool{
+			getFunctionTool("tool1", "tool1_output"),
+			getFunctionTool("tool2", "tool2_output"),
+			getFunctionTool("tool3", "tool3_output"),
+		},
+		ToolUseBehavior: StopAtTools{StopAtToolNames: []string{"tool1"}},
+	}
+	toolResults := []FunctionToolResult{
+		makeFunctionToolResult(agent, "ignored2", "tool2"),
+		makeFunctionToolResult(agent, "ignored3", "tool3"),
+	}
+	result, err := RunImpl().checkForFinalOutputFromTools(
+		agent,
+		toolResults,
+		runcontext.NewRunContextWrapper(nil),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, ToolsToFinalOutputResult{
+		IsFinalOutput: false,
+		FinalOutput:   optional.None[any](),
+	}, result)
+
+	// Now test with a tool that matches the list
+	toolResults = []FunctionToolResult{
+		makeFunctionToolResult(agent, "output1", "tool1"),
+		makeFunctionToolResult(agent, "ignored2", "tool2"),
+		makeFunctionToolResult(agent, "ignored3", "tool3"),
+	}
+	result, err = RunImpl().checkForFinalOutputFromTools(
+		agent,
+		toolResults,
+		runcontext.NewRunContextWrapper(nil),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, ToolsToFinalOutputResult{
+		IsFinalOutput: true,
+		FinalOutput:   optional.Value[any]("output1"),
+	}, result)
+}

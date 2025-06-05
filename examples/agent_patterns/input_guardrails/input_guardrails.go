@@ -1,0 +1,185 @@
+// Copyright 2025 The NLP Odyssey Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package main
+
+import (
+	"bufio"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
+)
+
+/*
+This example shows how to use guardrails.
+
+Guardrails are checks that run in parallel to the agent's execution.
+They can be used to do things like:
+- Check if input messages are off-topic
+- Check that output messages don't violate any policies
+- Take over control of the agent's execution if an unexpected input is detected
+
+In this example, we'll set up an input guardrail that trips if the user is
+asking to do math homework.
+If the guardrail trips, we'll respond with a refusal message.
+*/
+
+// 1. An agent-based guardrail that is triggered if the user is asking to do math homework
+
+type MathHomeworkOutput struct {
+	Reasoning      string `json:"reasoning"`
+	IsMathHomework bool   `json:"is_math_homework"`
+}
+
+type MathHomeworkOutputSchema struct{}
+
+func (MathHomeworkOutputSchema) Name() string             { return "MathHomeworkOutput" }
+func (MathHomeworkOutputSchema) IsPlainText() bool        { return false }
+func (MathHomeworkOutputSchema) IsStrictJSONSchema() bool { return true }
+func (MathHomeworkOutputSchema) JSONSchema() map[string]any {
+	return map[string]any{
+		"title":                "MathHomeworkOutput",
+		"type":                 "object",
+		"required":             []string{"reasoning", "is_math_homework"},
+		"additionalProperties": false,
+		"properties": map[string]any{
+			"reasoning": map[string]any{
+				"title": "Reasoning",
+				"type":  "string",
+			},
+			"is_math_homework": map[string]any{
+				"title": "Is math homework",
+				"type":  "boolean",
+			},
+		},
+	}
+}
+func (MathHomeworkOutputSchema) ValidateJSON(jsonStr string) (any, error) {
+	r := strings.NewReader(jsonStr)
+	dec := json.NewDecoder(r)
+	dec.DisallowUnknownFields()
+
+	var v MathHomeworkOutput
+	err := dec.Decode(&v)
+	return v, err
+}
+
+var GuardrailAgent = &agents.Agent{
+	Name:         "Guardrail check",
+	Instructions: agents.StringInstructions("Check if the user is asking you to do their math homework."),
+	OutputSchema: MathHomeworkOutputSchema{},
+	Model:        optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+}
+
+// MathGuardrailFunction is an input guardrail function, which happens to call
+// an agent to check if the input is a math homework question.
+func MathGuardrailFunction(
+	ctx context.Context,
+	cw *runcontext.RunContextWrapper,
+	_ *agents.Agent,
+	input agents.Input,
+) (agents.GuardrailFunctionOutput, error) {
+	result, err := agents.Runner().Run(ctx, agents.RunParams{
+		StartingAgent: GuardrailAgent,
+		Input:         input,
+		Context:       cw.Context,
+	})
+	if err != nil {
+		return agents.GuardrailFunctionOutput{}, err
+	}
+	finalOutput := result.FinalOutput.(MathHomeworkOutput)
+
+	return agents.GuardrailFunctionOutput{
+		OutputInfo:        finalOutput,
+		TripwireTriggered: finalOutput.IsMathHomework,
+	}, nil
+}
+
+var MathGuardrail = agents.InputGuardrail{
+	GuardrailFunction: MathGuardrailFunction,
+	Name:              "math_guardrail",
+}
+
+// 2. The run loop
+
+func main() {
+	agent := &agents.Agent{
+		Name: "Customer support agent",
+		Instructions: agents.StringInstructions(
+			"You are a customer support agent. You help customers with their questions.",
+		),
+		InputGuardrails: []agents.InputGuardrail{MathGuardrail},
+		Model:           optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+	}
+
+	var inputData []agents.TResponseInputItem
+
+	for {
+		fmt.Print("Enter a message: ")
+		_ = os.Stdout.Sync()
+		line, _, err := bufio.NewReader(os.Stdin).ReadLine()
+		if err != nil {
+			panic(err)
+		}
+		userInput := string(line)
+		inputData = append(inputData, agents.TResponseInputItem{
+			OfMessage: &responses.EasyInputMessageParam{
+				Content: responses.EasyInputMessageContentUnionParam{
+					OfString: param.NewOpt(userInput),
+				},
+				Role: responses.EasyInputMessageRoleUser,
+				Type: responses.EasyInputMessageTypeMessage,
+			},
+		})
+
+		result, err := agents.Runner().Run(context.Background(), agents.RunParams{
+			StartingAgent: agent,
+			Input:         agents.InputItems(inputData),
+		})
+		if err != nil {
+			var tripwireError agents.InputGuardrailTripwireTriggeredError
+			if errors.As(err, &tripwireError) {
+				// If the guardrail triggered, we add a refusal message to the input
+				message := "Sorry, I can't help you with your math homework."
+				fmt.Println(message)
+				inputData = append(inputData, agents.TResponseInputItem{
+					OfMessage: &responses.EasyInputMessageParam{
+						Content: responses.EasyInputMessageContentUnionParam{
+							OfString: param.NewOpt(message),
+						},
+						Role: responses.EasyInputMessageRoleAssistant,
+						Type: responses.EasyInputMessageTypeMessage,
+					},
+				})
+				continue
+			} else {
+				panic(err)
+			}
+		}
+
+		fmt.Println(result.FinalOutput)
+
+		// If the guardrail didn't trigger, we use the result as the input for the next run
+		inputData = result.ToInputList()
+	}
+}
