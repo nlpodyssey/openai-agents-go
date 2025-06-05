@@ -599,23 +599,23 @@ func ResponseComputerToolCallPendingSafetyCheckToParam(
 	}
 }
 
-func ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionSliceFromChatCompletionContentPartTextParamSlice(
+func ChatCompletionAssistantMessagePartUnionSliceFromChatCompletionContentPartTextParamSlice(
 	input []openai.ChatCompletionContentPartTextParam,
-) []openai.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnion {
+) []openai.ChatCompletionAssistantMessagePartUnion {
 	if input == nil {
 		return nil
 	}
-	result := make([]openai.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnion, len(input))
+	result := make([]openai.ChatCompletionAssistantMessagePartUnion, len(input))
 	for i, item := range input {
-		result[i] = ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionFromChatCompletionContentPartTextParam(item)
+		result[i] = ChatCompletionAssistantMessagePartUnionFromChatCompletionContentPartTextParam(item)
 	}
 	return result
 }
 
-func ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionFromChatCompletionContentPartTextParam(
+func ChatCompletionAssistantMessagePartUnionFromChatCompletionContentPartTextParam(
 	input openai.ChatCompletionContentPartTextParam,
-) openai.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnion {
-	return openai.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnion{
+) openai.ChatCompletionAssistantMessagePartUnion {
+	return openai.ChatCompletionAssistantMessagePartUnion{
 		OfText: &openai.ChatCompletionContentPartTextParam{
 			Text: input.Text,
 			Type: constant.ValueOf[constant.Text](),
