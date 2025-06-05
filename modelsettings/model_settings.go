@@ -16,7 +16,7 @@ package modelsettings
 
 import (
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
-	"github.com/openai/openai-go/shared"
+	"github.com/openai/openai-go"
 )
 
 // ModelSettings holds settings to use when calling an LLM.
@@ -55,7 +55,7 @@ type ModelSettings struct {
 
 	// Configuration options for reasoning models
 	// (see https://platform.openai.com/docs/guides/reasoning).
-	Reasoning optional.Optional[shared.ReasoningParam] `json:"reasoning"`
+	Reasoning optional.Optional[openai.ReasoningParam] `json:"reasoning"`
 
 	// Metadata to include with the model response call.
 	Metadata optional.Optional[map[string]string] `json:"metadata"`

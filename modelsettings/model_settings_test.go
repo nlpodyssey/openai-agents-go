@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
-	"github.com/openai/openai-go/shared"
+	"github.com/openai/openai-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,7 +69,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		ParallelToolCalls: optional.Value(true),
 		Truncation:        optional.Value(TruncationAuto),
 		MaxTokens:         optional.Value[int64](100),
-		Reasoning:         optional.Value(shared.ReasoningParam{}),
+		Reasoning:         optional.Value(openai.ReasoningParam{}),
 		Metadata:          optional.Value(map[string]string{"foo": "bar"}),
 		Store:             optional.Value(false),
 		IncludeUsage:      optional.Value(false),
@@ -119,9 +119,9 @@ func TestModelSettings_Resolve(t *testing.T) {
 		ParallelToolCalls: optional.Value(true),
 		Truncation:        optional.Value(TruncationAuto),
 		MaxTokens:         optional.Value[int64](100),
-		Reasoning: optional.Value(shared.ReasoningParam{
-			Effort:          shared.ReasoningEffortLow,
-			GenerateSummary: shared.ReasoningGenerateSummaryConcise,
+		Reasoning: optional.Value(openai.ReasoningParam{
+			Effort:          openai.ReasoningEffortLow,
+			GenerateSummary: openai.ReasoningGenerateSummaryConcise,
 		}),
 		Metadata:     optional.Value(map[string]string{"foo": "bar"}),
 		Store:        optional.Value(false),
@@ -136,9 +136,9 @@ func TestModelSettings_Resolve(t *testing.T) {
 			FrequencyPenalty: optional.Value(0.1),
 			ToolChoice:       "required",
 			Truncation:       optional.Value(TruncationDisabled),
-			Reasoning: optional.Value(shared.ReasoningParam{
-				Effort:          shared.ReasoningEffortMedium,
-				GenerateSummary: shared.ReasoningGenerateSummaryDetailed,
+			Reasoning: optional.Value(openai.ReasoningParam{
+				Effort:          openai.ReasoningEffortMedium,
+				GenerateSummary: openai.ReasoningGenerateSummaryDetailed,
 			}),
 			Store:      optional.Value(true),
 			ExtraQuery: optional.Value(map[string]string{"a": "b"}),
@@ -155,9 +155,9 @@ func TestModelSettings_Resolve(t *testing.T) {
 			ParallelToolCalls: optional.Value(true),
 			Truncation:        optional.Value(TruncationDisabled),
 			MaxTokens:         optional.Value[int64](100),
-			Reasoning: optional.Value(shared.ReasoningParam{
-				Effort:          shared.ReasoningEffortMedium,
-				GenerateSummary: shared.ReasoningGenerateSummaryDetailed,
+			Reasoning: optional.Value(openai.ReasoningParam{
+				Effort:          openai.ReasoningEffortMedium,
+				GenerateSummary: openai.ReasoningGenerateSummaryDetailed,
 			}),
 			Metadata:     optional.Value(map[string]string{"foo": "bar"}),
 			Store:        optional.Value(true),
@@ -191,9 +191,9 @@ func TestModelSettings_Resolve(t *testing.T) {
 			ParallelToolCalls: optional.Value(false),
 			Truncation:        optional.Value(TruncationAuto),
 			MaxTokens:         optional.Value[int64](42),
-			Reasoning: optional.Value(shared.ReasoningParam{
-				Effort:          shared.ReasoningEffortLow,
-				GenerateSummary: shared.ReasoningGenerateSummaryConcise,
+			Reasoning: optional.Value(openai.ReasoningParam{
+				Effort:          openai.ReasoningEffortLow,
+				GenerateSummary: openai.ReasoningGenerateSummaryConcise,
 			}),
 			Metadata:     optional.Value(map[string]string{"a": "b"}),
 			Store:        optional.Value(false),

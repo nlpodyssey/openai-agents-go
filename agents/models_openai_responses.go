@@ -28,7 +28,6 @@ import (
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared"
 	"github.com/openai/openai-go/shared/constant"
 )
 
@@ -183,7 +182,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 		ParallelToolCalls:  parallelToolCalls,
 		Text:               responseFormat,
 		Store:              optional.ToParamOptOmitted(modelSettings.Store),
-		Reasoning:          modelSettings.Reasoning.ValueOrFallback(shared.ReasoningParam{}),
+		Reasoning:          modelSettings.Reasoning.ValueOrFallback(openai.ReasoningParam{}),
 		Metadata:           modelSettings.Metadata.ValueOrFallback(nil),
 	}
 

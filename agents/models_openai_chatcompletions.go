@@ -31,7 +31,6 @@ import (
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared"
 	"github.com/openai/openai-go/shared/constant"
 )
 
@@ -130,7 +129,7 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 		Tools:             nil,
 		ParallelToolCalls: body.ParallelToolCalls.Or(false),
 		Reasoning: openaitypes.ReasoningFromParam(
-			params.ModelSettings.Reasoning.ValueOrFallback(shared.ReasoningParam{}),
+			params.ModelSettings.Reasoning.ValueOrFallback(openai.ReasoningParam{}),
 		),
 	}
 
@@ -198,7 +197,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 		)
 	}
 
-	var reasoningEffort shared.ReasoningEffort
+	var reasoningEffort openai.ReasoningEffort
 	if modelSettings.Reasoning.Present {
 		reasoningEffort = modelSettings.Reasoning.Value.Effort
 	}

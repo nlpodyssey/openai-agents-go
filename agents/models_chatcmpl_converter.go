@@ -25,7 +25,6 @@ import (
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared"
 	"github.com/openai/openai-go/shared/constant"
 )
 
@@ -60,8 +59,8 @@ func (chatCmplConverter) ConvertResponseFormat(
 		return openai.ChatCompletionNewParamsResponseFormatUnion{}, false
 	}
 	return openai.ChatCompletionNewParamsResponseFormatUnion{
-		OfJSONSchema: &shared.ResponseFormatJSONSchemaParam{
-			JSONSchema: shared.ResponseFormatJSONSchemaJSONSchemaParam{
+		OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
+			JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:        "final_output",
 				Strict:      param.NewOpt(finalOutputSchema.IsStrictJSONSchema()),
 				Description: param.Null[string](),
@@ -335,7 +334,7 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 					OfAssistant: &openai.ChatCompletionAssistantMessageParam{
 						Content: openai.ChatCompletionAssistantMessageParamContentUnion{
 							OfString:              str,
-							OfArrayOfContentParts: openaitypes.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionSliceFromChatCompletionContentPartTextParamSlice(arr),
+							OfArrayOfContentParts: openaitypes.ChatCompletionAssistantMessagePartUnionSliceFromChatCompletionContentPartTextParamSlice(arr),
 						},
 						Role: constant.ValueOf[constant.Assistant](),
 					},
@@ -472,7 +471,7 @@ func (chatCmplConverter) ToolToOpenai(tool Tool) openai.ChatCompletionToolParam 
 			description = param.NewOpt(tool.Description)
 		}
 		return openai.ChatCompletionToolParam{
-			Function: shared.FunctionDefinitionParam{
+			Function: openai.FunctionDefinitionParam{
 				Name:        tool.Name,
 				Description: description,
 				Parameters:  tool.ParamsJSONSchema,
@@ -491,7 +490,7 @@ func (chatCmplConverter) ConvertHandoffTool(handoff Handoff) openai.ChatCompleti
 		description = param.NewOpt(handoff.ToolDescription)
 	}
 	return openai.ChatCompletionToolParam{
-		Function: shared.FunctionDefinitionParam{
+		Function: openai.FunctionDefinitionParam{
 			Name:        handoff.ToolName,
 			Description: description,
 			Parameters:  handoff.InputJSONSchema,
