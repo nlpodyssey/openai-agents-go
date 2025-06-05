@@ -120,8 +120,8 @@ func TestModelSettings_Resolve(t *testing.T) {
 		Truncation:        optional.Value(TruncationAuto),
 		MaxTokens:         optional.Value[int64](100),
 		Reasoning: optional.Value(openai.ReasoningParam{
-			Effort:          openai.ReasoningEffortLow,
-			GenerateSummary: openai.ReasoningGenerateSummaryConcise,
+			Effort:  openai.ReasoningEffortLow,
+			Summary: openai.ReasoningSummaryConcise,
 		}),
 		Metadata:     optional.Value(map[string]string{"foo": "bar"}),
 		Store:        optional.Value(false),
@@ -137,8 +137,8 @@ func TestModelSettings_Resolve(t *testing.T) {
 			ToolChoice:       "required",
 			Truncation:       optional.Value(TruncationDisabled),
 			Reasoning: optional.Value(openai.ReasoningParam{
-				Effort:          openai.ReasoningEffortMedium,
-				GenerateSummary: openai.ReasoningGenerateSummaryDetailed,
+				Effort:  openai.ReasoningEffortMedium,
+				Summary: openai.ReasoningSummaryDetailed,
 			}),
 			Store:      optional.Value(true),
 			ExtraQuery: optional.Value(map[string]string{"a": "b"}),
@@ -156,8 +156,8 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Truncation:        optional.Value(TruncationDisabled),
 			MaxTokens:         optional.Value[int64](100),
 			Reasoning: optional.Value(openai.ReasoningParam{
-				Effort:          openai.ReasoningEffortMedium,
-				GenerateSummary: openai.ReasoningGenerateSummaryDetailed,
+				Effort:  openai.ReasoningEffortMedium,
+				Summary: openai.ReasoningSummaryDetailed,
 			}),
 			Metadata:     optional.Value(map[string]string{"foo": "bar"}),
 			Store:        optional.Value(true),
@@ -192,8 +192,8 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Truncation:        optional.Value(TruncationAuto),
 			MaxTokens:         optional.Value[int64](42),
 			Reasoning: optional.Value(openai.ReasoningParam{
-				Effort:          openai.ReasoningEffortLow,
-				GenerateSummary: openai.ReasoningGenerateSummaryConcise,
+				Effort:  openai.ReasoningEffortLow,
+				Summary: openai.ReasoningSummaryConcise,
 			}),
 			Metadata:     optional.Value(map[string]string{"a": "b"}),
 			Store:        optional.Value(false),

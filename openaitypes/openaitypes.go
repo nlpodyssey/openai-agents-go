@@ -641,8 +641,8 @@ func ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionFromChatCo
 
 func ReasoningFromParam(input responses.ReasoningParam) openai.Reasoning {
 	return openai.Reasoning{
-		Effort:          input.Effort,
-		GenerateSummary: input.GenerateSummary,
+		Effort:  input.Effort,
+		Summary: input.Summary,
 	}
 }
 
