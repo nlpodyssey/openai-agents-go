@@ -320,7 +320,7 @@ func TestConvertResponseFormatReturnsNotGivenForPlainTextAndObjectForSchemas(t *
 			JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:        "final_output",
 				Strict:      param.NewOpt(true),
-				Description: param.NullOpt[string](),
+				Description: param.Null[string](),
 				Schema:      IntResponseSchema{}.JSONSchema(),
 			},
 			Type: constant.ValueOf[constant.JSONSchema](),
@@ -414,7 +414,7 @@ func TestExtractAllAndTextContentForStringsAndLists(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, param.NullOpt[string](), s)
+	assert.Equal(t, param.Null[string](), s)
 	assert.Equal(t, []openai.ChatCompletionContentPartTextParam{
 		{Text: "one", Type: constant.ValueOf[constant.Text]()},
 		{Text: "two", Type: constant.ValueOf[constant.Text]()},
@@ -425,7 +425,7 @@ func TestExtractAllAndTextContentForStringsAndLists(t *testing.T) {
 		{OfInputText: &text2},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, param.NullOpt[string](), s)
+	assert.Equal(t, param.Null[string](), s)
 	assert.Equal(t, []openai.ChatCompletionContentPartTextParam{
 		{Text: "one", Type: constant.ValueOf[constant.Text]()},
 		{Text: "two", Type: constant.ValueOf[constant.Text]()},
@@ -615,7 +615,7 @@ func TestItemReferenceErrors(t *testing.T) {
 		{
 			OfItemReference: &responses.ResponseInputItemItemReferenceParam{
 				ID:   "item1",
-				Type: constant.ValueOf[constant.ItemReference](),
+				Type: "item_reference",
 			},
 		},
 	})

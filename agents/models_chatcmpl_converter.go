@@ -64,7 +64,7 @@ func (chatCmplConverter) ConvertResponseFormat(
 			JSONSchema: shared.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:        "final_output",
 				Strict:      param.NewOpt(finalOutputSchema.IsStrictJSONSchema()),
-				Description: param.NullOpt[string](),
+				Description: param.Null[string](),
 				Schema:      finalOutputSchema.JSONSchema(),
 			},
 			Type: constant.ValueOf[constant.JSONSchema](),
@@ -121,18 +121,18 @@ func (conv chatCmplConverter) ExtractTextContentFromEasyInputMessageContentUnion
 ) (param.Opt[string], []openai.ChatCompletionContentPartTextParam, error) {
 	allContent, err := conv.ExtractAllContentFromEasyInputMessageContentUnionParam(content)
 	if err != nil {
-		return param.NullOpt[string](), nil, err
+		return param.Null[string](), nil, err
 	}
 
 	if !param.IsOmitted(allContent.OfString) {
 		return allContent.OfString, nil, nil
 	}
 	if param.IsOmitted(allContent.OfArrayOfContentParts) {
-		return param.NullOpt[string](), nil, fmt.Errorf("unexpected .ChatCompletionUserMessageParamContentUnion %+v", allContent)
+		return param.Null[string](), nil, fmt.Errorf("unexpected .ChatCompletionUserMessageParamContentUnion %+v", allContent)
 	}
 
 	out := conv.ExtractTextContentFromChatCompletionContentPartUnionParams(allContent.OfArrayOfContentParts)
-	return param.NullOpt[string](), out, nil
+	return param.Null[string](), out, nil
 }
 
 func (conv chatCmplConverter) ExtractTextContentFromResponseInputMessageContentListParams(
@@ -140,18 +140,18 @@ func (conv chatCmplConverter) ExtractTextContentFromResponseInputMessageContentL
 ) (param.Opt[string], []openai.ChatCompletionContentPartTextParam, error) {
 	allContent, err := conv.ExtractAllContentFromResponseInputContentUnionParams(content)
 	if err != nil {
-		return param.NullOpt[string](), nil, err
+		return param.Null[string](), nil, err
 	}
 
 	if !param.IsOmitted(allContent.OfString) {
 		return allContent.OfString, nil, nil
 	}
 	if param.IsOmitted(allContent.OfArrayOfContentParts) {
-		return param.NullOpt[string](), nil, fmt.Errorf("unexpected .ChatCompletionUserMessageParamContentUnion %+v", allContent)
+		return param.Null[string](), nil, fmt.Errorf("unexpected .ChatCompletionUserMessageParamContentUnion %+v", allContent)
 	}
 
 	out := conv.ExtractTextContentFromChatCompletionContentPartUnionParams(allContent.OfArrayOfContentParts)
-	return param.NullOpt[string](), out, nil
+	return param.Null[string](), out, nil
 }
 
 func (conv chatCmplConverter) ExtractTextContentFromChatCompletionContentPartUnionParams(
@@ -467,7 +467,7 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 func (chatCmplConverter) ToolToOpenai(tool Tool) openai.ChatCompletionToolParam {
 	switch tool := tool.(type) {
 	case FunctionTool:
-		description := param.NullOpt[string]()
+		description := param.Null[string]()
 		if tool.Description != "" {
 			description = param.NewOpt(tool.Description)
 		}
@@ -486,7 +486,7 @@ func (chatCmplConverter) ToolToOpenai(tool Tool) openai.ChatCompletionToolParam 
 }
 
 func (chatCmplConverter) ConvertHandoffTool(handoff Handoff) openai.ChatCompletionToolParam {
-	description := param.NullOpt[string]()
+	description := param.Null[string]()
 	if handoff.ToolDescription != "" {
 		description = param.NewOpt(handoff.ToolDescription)
 	}

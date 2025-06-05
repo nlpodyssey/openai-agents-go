@@ -129,7 +129,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 				OfFunction: &responses.FunctionToolParam{
 					Name:        "fn",
 					Parameters:  toolFn.ParamsJSONSchema,
-					Strict:      true,
+					Strict:      param.NewOpt(true),
 					Description: param.NewOpt("..."),
 					Type:        constant.ValueOf[constant.Function](),
 				},
@@ -163,7 +163,7 @@ func TestConvertToolsIncludesHandoffs(t *testing.T) {
 						"properties":           map[string]any{},
 						"required":             []string{},
 					},
-					Strict:      true,
+					Strict:      param.NewOpt(true),
 					Description: param.NewOpt(agents.DefaultHandoffToolDescription(agent)),
 					Type:        constant.ValueOf[constant.Function](),
 				},

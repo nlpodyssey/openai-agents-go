@@ -71,7 +71,7 @@ func ToParamOptNull[T comparable](o Optional[T]) param.Opt[T] {
 	if o.Present {
 		return param.NewOpt(o.Value)
 	}
-	return param.NullOpt[T]()
+	return param.Null[T]()
 }
 
 func ToParamOptOmitted[T comparable](o Optional[T]) param.Opt[T] {

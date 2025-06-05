@@ -285,7 +285,7 @@ func (responsesConverter) convertTool(tool Tool) (responses.ToolUnionParam, *res
 			OfFunction: &responses.FunctionToolParam{
 				Name:        tool.Name,
 				Parameters:  tool.ParamsJSONSchema,
-				Strict:      tool.StrictJSONSchema.ValueOrFallback(true),
+				Strict:      param.NewOpt(tool.StrictJSONSchema.ValueOrFallback(true)),
 				Description: param.NewOpt(tool.Description),
 				Type:        constant.ValueOf[constant.Function](),
 			},
@@ -301,7 +301,7 @@ func (responsesConverter) convertHandoffTool(handoff Handoff) responses.ToolUnio
 		OfFunction: &responses.FunctionToolParam{
 			Name:        handoff.ToolName,
 			Parameters:  handoff.InputJSONSchema,
-			Strict:      handoff.StrictJSONSchema.ValueOrFallback(true),
+			Strict:      param.NewOpt(handoff.StrictJSONSchema.ValueOrFallback(true)),
 			Description: param.NewOpt(handoff.ToolDescription),
 			Type:        constant.ValueOf[constant.Function](),
 		},
