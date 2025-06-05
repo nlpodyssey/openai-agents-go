@@ -126,9 +126,9 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 
 	// Two text delta events.
 	assert.Equal(t, "response.output_text.delta", outputEvents[3].Type)
-	assert.Equal(t, "He", outputEvents[3].Delta)
+	assert.Equal(t, "He", outputEvents[3].Delta.OfString)
 	assert.Equal(t, "response.output_text.delta", outputEvents[4].Type)
-	assert.Equal(t, "llo", outputEvents[4].Delta)
+	assert.Equal(t, "llo", outputEvents[4].Delta.OfString)
 
 	// After streaming, the content part and item should be marked done.
 	assert.Equal(t, "response.content_part.done", outputEvents[5].Type)
@@ -207,9 +207,9 @@ func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {
 	assert.Equal(t, "response.output_item.added", outputEvents[1].Type)
 	assert.Equal(t, "response.content_part.added", outputEvents[2].Type)
 	assert.Equal(t, "response.refusal.delta", outputEvents[3].Type)
-	assert.Equal(t, "No", outputEvents[3].Delta)
+	assert.Equal(t, "No", outputEvents[3].Delta.OfString)
 	assert.Equal(t, "response.refusal.delta", outputEvents[4].Type)
-	assert.Equal(t, "Thanks", outputEvents[4].Delta)
+	assert.Equal(t, "Thanks", outputEvents[4].Delta.OfString)
 	assert.Equal(t, "response.content_part.done", outputEvents[5].Type)
 	assert.Equal(t, "response.output_item.done", outputEvents[6].Type)
 	assert.Equal(t, "response.completed", outputEvents[7].Type)
@@ -295,7 +295,7 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 	assert.Equal(t, "my_func", addedFn.Name) // Name should be concatenation of both chunks.
 	assert.Equal(t, "arg1arg2", addedFn.Arguments)
 	assert.Equal(t, "response.function_call_arguments.delta", outputEvents[2].Type)
-	assert.Equal(t, "arg1arg2", outputEvents[2].Delta)
+	assert.Equal(t, "arg1arg2", outputEvents[2].Delta.OfString)
 	assert.Equal(t, "response.output_item.done", outputEvents[3].Type)
 	assert.Equal(t, "response.completed", outputEvents[4].Type)
 }

@@ -266,7 +266,7 @@ func ResponseInputItemUnionParamFromResponseOutputItemUnion(
 			Queries: input.Queries,
 			Status:  responses.ResponseFileSearchToolCallStatus(input.Status),
 			Type:    constant.ValueOf[constant.FileSearchCall](),
-			Results: input.Results,
+			Results: input.Results.OfResponseFileSearchToolCallResults,
 		})
 	case "function_call":
 		return ResponseInputItemUnionParamFromResponseFunctionToolCall(responses.ResponseFunctionToolCall{
@@ -286,7 +286,7 @@ func ResponseInputItemUnionParamFromResponseOutputItemUnion(
 	case "computer_call":
 		return ResponseInputItemUnionParamFromResponseComputerToolCall(responses.ResponseComputerToolCall{
 			ID:                  input.ID,
-			Action:              input.Action,
+			Action:              ResponseComputerToolCallActionUnionFromResponseOutputItemUnionAction(input.Action),
 			CallID:              input.CallID,
 			PendingSafetyChecks: input.PendingSafetyChecks,
 			Status:              responses.ResponseComputerToolCallStatus(input.Status),
@@ -398,6 +398,22 @@ func ResponseInputItemUnionParamFromResponseComputerToolCall(
 	v := ResponseComputerToolCallToParam(input)
 	return responses.ResponseInputItemUnionParam{
 		OfComputerCall: &v,
+	}
+}
+
+func ResponseComputerToolCallActionUnionFromResponseOutputItemUnionAction(
+	input responses.ResponseOutputItemUnionAction,
+) responses.ResponseComputerToolCallActionUnion {
+	return responses.ResponseComputerToolCallActionUnion{
+		Button:  input.Button,
+		Type:    input.Type,
+		X:       input.X,
+		Y:       input.Y,
+		Path:    input.Path,
+		Keys:    input.Keys,
+		ScrollX: input.ScrollX,
+		ScrollY: input.ScrollY,
+		Text:    input.Text,
 	}
 }
 
@@ -599,23 +615,23 @@ func ResponseComputerToolCallPendingSafetyCheckToParam(
 	}
 }
 
-func ChatCompletionAssistantMessagePartUnionSliceFromChatCompletionContentPartTextParamSlice(
+func ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionSliceFromChatCompletionContentPartTextParamSlice(
 	input []openai.ChatCompletionContentPartTextParam,
-) []openai.ChatCompletionAssistantMessagePartUnion {
+) []openai.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnion {
 	if input == nil {
 		return nil
 	}
-	result := make([]openai.ChatCompletionAssistantMessagePartUnion, len(input))
+	result := make([]openai.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnion, len(input))
 	for i, item := range input {
-		result[i] = ChatCompletionAssistantMessagePartUnionFromChatCompletionContentPartTextParam(item)
+		result[i] = ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionFromChatCompletionContentPartTextParam(item)
 	}
 	return result
 }
 
-func ChatCompletionAssistantMessagePartUnionFromChatCompletionContentPartTextParam(
+func ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionFromChatCompletionContentPartTextParam(
 	input openai.ChatCompletionContentPartTextParam,
-) openai.ChatCompletionAssistantMessagePartUnion {
-	return openai.ChatCompletionAssistantMessagePartUnion{
+) openai.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnion {
+	return openai.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnion{
 		OfText: &openai.ChatCompletionContentPartTextParam{
 			Text: input.Text,
 			Type: constant.ValueOf[constant.Text](),

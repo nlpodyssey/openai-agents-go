@@ -134,10 +134,12 @@ func (chatCmplStreamHandler) HandleStream(
 				// Emit the delta for this segment of content
 				if !yield(&TResponseStreamEvent{ // responses.ResponseTextDeltaEvent
 					ContentIndex: state.TextContentIndexAndOutput.Index,
-					Delta:        delta.Content,
-					ItemID:       FakeResponsesID,
-					OutputIndex:  0,
-					Type:         "response.output_text.delta",
+					Delta: responses.ResponseStreamEventUnionDelta{
+						OfString: delta.Content,
+					},
+					ItemID:      FakeResponsesID,
+					OutputIndex: 0,
+					Type:        "response.output_text.delta",
 				}, nil) {
 					return
 				}
@@ -193,10 +195,12 @@ func (chatCmplStreamHandler) HandleStream(
 				// Emit the delta for this segment of refusal
 				if !yield(&TResponseStreamEvent{ // responses.ResponseRefusalDeltaEvent
 					ContentIndex: state.RefusalContentIndexAndOutput.Index,
-					Delta:        delta.Refusal,
-					ItemID:       FakeResponsesID,
-					OutputIndex:  0,
-					Type:         "response.refusal.delta",
+					Delta: responses.ResponseStreamEventUnionDelta{
+						OfString: delta.Refusal,
+					},
+					ItemID:      FakeResponsesID,
+					OutputIndex: 0,
+					Type:        "response.refusal.delta",
 				}, nil) {
 					return
 				}
@@ -279,7 +283,9 @@ func (chatCmplStreamHandler) HandleStream(
 			}
 			// Then, yield the args
 			if !yield(&TResponseStreamEvent{ // responses.ResponseFunctionCallArgumentsDeltaEvent
-				Delta:       functionCall.Arguments,
+				Delta: responses.ResponseStreamEventUnionDelta{
+					OfString: functionCall.Arguments,
+				},
 				ItemID:      FakeResponsesID,
 				OutputIndex: functionCallStartingIndex,
 				Type:        "response.function_call_arguments.delta",

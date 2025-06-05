@@ -136,9 +136,9 @@ func main() {
 
 	err = result.StreamEvents(func(event agents.StreamEvent) error {
 		if e, ok := event.(agents.RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-			fmt.Print(e.Data.Delta)
+			fmt.Print(e.Data.Delta.OfString)
 			_ = os.Stdout.Sync()
-			currentText += e.Data.Delta
+			currentText += e.Data.Delta.OfString
 
 			// Check if it's time to run the guardrail check
 			// Note that we don't run the guardrail check if there's already a task running. An

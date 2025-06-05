@@ -42,7 +42,7 @@ func main() {
 
 	err = result.StreamEvents(func(event agents.StreamEvent) error {
 		if e, ok := event.(agents.RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-			fmt.Print(e.Data.Delta)
+			fmt.Print(e.Data.Delta.OfString)
 			_ = os.Stdout.Sync()
 		}
 		return nil

@@ -334,7 +334,7 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 					OfAssistant: &openai.ChatCompletionAssistantMessageParam{
 						Content: openai.ChatCompletionAssistantMessageParamContentUnion{
 							OfString:              str,
-							OfArrayOfContentParts: openaitypes.ChatCompletionAssistantMessagePartUnionSliceFromChatCompletionContentPartTextParamSlice(arr),
+							OfArrayOfContentParts: openaitypes.ChatCompletionAssistantMessageParamContentArrayOfContentPartUnionSliceFromChatCompletionContentPartTextParamSlice(arr),
 						},
 						Role: constant.ValueOf[constant.Assistant](),
 					},

@@ -96,7 +96,7 @@ func main() {
 			data := e.Data
 			switch data.Type {
 			case "response.output_text.delta":
-				fmt.Print(data.Delta)
+				fmt.Print(data.Delta.OfString)
 				_ = os.Stdout.Sync()
 			case "response.content_part.done":
 				fmt.Println()
