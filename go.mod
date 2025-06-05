@@ -17,7 +17,7 @@ module github.com/nlpodyssey/openai-agents-go
 go 1.24.3
 
 require (
-	github.com/openai/openai-go v1.2.1
+	github.com/openai/openai-go v1.3.0
 	github.com/stretchr/testify v1.10.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 )
