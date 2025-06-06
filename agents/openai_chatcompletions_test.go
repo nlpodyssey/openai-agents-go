@@ -37,7 +37,7 @@ func makeOpenaiClientWithResponse(t *testing.T, v any) OpenaiClient {
 	require.NoError(t, err)
 
 	return OpenaiClient{
-		BaseURL: optional.Value("https://fake"),
+		BaseURL: param.NewOpt("https://fake"),
 		Client: openai.NewClient(
 			option.WithMiddleware(func(req *http.Request, _ option.MiddlewareNext) (*http.Response, error) {
 				return &http.Response{
@@ -252,12 +252,12 @@ func TestPrepareRequestNonStream(t *testing.T) {
 func TestStoreParam(t *testing.T) {
 	t.Run("should default to None with no base URL", func(t *testing.T) {
 		modelSettings := modelsettings.ModelSettings{}
-		client := NewOpenaiClient(optional.None[string]())
+		client := NewOpenaiClient(param.Null[string]())
 		assert.Equal(t, optional.None[bool](), ChatCmplHelpers().GetStoreParam(client, modelSettings))
 	})
 
 	t.Run("for OpenAI API calls", func(t *testing.T) {
-		client := NewOpenaiClient(optional.Value("https://api.openai.com/v1/"))
+		client := NewOpenaiClient(param.NewOpt("https://api.openai.com/v1/"))
 
 		t.Run("should default to true ", func(t *testing.T) {
 			modelSettings := modelsettings.ModelSettings{}
@@ -276,7 +276,7 @@ func TestStoreParam(t *testing.T) {
 	})
 
 	t.Run("for non-OpenAI API calls", func(t *testing.T) {
-		client := NewOpenaiClient(optional.Value("https://example.com"))
+		client := NewOpenaiClient(param.NewOpt("https://example.com"))
 
 		t.Run("should default to None", func(t *testing.T) {
 			modelSettings := modelsettings.ModelSettings{}

@@ -46,7 +46,7 @@ type NewMultiProviderParams struct {
 
 	// The base URL to use for the OpenAI provider. If not provided, we will
 	// use the default base URL.
-	OpenaiBaseURL optional.Optional[string]
+	OpenaiBaseURL param.Opt[string]
 
 	// An optional OpenAI client to use. If not provided, we will create a new
 	// OpenAI client using the OpenaiAPIKey and OpenaiBaseURL.

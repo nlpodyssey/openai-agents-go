@@ -32,7 +32,7 @@ type OpenAIProviderParams struct {
 
 	// The base URL to use for the OpenAI client. If not provided, we will use the
 	// default base URL.
-	BaseURL optional.Optional[string]
+	BaseURL param.Opt[string]
 
 	// An optional OpenAI client to use. If not provided, we will create a new
 	// OpenAI client using the APIKey and BaseURL.
@@ -56,7 +56,7 @@ type OpenAIProvider struct {
 
 // NewOpenAIProvider creates a new OpenAI provider.
 func NewOpenAIProvider(params OpenAIProviderParams) *OpenAIProvider {
-	if params.OpenaiClient.Present && (params.APIKey.Valid() || params.BaseURL.Present) {
+	if params.OpenaiClient.Present && (params.APIKey.Valid() || params.BaseURL.Valid()) {
 		panic(errors.New("OpenAIProvider: don't provide APIKey or BaseURL if you provide OpenaiClient"))
 	}
 

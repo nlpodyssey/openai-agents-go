@@ -29,7 +29,7 @@ type chatCmplHelpers struct {
 func ChatCmplHelpers() chatCmplHelpers { return chatCmplHelpers{} }
 
 func (chatCmplHelpers) IsOpenAI(client OpenaiClient) bool {
-	return strings.HasPrefix(client.BaseURL.ValueOrFallback(""), "https://api.openai.com")
+	return strings.HasPrefix(client.BaseURL.Or(""), "https://api.openai.com")
 }
 
 func (h chatCmplHelpers) GetStoreParam(
