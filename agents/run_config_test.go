@@ -63,7 +63,7 @@ func TestModelProviderOnRunConfigIsUsedForAgentModelName(t *testing.T) {
 		Model: optional.Value(agents.NewAgentModelName("test-model")),
 	}
 	runConfig := agents.RunConfig{
-		ModelProvider: optional.Value[agents.ModelProvider](provider),
+		ModelProvider: provider,
 	}
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
@@ -92,7 +92,7 @@ func TestRunConfigModelNameOverrideTakesPrecedence(t *testing.T) {
 	}
 	runConfig := agents.RunConfig{
 		Model:         optional.Value(agents.NewAgentModelName("override-name")),
-		ModelProvider: optional.Value[agents.ModelProvider](provider),
+		ModelProvider: provider,
 	}
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
@@ -146,7 +146,7 @@ func TestAgentModelObjectIsUsedWhenPresent(t *testing.T) {
 		Model: optional.Value(agents.NewAgentModel(fakeModel)),
 	}
 	runConfig := agents.RunConfig{
-		ModelProvider: optional.Value[agents.ModelProvider](provider),
+		ModelProvider: provider,
 	}
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,

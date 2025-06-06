@@ -45,8 +45,8 @@ type RunConfig struct {
 	// agent. The model_provider passed in below must be able to resolve this model name.
 	Model optional.Optional[AgentModel]
 
-	// The model provider to use when looking up string model names. Defaults to OpenAI (MultiProvider).
-	ModelProvider optional.Optional[ModelProvider]
+	// Optional model provider to use when looking up string model names. Defaults to OpenAI (MultiProvider).
+	ModelProvider ModelProvider
 
 	// Configure global model settings. Any non-null values will override the agent-specific model
 	// settings.
@@ -976,9 +976,10 @@ func (runner) getAllTools(agent *Agent) []Tool {
 }
 
 func (r runner) getModel(agent *Agent, runConfig RunConfig) (Model, error) {
-	modelProvider := runConfig.ModelProvider.ValueOrFallbackFunc(func() ModelProvider {
-		return NewMultiProvider(NewMultiProviderParams{})
-	})
+	modelProvider := runConfig.ModelProvider
+	if modelProvider == nil {
+		modelProvider = NewMultiProvider(NewMultiProviderParams{})
+	}
 
 	if runConfig.Model.Present {
 		runConfigModel := runConfig.Model.Value
