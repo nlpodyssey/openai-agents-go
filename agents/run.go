@@ -270,8 +270,8 @@ type RunStreamedParams struct {
 	// You can pass a single string for a user message, or a list of input items.
 	Input Input
 
-	// The context to run the agent with.
-	Context optional.Optional[any]
+	// Optional context to run the agent with.
+	Context any
 
 	// The maximum number of turns to run the agent for.
 	// A turn is defined as one AI invocation (including any tool calls that might occur).
