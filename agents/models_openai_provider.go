@@ -39,7 +39,7 @@ type OpenAIProviderParams struct {
 	OpenaiClient optional.Optional[OpenaiClient]
 
 	// The organization to use for the OpenAI client.
-	Organization optional.Optional[string]
+	Organization param.Opt[string]
 
 	// The project to use for the OpenAI client.
 	Project optional.Optional[string]
@@ -104,8 +104,8 @@ func (provider *OpenAIProvider) getClient() OpenaiClient {
 				options := make([]option.RequestOption, 0)
 				options = append(options, option.WithAPIKey(apiKey))
 
-				if v, ok := provider.params.Organization.Get(); ok {
-					options = append(options, option.WithOrganization(v))
+				if provider.params.Organization.Valid() {
+					options = append(options, option.WithOrganization(provider.params.Organization.Value))
 				}
 				if v, ok := provider.params.Project.Get(); ok {
 					options = append(options, option.WithProject(v))

@@ -53,7 +53,7 @@ type NewMultiProviderParams struct {
 	OpenaiClient optional.Optional[OpenaiClient]
 
 	// The organization to use for the OpenAI provider.
-	OpenaiOrganization optional.Optional[string]
+	OpenaiOrganization param.Opt[string]
 
 	// The project to use for the OpenAI provider.
 	OpenaiProject optional.Optional[string]
