@@ -75,10 +75,10 @@ type RunParams struct {
 	// Optional context to run the agent with.
 	Context any
 
-	// The maximum number of turns to run the agent for.
+	// Optional maximum number of turns to run the agent for.
 	// A turn is defined as one AI invocation (including any tool calls that might occur).
-	// Default: DefaultMaxTurns.
-	MaxTurns optional.Optional[uint64]
+	// Default (when left zero): DefaultMaxTurns.
+	MaxTurns uint64
 
 	// Optional object that receives callbacks on various lifecycle events.
 	Hooks RunHooks
@@ -117,7 +117,11 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 	toolUseTracker := NewAgentToolUseTracker()
 	originalInput := CopyGeneralInput(params.Input)
 	currentTurn := uint64(0)
-	maxTurns := params.MaxTurns.ValueOrFallback(DefaultMaxTurns)
+
+	maxTurns := params.MaxTurns
+	if maxTurns == 0 {
+		maxTurns = DefaultMaxTurns
+	}
 
 	var (
 		generatedItems        []RunItem
@@ -273,10 +277,10 @@ type RunStreamedParams struct {
 	// Optional context to run the agent with.
 	Context any
 
-	// The maximum number of turns to run the agent for.
+	// Optional maximum number of turns to run the agent for.
 	// A turn is defined as one AI invocation (including any tool calls that might occur).
-	// Default: DefaultMaxTurns.
-	MaxTurns optional.Optional[uint64]
+	// Default (when left zero): DefaultMaxTurns.
+	MaxTurns uint64
 
 	// An object that receives callbacks on various lifecycle events.
 	Hooks RunHooks
@@ -312,7 +316,10 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 		hooks = NoOpRunHooks{}
 	}
 
-	maxTurns := params.MaxTurns.ValueOrFallback(DefaultMaxTurns)
+	maxTurns := params.MaxTurns
+	if maxTurns == 0 {
+		maxTurns = DefaultMaxTurns
+	}
 
 	if params.StartingAgent == nil {
 		return nil, fmt.Errorf("StartingAgent must not be nil")
