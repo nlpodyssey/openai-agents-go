@@ -17,19 +17,19 @@ package agents
 import (
 	"slices"
 
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/packages/param"
 )
 
 type OpenaiClient struct {
 	openai.Client
-	BaseURL optional.Optional[string]
+	BaseURL param.Opt[string]
 }
 
-func NewOpenaiClient(baseURL optional.Optional[string], opts ...option.RequestOption) OpenaiClient {
-	if v, ok := baseURL.Get(); ok {
-		opts = append(slices.Clone(opts), option.WithBaseURL(v))
+func NewOpenaiClient(baseURL param.Opt[string], opts ...option.RequestOption) OpenaiClient {
+	if baseURL.Valid() {
+		opts = append(slices.Clone(opts), option.WithBaseURL(baseURL.Value))
 	}
 	return OpenaiClient{
 		Client:  openai.NewClient(opts...),
