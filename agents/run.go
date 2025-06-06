@@ -80,8 +80,8 @@ type RunParams struct {
 	// Default: DefaultMaxTurns.
 	MaxTurns optional.Optional[uint64]
 
-	// An object that receives callbacks on various lifecycle events.
-	Hooks optional.Optional[RunHooks]
+	// Optional object that receives callbacks on various lifecycle events.
+	Hooks RunHooks
 
 	// Global settings for the entire agent run.
 	RunConfig optional.Optional[RunConfig]
@@ -109,7 +109,11 @@ type RunParams struct {
 // It returns a run result containing all the inputs, guardrail results and the output of the last
 // agent. Agents may perform handoffs, so we don't know the specific type of the output.
 func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
-	hooks := params.Hooks.ValueOrFallback(NoOpRunHooks{})
+	hooks := params.Hooks
+	if hooks == nil {
+		hooks = NoOpRunHooks{}
+	}
+
 	runConfig := params.RunConfig.ValueOrFallback(RunConfig{})
 	toolUseTracker := NewAgentToolUseTracker()
 	originalInput := CopyGeneralInput(params.Input)
@@ -276,7 +280,7 @@ type RunStreamedParams struct {
 	MaxTurns optional.Optional[uint64]
 
 	// An object that receives callbacks on various lifecycle events.
-	Hooks optional.Optional[RunHooks]
+	Hooks RunHooks
 
 	// Global settings for the entire agent run.
 	RunConfig optional.Optional[RunConfig]
@@ -304,7 +308,11 @@ type RunStreamedParams struct {
 //
 // It returns a result object that contains data about the run, as well as a method to stream events.
 func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*RunResultStreaming, error) {
-	hooks := params.Hooks.ValueOrFallback(NoOpRunHooks{})
+	hooks := params.Hooks
+	if hooks == nil {
+		hooks = NoOpRunHooks{}
+	}
+
 	runConfig := params.RunConfig.ValueOrFallback(RunConfig{})
 	maxTurns := params.MaxTurns.ValueOrFallback(DefaultMaxTurns)
 
