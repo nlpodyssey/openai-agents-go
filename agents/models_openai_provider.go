@@ -90,7 +90,9 @@ func (provider *OpenAIProvider) GetModel(modelName string) (Model, error) {
 // It panics if you don't have an API key set.
 func (provider *OpenAIProvider) getClient() OpenaiClient {
 	if provider.client == nil {
-		client := GetDefaultOpenaiClient().ValueOrFallbackFunc(func() OpenaiClient {
+		if defaultClient := GetDefaultOpenaiClient(); defaultClient != nil {
+			provider.client = defaultClient
+		} else {
 			apiKey := ""
 			if provider.params.APIKey.Valid() {
 				apiKey = provider.params.APIKey.Value
@@ -112,9 +114,9 @@ func (provider *OpenAIProvider) getClient() OpenaiClient {
 				options = append(options, option.WithProject(provider.params.Project.Value))
 			}
 
-			return NewOpenaiClient(provider.params.BaseURL, options...)
-		})
-		provider.client = &client
+			newClient := NewOpenaiClient(provider.params.BaseURL, options...)
+			provider.client = &newClient
+		}
 	}
 	return *provider.client
 }
