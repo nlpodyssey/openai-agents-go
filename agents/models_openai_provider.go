@@ -42,7 +42,7 @@ type OpenAIProviderParams struct {
 	Organization param.Opt[string]
 
 	// The project to use for the OpenAI client.
-	Project optional.Optional[string]
+	Project param.Opt[string]
 
 	// Whether to use the OpenAI responses API.
 	UseResponses optional.Optional[bool]
@@ -107,8 +107,8 @@ func (provider *OpenAIProvider) getClient() OpenaiClient {
 				if provider.params.Organization.Valid() {
 					options = append(options, option.WithOrganization(provider.params.Organization.Value))
 				}
-				if v, ok := provider.params.Project.Get(); ok {
-					options = append(options, option.WithProject(v))
+				if provider.params.Project.Valid() {
+					options = append(options, option.WithProject(provider.params.Project.Value))
 				}
 
 				return NewOpenaiClient(provider.params.BaseURL, options...)

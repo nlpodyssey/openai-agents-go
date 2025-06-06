@@ -56,7 +56,7 @@ type NewMultiProviderParams struct {
 	OpenaiOrganization param.Opt[string]
 
 	// The project to use for the OpenAI provider.
-	OpenaiProject optional.Optional[string]
+	OpenaiProject param.Opt[string]
 
 	// Whether to use the OpenAI responses API.
 	OpenaiUseResponses optional.Optional[bool]
