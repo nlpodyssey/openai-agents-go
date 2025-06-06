@@ -49,7 +49,7 @@ func TestNonStreamedMaxTurns(t *testing.T) {
 	_, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("user_message"),
-		MaxTurns:      optional.Value[uint64](3),
+		MaxTurns:      3,
 	})
 
 	var target agents.MaxTurnsExceededError
@@ -78,7 +78,7 @@ func TestStreamedMaxTurns(t *testing.T) {
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("user_message"),
-		MaxTurns:      optional.Value[uint64](3),
+		MaxTurns:      3,
 	})
 	require.NoError(t, err)
 
@@ -141,7 +141,7 @@ func TestStructuredOutputNonStreamedMaxTurns(t *testing.T) {
 	_, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("user_message"),
-		MaxTurns:      optional.Value[uint64](3),
+		MaxTurns:      3,
 	})
 
 	var target agents.MaxTurnsExceededError
@@ -170,7 +170,7 @@ func TestStructuredOutputStreamedMaxTurns(t *testing.T) {
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("user_message"),
-		MaxTurns:      optional.Value[uint64](3),
+		MaxTurns:      3,
 	})
 	require.NoError(t, err)
 
