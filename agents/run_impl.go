@@ -27,6 +27,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
 )
@@ -37,7 +38,7 @@ func (queueCompleteSentinel) isStreamEvent() {}
 
 var notFinalOutput = ToolsToFinalOutputResult{
 	IsFinalOutput: false,
-	FinalOutput:   optional.None[any](),
+	FinalOutput:   param.Null[any](),
 }
 
 type AgentToolUseTracker struct {
@@ -214,7 +215,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 
 	if checkToolUse.IsFinalOutput {
 		// If the output type is str, then let's just stringify it
-		if !checkToolUse.FinalOutput.Present {
+		if !checkToolUse.FinalOutput.Valid() {
 			slog.Error("Model returned a final output of None. Not raising an error because we assume you know what you're doing.")
 		}
 
@@ -225,7 +226,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			newResponse,
 			preStepItems,
 			newStepItems,
-			checkToolUse.FinalOutput.ValueOrFallback(nil),
+			checkToolUse.FinalOutput.Or(nil),
 			hooks,
 			contextWrapper,
 		)
@@ -825,14 +826,14 @@ func (runImpl) checkForFinalOutputFromTools(
 	case StopOnFirstTool:
 		return ToolsToFinalOutputResult{
 			IsFinalOutput: true,
-			FinalOutput:   optional.Value(toolResults[0].Output),
+			FinalOutput:   param.NewOpt(toolResults[0].Output),
 		}, nil
 	case StopAtTools:
 		for _, toolResult := range toolResults {
 			if slices.Contains(v.StopAtToolNames, toolResult.Tool.Name) {
 				return ToolsToFinalOutputResult{
 					IsFinalOutput: true,
-					FinalOutput:   optional.Value(toolResult.Output),
+					FinalOutput:   param.NewOpt(toolResult.Output),
 				}, nil
 			}
 		}

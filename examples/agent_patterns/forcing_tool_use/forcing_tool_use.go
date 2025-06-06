@@ -24,7 +24,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -107,7 +106,7 @@ func CustomToolUseBehavior(
 
 	return agents.ToolsToFinalOutputResult{
 		IsFinalOutput: true,
-		FinalOutput: optional.Value[any](
+		FinalOutput: param.NewOpt[any](
 			fmt.Sprintf("%s is %s", weather.City, weather.Conditions),
 		),
 	}, nil

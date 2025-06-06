@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +78,7 @@ func TestNoToolResultsReturnsNotFinalOutput(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
-		FinalOutput:   optional.None[any](),
+		FinalOutput:   param.Null[any](),
 	}, result)
 }
 
@@ -99,7 +99,7 @@ func TestRunLlmAgainBehavior(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
-		FinalOutput:   optional.None[any](),
+		FinalOutput:   param.Null[any](),
 	}, result)
 }
 
@@ -121,7 +121,7 @@ func TestStopOnFirstToolBehavior(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: true,
-		FinalOutput:   optional.Value[any]("first_tool_output"),
+		FinalOutput:   param.NewOpt[any]("first_tool_output"),
 	}, result)
 }
 
@@ -131,7 +131,7 @@ func TestCustomToolUseBehavior(t *testing.T) {
 		assert.Len(t, results, 3)
 		return ToolsToFinalOutputResult{
 			IsFinalOutput: true,
-			FinalOutput:   optional.Value[any]("custom"),
+			FinalOutput:   param.NewOpt[any]("custom"),
 		}, nil
 	}
 	agent := &Agent{
@@ -151,7 +151,7 @@ func TestCustomToolUseBehavior(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: true,
-		FinalOutput:   optional.Value[any]("custom"),
+		FinalOutput:   param.NewOpt[any]("custom"),
 	}, result)
 }
 
@@ -199,7 +199,7 @@ func TestToolNamesToStopAtBehavior(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
-		FinalOutput:   optional.None[any](),
+		FinalOutput:   param.Null[any](),
 	}, result)
 
 	// Now test with a tool that matches the list
@@ -216,6 +216,6 @@ func TestToolNamesToStopAtBehavior(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: true,
-		FinalOutput:   optional.Value[any]("output1"),
+		FinalOutput:   param.NewOpt[any]("output1"),
 	}, result)
 }
