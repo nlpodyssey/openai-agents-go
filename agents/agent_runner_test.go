@@ -27,6 +27,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,7 @@ func TestSimpleFirstRun(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
@@ -83,7 +84,7 @@ func TestSubsequentRuns(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
@@ -126,7 +127,7 @@ func TestToolCallRuns(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 		},
@@ -164,15 +165,15 @@ func TestHandoffs(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
 		Name:     "agent_3",
-		Model:    optional.Value(agents.NewAgentModel(model)),
+		Model:    param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
@@ -245,7 +246,7 @@ func TestStructuredOutput(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
@@ -253,7 +254,7 @@ func TestStructuredOutput(t *testing.T) {
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
@@ -305,11 +306,11 @@ func TestHandoffFilters(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:       agent1,
@@ -344,7 +345,7 @@ func TestInputFilterError(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	onInvokeHandoff := func(context.Context, *runcontext.RunContextWrapper, string) (*agents.Agent, error) {
@@ -358,7 +359,7 @@ func TestInputFilterError(t *testing.T) {
 
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{
 			agents.Handoff{
 				ToolName:        agents.DefaultHandoffToolName(agent1),
@@ -408,12 +409,12 @@ func TestHandoffOnInput(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
@@ -452,12 +453,12 @@ func TestHandoffOnInputError(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
@@ -527,7 +528,7 @@ func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 			Name:              "guardrail_function",
 			GuardrailFunction: guardrailFunction,
 		}},
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	_, err := agents.Runner().Run(t.Context(), agents.RunParams{
@@ -560,7 +561,7 @@ func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 			Name:              "guardrail_function",
 			GuardrailFunction: guardrailFunction,
 		}},
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	_, err := agents.Runner().Run(t.Context(), agents.RunParams{
@@ -607,7 +608,7 @@ func TestToolUseBehaviorFirstOutput(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 			TestToolOne,
@@ -648,7 +649,7 @@ func TestToolUseBehaviorCustomFunction(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 			TestToolOne,
@@ -684,7 +685,7 @@ func TestModelSettingsOverride(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		ModelSettings: modelsettings.ModelSettings{
 			Temperature: optional.Value(1.0),
 			MaxTokens:   optional.Value[int64](1000),
@@ -723,7 +724,7 @@ func TestPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 	})
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	assert.Equal(t, "", model.LastTurnArgs.PreviousResponseID)
@@ -741,7 +742,7 @@ func TestMultiTurnPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
@@ -778,7 +779,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamed(t *testing.T) {
 	})
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	assert.Equal(t, "", model.LastTurnArgs.PreviousResponseID)
@@ -801,7 +802,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamedMultiTurn(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},

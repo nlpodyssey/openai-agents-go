@@ -22,6 +22,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 type Weather struct {
@@ -78,7 +79,7 @@ func main() {
 	agent := &agents.Agent{
 		Name:         "Hello world",
 		Instructions: agents.StringInstructions("You are a helpful agent."),
-		Model:        optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 		Tools: []agents.Tool{
 			GetWeatherTool,
 		},

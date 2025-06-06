@@ -24,6 +24,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/packages/param"
 )
 
 var (
@@ -94,7 +95,7 @@ func main() {
 	agent := &agents.Agent{
 		Name:         "Assistant",
 		Instructions: agents.StringInstructions("You only respond in haikus."),
-		Model:        optional.Value(agents.NewAgentModelName(ModelName)),
+		Model:        param.NewOpt(agents.NewAgentModelName(ModelName)),
 		Tools:        []agents.Tool{GetWeatherTool},
 	}
 

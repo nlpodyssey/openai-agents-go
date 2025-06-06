@@ -22,6 +22,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
+	"github.com/openai/openai-go/packages/param"
 )
 
 type ToolsToFinalOutputResult struct {
@@ -64,7 +65,7 @@ type Agent struct {
 	Handoffs []AgentHandoff
 
 	// The model implementation to use when invoking the LLM.
-	Model optional.Optional[AgentModel]
+	Model param.Opt[AgentModel]
 
 	// Configures model-specific tuning parameters (e.g. temperature, top_p).
 	ModelSettings modelsettings.ModelSettings

@@ -21,7 +21,6 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -37,17 +36,17 @@ var (
 	FrenchAgent = &agents.Agent{
 		Name:         "french_agent",
 		Instructions: agents.StringInstructions("You only speak French"),
-		Model:        optional.Value(Model),
+		Model:        param.NewOpt(Model),
 	}
 	SpanishAgent = &agents.Agent{
 		Name:         "spanish_agent",
 		Instructions: agents.StringInstructions("You only speak Spanish"),
-		Model:        optional.Value(Model),
+		Model:        param.NewOpt(Model),
 	}
 	EnglishAgent = &agents.Agent{
 		Name:         "english_agent",
 		Instructions: agents.StringInstructions("You only speak English"),
-		Model:        optional.Value(Model),
+		Model:        param.NewOpt(Model),
 	}
 	TriageAgent = &agents.Agent{
 		Name: "triage_agent",
@@ -55,7 +54,7 @@ var (
 			"Handoff to the appropriate agent based on the language of the request.",
 		),
 		Handoffs: []agents.AgentHandoff{FrenchAgent, SpanishAgent, EnglishAgent},
-		Model:    optional.Value(Model),
+		Model:    param.NewOpt(Model),
 	}
 )
 

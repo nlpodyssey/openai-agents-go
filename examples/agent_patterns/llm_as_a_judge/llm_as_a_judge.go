@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -40,7 +39,7 @@ var StoryOutlineGenerator = &agents.Agent{
 		"You generate a very short story outline based on the user's input. " +
 			"If there is any feedback provided, use it to improve the outline.",
 	),
-	Model: optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+	Model: param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 }
 
 type EvaluationFeedback struct {
@@ -98,7 +97,7 @@ var Evaluator = &agents.Agent{
 			"Never give it a pass on the first try.",
 	),
 	OutputSchema: EvaluationFeedbackSchema{},
-	Model:        optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+	Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 }
 
 func main() {

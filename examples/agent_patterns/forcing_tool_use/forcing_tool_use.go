@@ -25,6 +25,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -148,7 +149,7 @@ func main() {
 		ModelSettings: modelsettings.ModelSettings{
 			ToolChoice: toolChoice,
 		},
-		Model: optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+		Model: param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 	}
 
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{

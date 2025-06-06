@@ -19,7 +19,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,7 +60,7 @@ func TestModelProviderOnRunConfigIsUsedForAgentModelName(t *testing.T) {
 	provider := NewDummyProvider(fakeModel)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModelName("test-model")),
+		Model: param.NewOpt(agents.NewAgentModelName("test-model")),
 	}
 	runConfig := agents.RunConfig{
 		ModelProvider: provider,
@@ -88,10 +88,10 @@ func TestRunConfigModelNameOverrideTakesPrecedence(t *testing.T) {
 	provider := NewDummyProvider(fakeModel)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModelName("agent-model")),
+		Model: param.NewOpt(agents.NewAgentModelName("agent-model")),
 	}
 	runConfig := agents.RunConfig{
-		Model:         optional.Value(agents.NewAgentModelName("override-name")),
+		Model:         param.NewOpt(agents.NewAgentModelName("override-name")),
 		ModelProvider: provider,
 	}
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
@@ -116,10 +116,10 @@ func TestRunConfigModelOverrideObjectTakesPrecedence(t *testing.T) {
 	})
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModelName("agent-model")),
+		Model: param.NewOpt(agents.NewAgentModelName("agent-model")),
 	}
 	runConfig := agents.RunConfig{
-		Model: optional.Value(agents.NewAgentModel(fakeModel)),
+		Model: param.NewOpt(agents.NewAgentModel(fakeModel)),
 	}
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
@@ -143,7 +143,7 @@ func TestAgentModelObjectIsUsedWhenPresent(t *testing.T) {
 	provider := NewDummyProvider(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(fakeModel)),
+		Model: param.NewOpt(agents.NewAgentModel(fakeModel)),
 	}
 	runConfig := agents.RunConfig{
 		ModelProvider: provider,

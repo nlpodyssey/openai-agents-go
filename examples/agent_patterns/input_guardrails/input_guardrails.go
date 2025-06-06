@@ -25,7 +25,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -88,7 +87,7 @@ var GuardrailAgent = &agents.Agent{
 	Name:         "Guardrail check",
 	Instructions: agents.StringInstructions("Check if the user is asking you to do their math homework."),
 	OutputSchema: MathHomeworkOutputSchema{},
-	Model:        optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+	Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 }
 
 // MathGuardrailFunction is an input guardrail function, which happens to call
@@ -129,7 +128,7 @@ func main() {
 			"You are a customer support agent. You help customers with their questions.",
 		),
 		InputGuardrails: []agents.InputGuardrail{MathGuardrail},
-		Model:           optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+		Model:           param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 	}
 
 	var inputData []agents.TResponseInputItem

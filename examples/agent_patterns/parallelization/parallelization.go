@@ -24,7 +24,7 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -37,12 +37,12 @@ var (
 	SpanishAgent = &agents.Agent{
 		Name:         "spanish_agent",
 		Instructions: agents.StringInstructions("You translate the user's message to Spanish"),
-		Model:        optional.Value(Model),
+		Model:        param.NewOpt(Model),
 	}
 	TranslationPicker = &agents.Agent{
 		Name:         "translation_picker",
 		Instructions: agents.StringInstructions("You pick the best Spanish translation from the given options."),
-		Model:        optional.Value(Model),
+		Model:        param.NewOpt(Model),
 	}
 )
 

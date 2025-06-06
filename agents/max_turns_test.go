@@ -22,7 +22,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +31,7 @@ func TestNonStreamedMaxTurns(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
@@ -60,7 +60,7 @@ func TestStreamedMaxTurns(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
@@ -123,7 +123,7 @@ func TestStructuredOutputNonStreamedMaxTurns(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:         "test_1",
-		Model:        optional.Value(agents.NewAgentModel(model)),
+		Model:        param.NewOpt(agents.NewAgentModel(model)),
 		OutputSchema: MaxTurnsTestFooSchema{},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("tool_1", "result"),
@@ -152,7 +152,7 @@ func TestStructuredOutputStreamedMaxTurns(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:         "test_1",
-		Model:        optional.Value(agents.NewAgentModel(model)),
+		Model:        param.NewOpt(agents.NewAgentModel(model)),
 		OutputSchema: MaxTurnsTestFooSchema{},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("tool_1", "result"),

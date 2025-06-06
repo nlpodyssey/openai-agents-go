@@ -27,7 +27,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_prompt"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -169,7 +168,7 @@ Use the following routine to support the customer.
 2. Use the faq lookup tool to answer the question. Do not rely on your own knowledge.
 3. If you cannot answer the question, transfer back to the triage agent.`),
 		Tools: []agents.Tool{FAQLookupTool},
-		Model: optional.Value(Model),
+		Model: param.NewOpt(Model),
 	}
 
 	SeatBookingAgent = &agents.Agent{
@@ -185,7 +184,7 @@ Use the following routine to support the customer.
 3. Use the update seat tool to update the seat on the flight.
 If the customer asks a question that is not related to the routine, transfer back to the triage agent.`),
 		Tools: []agents.Tool{UpdateSeatTool},
-		Model: optional.Value(Model),
+		Model: param.NewOpt(Model),
 	}
 
 	TriageAgent = &agents.Agent{
@@ -201,7 +200,7 @@ You are a helpful triaging agent. You can use your tools to delegate questions t
 				OnHandoff: agents.OnHandoffWithoutInput(OnSeatBookingHandoff),
 			}),
 		},
-		Model: optional.Value(Model),
+		Model: param.NewOpt(Model),
 	}
 )
 
