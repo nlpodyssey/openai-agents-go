@@ -27,16 +27,17 @@ import (
 //
 //	You can override or customize this mapping.
 type MultiProvider struct {
-	ProviderMap       optional.Optional[*MultiProviderMap]
+	// Optional provider map.
+	ProviderMap       *MultiProviderMap
 	OpenAIProvider    *OpenAIProvider
 	fallbackProviders map[string]ModelProvider
 }
 
 type NewMultiProviderParams struct {
-	// A MultiProviderMap that maps prefixes to ModelProviders. If not provided,
+	// Optional MultiProviderMap that maps prefixes to ModelProviders. If not provided,
 	// we will use a default mapping. See the documentation for MultiProvider to see the
 	// default mapping.
-	ProviderMap optional.Optional[*MultiProviderMap]
+	ProviderMap *MultiProviderMap
 
 	// The API key to use for the OpenAI provider. If not provided, we will use
 	// the default API key.
@@ -113,8 +114,8 @@ func (mp *MultiProvider) getFallbackProvider(prefix string) (ModelProvider, erro
 func (mp *MultiProvider) GetModel(modelName string) (Model, error) {
 	prefix, name := mp.getPrefixAndModelName(modelName)
 
-	if prefix != "" && mp.ProviderMap.Present {
-		if provider, ok := mp.ProviderMap.Value.GetProvider(prefix); ok {
+	if prefix != "" && mp.ProviderMap != nil {
+		if provider, ok := mp.ProviderMap.GetProvider(prefix); ok {
 			return provider.GetModel(name)
 		}
 	}
