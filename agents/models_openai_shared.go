@@ -17,13 +17,12 @@ package agents
 import (
 	"fmt"
 
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 )
 
 var (
 	defaultOpenaiKey      = param.Null[string]()
-	defaultOpenaiClient   = optional.None[OpenaiClient]()
+	defaultOpenaiClient   *OpenaiClient
 	useResponsesByDefault = true
 )
 
@@ -42,10 +41,10 @@ func GetDefaultOpenaiKey() param.Opt[string] {
 // SetDefaultOpenaiClient sets the default OpenAI client to use for LLM requests.
 // If provided, this client will be used instead of the default OpenAI client.
 func SetDefaultOpenaiClient(client OpenaiClient) {
-	defaultOpenaiClient = optional.Value(client)
+	defaultOpenaiClient = &client
 }
 
-func GetDefaultOpenaiClient() optional.Optional[OpenaiClient] {
+func GetDefaultOpenaiClient() *OpenaiClient {
 	return defaultOpenaiClient
 }
 
