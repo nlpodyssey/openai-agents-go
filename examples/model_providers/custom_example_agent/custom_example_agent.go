@@ -22,7 +22,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -48,7 +47,7 @@ This example uses a custom provider for a specific agent. Steps:
 */
 
 var Client = agents.NewOpenaiClient(
-	optional.Value(BaseURL),
+	param.NewOpt(BaseURL),
 	option.WithAPIKey(APIKey),
 )
 

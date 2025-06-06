@@ -26,6 +26,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +45,7 @@ func makeOpenaiClientWithStreamResponse(t *testing.T, chunks ...any) agents.Open
 	body.WriteString("data: [DONE]\n\n")
 
 	return agents.OpenaiClient{
-		BaseURL: optional.Value("https://fake"),
+		BaseURL: param.NewOpt("https://fake"),
 		Client: openai.NewClient(
 			option.WithMiddleware(func(req *http.Request, _ option.MiddlewareNext) (*http.Response, error) {
 				return &http.Response{
