@@ -209,6 +209,10 @@ As a result, the mental model for the agent loop is:
 1. If the current agent has an `OutputSchema`, the loop runs until the agent produces structured output matching that type.
 2. If the current agent does not have an `OutputSchema`, the loop runs until the current agent produces a message without any tool calls/handoffs.
 
+## Acknowledgments
+
+We would like to thank the OpenAI team for creating the original [OpenAI Agents Python SDK](https://openai.github.io/openai-agents-python/) and the [official OpenAI Go client library](https://github.com/openai/openai-go), which serve as the foundation for this Go implementation.
+
 ## Common agent patterns
 
 The Agents SDK is designed to be highly flexible, allowing you to model a wide
