@@ -73,7 +73,7 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 	dummyClient := makeOpenaiClientWithResponse(t, chat)
 
 	provider := NewOpenAIProvider(OpenAIProviderParams{
-		OpenaiClient: optional.Value(dummyClient),
+		OpenaiClient: &dummyClient,
 		UseResponses: param.NewOpt(false),
 	})
 	model, err := provider.GetModel("gpt-4")
@@ -125,7 +125,7 @@ func TestGetResponseWithRefusal(t *testing.T) {
 	dummyClient := makeOpenaiClientWithResponse(t, chat)
 
 	provider := NewOpenAIProvider(OpenAIProviderParams{
-		OpenaiClient: optional.Value(dummyClient),
+		OpenaiClient: &dummyClient,
 		UseResponses: param.NewOpt(false),
 	})
 	model, err := provider.GetModel("gpt-4")
@@ -181,7 +181,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 	dummyClient := makeOpenaiClientWithResponse(t, chat)
 
 	provider := NewOpenAIProvider(OpenAIProviderParams{
-		OpenaiClient: optional.Value(dummyClient),
+		OpenaiClient: &dummyClient,
 		UseResponses: param.NewOpt(false),
 	})
 	model, err := provider.GetModel("gpt-4")
@@ -216,7 +216,7 @@ func TestPrepareRequestNonStream(t *testing.T) {
 	dummyClient := makeOpenaiClientWithResponse(t, nil)
 
 	provider := NewOpenAIProvider(OpenAIProviderParams{
-		OpenaiClient: optional.Value(dummyClient),
+		OpenaiClient: &dummyClient,
 		UseResponses: param.NewOpt(false),
 	})
 	model, err := provider.GetModel("gpt-4")
