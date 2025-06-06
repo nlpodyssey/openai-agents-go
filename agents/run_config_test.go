@@ -68,7 +68,7 @@ func TestModelProviderOnRunConfigIsUsedForAgentModelName(t *testing.T) {
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("any"),
-		RunConfig:     optional.Value(runConfig),
+		RunConfig:     runConfig,
 	})
 	require.NoError(t, err)
 	// We picked up the model from our dummy provider
@@ -97,7 +97,7 @@ func TestRunConfigModelNameOverrideTakesPrecedence(t *testing.T) {
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("any"),
-		RunConfig:     optional.Value(runConfig),
+		RunConfig:     runConfig,
 	})
 	require.NoError(t, err)
 	// We should have requested the override name, not the agent.model
@@ -124,7 +124,7 @@ func TestRunConfigModelOverrideObjectTakesPrecedence(t *testing.T) {
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("any"),
-		RunConfig:     optional.Value(runConfig),
+		RunConfig:     runConfig,
 	})
 	require.NoError(t, err)
 	// Our FakeModel on the RunConfig should have been used.
@@ -151,7 +151,7 @@ func TestAgentModelObjectIsUsedWhenPresent(t *testing.T) {
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("any"),
-		RunConfig:     optional.Value(runConfig),
+		RunConfig:     runConfig,
 	})
 	require.NoError(t, err)
 	// The dummy provider should never have been called, and the output should come from

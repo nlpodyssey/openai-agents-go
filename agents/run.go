@@ -83,8 +83,8 @@ type RunParams struct {
 	// Optional object that receives callbacks on various lifecycle events.
 	Hooks RunHooks
 
-	// Global settings for the entire agent run.
-	RunConfig optional.Optional[RunConfig]
+	// Optional global settings for the entire agent run.
+	RunConfig RunConfig
 
 	// Optional ID of the previous response, if using OpenAI models via the Responses API,
 	// this allows you to skip passing in input from the previous turn.
@@ -114,7 +114,6 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 		hooks = NoOpRunHooks{}
 	}
 
-	runConfig := params.RunConfig.ValueOrFallback(RunConfig{})
 	toolUseTracker := NewAgentToolUseTracker()
 	originalInput := CopyGeneralInput(params.Input)
 	currentTurn := uint64(0)
@@ -166,7 +165,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 				inputGuardrailResults, guardrailsError = r.runInputGuardrails(
 					childCtx,
 					params.StartingAgent,
-					slices.Concat(params.StartingAgent.InputGuardrails, runConfig.InputGuardrails),
+					slices.Concat(params.StartingAgent.InputGuardrails, params.RunConfig.InputGuardrails),
 					CopyGeneralInput(params.Input),
 					contextWrapper,
 				)
@@ -186,7 +185,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 					generatedItems,
 					hooks,
 					contextWrapper,
-					runConfig,
+					params.RunConfig,
 					shouldRunAgentStartHooks,
 					toolUseTracker,
 					params.PreviousResponseID,
@@ -210,7 +209,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 				generatedItems,
 				hooks,
 				contextWrapper,
-				runConfig,
+				params.RunConfig,
 				shouldRunAgentStartHooks,
 				toolUseTracker,
 				params.PreviousResponseID,
@@ -230,7 +229,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 		case NextStepFinalOutput:
 			outputGuardrailResults, err := r.runOutputGuardrails(
 				childCtx,
-				slices.Concat(currentAgent.OutputGuardrails, runConfig.OutputGuardrails),
+				slices.Concat(currentAgent.OutputGuardrails, params.RunConfig.OutputGuardrails),
 				currentAgent,
 				nextStep.Output,
 				contextWrapper,
@@ -282,8 +281,8 @@ type RunStreamedParams struct {
 	// An object that receives callbacks on various lifecycle events.
 	Hooks RunHooks
 
-	// Global settings for the entire agent run.
-	RunConfig optional.Optional[RunConfig]
+	// Optional global settings for the entire agent run.
+	RunConfig RunConfig
 
 	// Optional ID of the previous response, if using OpenAI models via the Responses API,
 	// this allows you to skip passing in input from the previous turn.
@@ -313,7 +312,6 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 		hooks = NoOpRunHooks{}
 	}
 
-	runConfig := params.RunConfig.ValueOrFallback(RunConfig{})
 	maxTurns := params.MaxTurns.ValueOrFallback(DefaultMaxTurns)
 
 	if params.StartingAgent == nil {
@@ -352,7 +350,7 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 			maxTurns,
 			hooks,
 			contextWrapper,
-			runConfig,
+			params.RunConfig,
 			params.PreviousResponseID,
 		)
 	})
