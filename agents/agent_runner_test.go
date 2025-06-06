@@ -639,7 +639,7 @@ var CustomToolUseBehavior = func(_ *runcontext.RunContextWrapper, results []agen
 	if slices.ContainsFunc(results, func(r agents.FunctionToolResult) bool { return r.Tool.Name == "test_tool_one" }) {
 		return agents.ToolsToFinalOutputResult{
 			IsFinalOutput: true,
-			FinalOutput:   optional.Value[any]("the_final_output"),
+			FinalOutput:   param.NewOpt[any]("the_final_output"),
 		}, nil
 	}
 	return agents.ToolsToFinalOutputResult{IsFinalOutput: false}, nil
