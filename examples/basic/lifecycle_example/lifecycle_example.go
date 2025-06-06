@@ -226,7 +226,7 @@ func main() {
 
 	_, err = agents.Runner().Run(ctx, agents.RunParams{
 		StartingAgent: StartAgent,
-		Hooks:         optional.Value[agents.RunHooks](Hooks),
+		Hooks:         Hooks,
 		Input: agents.InputString(
 			fmt.Sprintf("Generate a random number between 0 and %s.", userInput),
 		),
