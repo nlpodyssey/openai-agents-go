@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 // MultiProvider is a ModelProvider that maps to a Model based on the prefix of the model name.
@@ -41,7 +42,7 @@ type NewMultiProviderParams struct {
 
 	// The API key to use for the OpenAI provider. If not provided, we will use
 	// the default API key.
-	OpenaiAPIKey optional.Optional[string]
+	OpenaiAPIKey param.Opt[string]
 
 	// The base URL to use for the OpenAI provider. If not provided, we will
 	// use the default base URL.
