@@ -21,7 +21,7 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -37,21 +37,21 @@ var (
 		Name:               "spanish_agent",
 		Instructions:       agents.StringInstructions("You translate the user's message to Spanish"),
 		HandoffDescription: "An English to Spanish translator",
-		Model:              optional.Value(Model),
+		Model:              param.NewOpt(Model),
 	}
 
 	FrenchAgent = &agents.Agent{
 		Name:               "french_agent",
 		Instructions:       agents.StringInstructions("You translate the user's message to French"),
 		HandoffDescription: "An English to French translator",
-		Model:              optional.Value(Model),
+		Model:              param.NewOpt(Model),
 	}
 
 	ItalianAgent = &agents.Agent{
 		Name:               "italian_agent",
 		Instructions:       agents.StringInstructions("You translate the user's message to Italian"),
 		HandoffDescription: "An English to Italian translator",
-		Model:              optional.Value(Model),
+		Model:              param.NewOpt(Model),
 	}
 
 	OrchestratorAgent = &agents.Agent{
@@ -75,7 +75,7 @@ var (
 				ToolDescription: "Translate the user's message to Italian",
 			}),
 		},
-		Model: optional.Value(Model),
+		Model: param.NewOpt(Model),
 	}
 
 	SynthesizerAgent = &agents.Agent{
@@ -83,7 +83,7 @@ var (
 		Instructions: agents.StringInstructions(
 			"You inspect translations, correct them if needed, and produce a final concatenated response.",
 		),
-		Model: optional.Value(Model),
+		Model: param.NewOpt(Model),
 	}
 )
 

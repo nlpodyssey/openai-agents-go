@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -43,7 +43,7 @@ var StoryOutlineAgent = &agents.Agent{
 	Instructions: agents.StringInstructions(
 		"Generate a very short story outline based on the user's input.",
 	),
-	Model: optional.Value(Model),
+	Model: param.NewOpt(Model),
 }
 
 type OutlineCheckerOutput struct {
@@ -89,7 +89,7 @@ var OutlineCheckerAgent = &agents.Agent{
 		"Read the given story outline, and judge the quality. Also, determine if it is a scifi story.",
 	),
 	OutputSchema: OutlineCheckerOutputSchema{},
-	Model:        optional.Value(Model),
+	Model:        param.NewOpt(Model),
 }
 
 var StoryAgent = &agents.Agent{
@@ -97,7 +97,7 @@ var StoryAgent = &agents.Agent{
 	Instructions: agents.StringInstructions(
 		"Write a short story based on the given outline.",
 	),
-	Model: optional.Value(Model),
+	Model: param.NewOpt(Model),
 }
 
 func main() {

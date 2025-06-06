@@ -21,7 +21,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 type Style string
@@ -53,7 +53,7 @@ func CustomInstructions(_ context.Context, cw *runcontext.RunContextWrapper, _ *
 var Agent = &agents.Agent{
 	Name:         "Chat agent",
 	Instructions: agents.FunctionInstructions(CustomInstructions),
-	Model:        optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+	Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 }
 
 func main() {

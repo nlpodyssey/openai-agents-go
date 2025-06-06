@@ -17,7 +17,7 @@ package agents
 import (
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +25,7 @@ func Test_runner_getModel(t *testing.T) {
 	t.Run("no prefix is OpenAI", func(t *testing.T) {
 		agent := &Agent{
 			Name:  "test",
-			Model: optional.Value(NewAgentModelName("gpt-4o")),
+			Model: param.NewOpt(NewAgentModelName("gpt-4o")),
 		}
 		model, err := Runner().getModel(agent, RunConfig{})
 		assert.NoError(t, err)
@@ -36,7 +36,7 @@ func Test_runner_getModel(t *testing.T) {
 	t.Run("OpenAI prefix", func(t *testing.T) {
 		agent := &Agent{
 			Name:  "test",
-			Model: optional.Value(NewAgentModelName("openai/gpt-4o")),
+			Model: param.NewOpt(NewAgentModelName("openai/gpt-4o")),
 		}
 		model, err := Runner().getModel(agent, RunConfig{})
 		assert.NoError(t, err)

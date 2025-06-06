@@ -24,8 +24,8 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/usage"
+	"github.com/openai/openai-go/packages/param"
 )
 
 type ExampleHooks struct {
@@ -197,7 +197,7 @@ var (
 		),
 		Tools:        []agents.Tool{MultiplyByTwoTool},
 		OutputSchema: FinalResultOutputSchema{},
-		Model:        optional.Value(agents.NewAgentModelName("gpt-4o-mini")),
+		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
 	}
 
 	StartAgent = &agents.Agent{
@@ -208,7 +208,7 @@ var (
 		Tools:        []agents.Tool{RandomNumberTool},
 		OutputSchema: FinalResultOutputSchema{},
 		Handoffs:     []agents.AgentHandoff{MultiplyAgent},
-		Model:        optional.Value(agents.NewAgentModelName("gpt-4o-mini")),
+		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
 	}
 )
 

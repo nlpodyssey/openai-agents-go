@@ -23,7 +23,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -72,15 +72,15 @@ func TestNonStreamedRuntHooks(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
 		Name:     "agent_3",
-		Model:    optional.Value(agents.NewAgentModel(model)),
+		Model:    param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
@@ -184,15 +184,15 @@ func TestStreamedRuntHooks(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
 		Name:     "agent_3",
-		Model:    optional.Value(agents.NewAgentModel(model)),
+		Model:    param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
@@ -334,15 +334,15 @@ func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "test_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent2 := &agents.Agent{
 		Name:  "test_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
 		Name:     "test_3",
-		Model:    optional.Value(agents.NewAgentModel(model)),
+		Model:    param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
@@ -440,15 +440,15 @@ func TestStructuredOutputStreamedRunHooks(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "test_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent2 := &agents.Agent{
 		Name:  "test_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
 		Name:     "test_3",
-		Model:    optional.Value(agents.NewAgentModel(model)),
+		Model:    param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),

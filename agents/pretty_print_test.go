@@ -21,7 +21,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +34,7 @@ func TestPrettyResult(t *testing.T) {
 	})
 	agent := &agents.Agent{
 		Name:  "test_agent",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent,
@@ -63,7 +63,7 @@ func TestPrettyRunResultStreaming(t *testing.T) {
 	})
 	agent := &agents.Agent{
 		Name:  "test_agent",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
@@ -130,7 +130,7 @@ func TestPrettyRunResultStructuredOutput(t *testing.T) {
 	})
 	agent := &agents.Agent{
 		Name:         "test_agent",
-		Model:        optional.Value(agents.NewAgentModel(model)),
+		Model:        param.NewOpt(agents.NewAgentModel(model)),
 		OutputSchema: PrettyPrintTestFooSchema{},
 	}
 	result, err := agents.Runner().Run(t.Context(), agents.RunParams{
@@ -163,7 +163,7 @@ func TestPrettyRunResultStreamingStructuredOutput(t *testing.T) {
 	})
 	agent := &agents.Agent{
 		Name:         "test_agent",
-		Model:        optional.Value(agents.NewAgentModel(model)),
+		Model:        param.NewOpt(agents.NewAgentModel(model)),
 		OutputSchema: PrettyPrintTestFooSchema{},
 	}
 

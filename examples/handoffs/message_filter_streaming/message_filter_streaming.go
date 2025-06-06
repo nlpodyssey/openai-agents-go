@@ -25,7 +25,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_filters"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -88,14 +87,14 @@ var (
 		Name:         "Assistant",
 		Instructions: agents.StringInstructions("Be extremely concise."),
 		Tools:        []agents.Tool{RandomNumberTool},
-		Model:        optional.Value(Model),
+		Model:        param.NewOpt(Model),
 	}
 
 	SpanishAgent = &agents.Agent{
 		Name:               "Spanish Assistant",
 		Instructions:       agents.StringInstructions("You only speak Spanish and are extremely concise."),
 		HandoffDescription: "A Spanish-speaking assistant.",
-		Model:              optional.Value(Model),
+		Model:              param.NewOpt(Model),
 	}
 
 	SecondAgent = &agents.Agent{
@@ -109,7 +108,7 @@ var (
 				InputFilter: SpanishHandoffMessageFilter,
 			}),
 		},
-		Model: optional.Value(Model),
+		Model: param.NewOpt(Model),
 	}
 )
 

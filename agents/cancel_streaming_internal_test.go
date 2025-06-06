@@ -20,7 +20,7 @@ import (
 	"iter"
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +28,7 @@ import (
 func TestCancelCleansUpResources(t *testing.T) {
 	agent := &Agent{
 		Name:  "Joker",
-		Model: optional.Value(NewAgentModel(FakeModel{})),
+		Model: param.NewOpt(NewAgentModel(FakeModel{})),
 	}
 
 	result, err := Runner().RunStreamed(t.Context(), RunStreamedParams{

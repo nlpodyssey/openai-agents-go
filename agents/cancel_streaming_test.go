@@ -20,7 +20,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +29,7 @@ func TestSimpleStreamingWithCancel(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
@@ -59,7 +59,7 @@ func TestMultipleEventsStreamingWithCancel(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 		},
@@ -104,7 +104,7 @@ func TestCancelPreventsFurtherEvents(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
@@ -143,7 +143,7 @@ func TestCancelIsIdempotent(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
@@ -171,7 +171,7 @@ func TestCancelBeforeStreaming(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
