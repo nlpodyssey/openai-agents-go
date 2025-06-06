@@ -32,7 +32,7 @@ type ToolsToFinalOutputResult struct {
 
 	// The final output.
 	// Can be missing if `IsFinalOutput` is false.
-	FinalOutput optional.Optional[any]
+	FinalOutput param.Opt[any]
 }
 
 // An Agent is an AI model configured with instructions, tools, guardrails, handoffs and more.
