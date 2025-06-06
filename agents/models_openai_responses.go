@@ -300,7 +300,7 @@ func (responsesConverter) convertHandoffTool(handoff Handoff) responses.ToolUnio
 		OfFunction: &responses.FunctionToolParam{
 			Name:        handoff.ToolName,
 			Parameters:  handoff.InputJSONSchema,
-			Strict:      param.NewOpt(handoff.StrictJSONSchema.ValueOrFallback(true)),
+			Strict:      param.NewOpt(handoff.StrictJSONSchema.Or(true)),
 			Description: param.NewOpt(handoff.ToolDescription),
 			Type:        constant.ValueOf[constant.Function](),
 		},
