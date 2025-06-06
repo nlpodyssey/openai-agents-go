@@ -89,7 +89,7 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 
 	provider := agents.NewOpenAIProvider(agents.OpenAIProviderParams{
 		OpenaiClient: optional.Value(dummyClient),
-		UseResponses: optional.Value(false),
+		UseResponses: param.NewOpt(false),
 	})
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
@@ -178,7 +178,7 @@ func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {
 
 	provider := agents.NewOpenAIProvider(agents.OpenAIProviderParams{
 		OpenaiClient: optional.Value(dummyClient),
-		UseResponses: optional.Value(false),
+		UseResponses: param.NewOpt(false),
 	})
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
@@ -260,7 +260,7 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 
 	provider := agents.NewOpenAIProvider(agents.OpenAIProviderParams{
 		OpenaiClient: optional.Value(dummyClient),
-		UseResponses: optional.Value(false),
+		UseResponses: param.NewOpt(false),
 	})
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
