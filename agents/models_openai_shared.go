@@ -18,10 +18,11 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 var (
-	defaultOpenaiKey      = optional.None[string]()
+	defaultOpenaiKey      = param.Null[string]()
 	defaultOpenaiClient   = optional.None[OpenaiClient]()
 	useResponsesByDefault = true
 )
@@ -31,10 +32,10 @@ var (
 //
 // If provided, this key will be used instead of the OPENAI_API_KEY environment variable.
 func SetDefaultOpenaiKey(key string) {
-	defaultOpenaiKey = optional.Value(key)
+	defaultOpenaiKey = param.NewOpt(key)
 }
 
-func GetDefaultOpenaiKey() optional.Optional[string] {
+func GetDefaultOpenaiKey() param.Opt[string] {
 	return defaultOpenaiKey
 }
 
