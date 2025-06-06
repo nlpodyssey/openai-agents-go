@@ -18,7 +18,6 @@ import (
 	"maps"
 	"strings"
 
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -48,9 +47,9 @@ type NewMultiProviderParams struct {
 	// use the default base URL.
 	OpenaiBaseURL param.Opt[string]
 
-	// An optional OpenAI client to use. If not provided, we will create a new
+	// Optional OpenAI client to use. If not provided, we will create a new
 	// OpenAI client using the OpenaiAPIKey and OpenaiBaseURL.
-	OpenaiClient optional.Optional[OpenaiClient]
+	OpenaiClient *OpenaiClient
 
 	// The organization to use for the OpenAI provider.
 	OpenaiOrganization param.Opt[string]
