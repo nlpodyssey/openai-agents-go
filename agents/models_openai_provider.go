@@ -91,17 +91,15 @@ func (provider *OpenAIProvider) GetModel(modelName string) (Model, error) {
 func (provider *OpenAIProvider) getClient() OpenaiClient {
 	if provider.client == nil {
 		client := GetDefaultOpenaiClient().ValueOrFallbackFunc(func() OpenaiClient {
-			var apiKey string
+			apiKey := ""
 			if provider.params.APIKey.Valid() {
 				apiKey = provider.params.APIKey.Value
+			} else if defaultKey := GetDefaultOpenaiKey(); defaultKey.Valid() {
+				apiKey = defaultKey.Value
+			} else if envKey := os.Getenv("OPENAI_API_KEY"); envKey != "" {
+				apiKey = envKey
 			} else {
-				apiKey = GetDefaultOpenaiKey().ValueOrFallbackFunc(func() string {
-					v := os.Getenv("OPENAI_API_KEY")
-					if v == "" {
-						slog.Warn("OpenAIProvider: an API key is missing")
-					}
-					return v
-				})
+				slog.Warn("OpenAIProvider: an API key is missing")
 			}
 
 			options := make([]option.RequestOption, 0)
