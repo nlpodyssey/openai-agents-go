@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 // FunctionTool is a tool that wraps a function.
@@ -45,7 +45,7 @@ type FunctionTool struct {
 	// Whether the JSON schema is in strict mode.
 	// We **strongly** recommend setting this to True, as it increases the likelihood of correct JSON input.
 	// Defaults to true if omitted.
-	StrictJSONSchema optional.Optional[bool]
+	StrictJSONSchema param.Opt[bool]
 }
 
 // A Tool that can be used in an agent.

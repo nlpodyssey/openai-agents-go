@@ -585,7 +585,7 @@ var TestToolOne = agents.FunctionTool{
 	OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
 		return AgentRunnerTestFoo{Bar: "tool_one_result"}, nil
 	},
-	StrictJSONSchema: optional.Value(true),
+	StrictJSONSchema: param.NewOpt(true),
 }
 
 var TestToolTwo = agents.FunctionTool{
@@ -601,7 +601,7 @@ var TestToolTwo = agents.FunctionTool{
 	OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
 		return AgentRunnerTestFoo{Bar: "tool_two_result"}, nil
 	},
-	StrictJSONSchema: optional.Value(true),
+	StrictJSONSchema: param.NewOpt(true),
 }
 
 func TestToolUseBehaviorFirstOutput(t *testing.T) {

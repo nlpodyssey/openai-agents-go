@@ -136,7 +136,7 @@ func (a *Agent) AsTool(params AgentAsToolParams) Tool {
 		Name:             name,
 		Description:      params.ToolDescription,
 		ParamsJSONSchema: a.agentAsToolParamsJSONSchema(name + "_args"),
-		StrictJSONSchema: optional.Value(true),
+		StrictJSONSchema: param.NewOpt(true),
 		OnInvokeTool: func(
 			ctx context.Context,
 			contextWrapper *runcontext.RunContextWrapper,

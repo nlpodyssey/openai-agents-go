@@ -21,7 +21,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -72,7 +71,7 @@ var GetWeatherTool = agents.FunctionTool{
 		}
 		return string(out), nil
 	},
-	StrictJSONSchema: optional.Value(true),
+	StrictJSONSchema: param.NewOpt(true),
 }
 
 func main() {
