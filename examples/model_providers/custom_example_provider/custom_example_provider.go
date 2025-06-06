@@ -110,7 +110,7 @@ func main() {
 		StartingAgent: agent,
 		Input:         agents.InputString("What's the weather in Tokyo?"),
 		RunConfig: optional.Value(agents.RunConfig{
-			ModelProvider: optional.Value[agents.ModelProvider](CustomModelProvider),
+			ModelProvider: CustomModelProvider,
 		}),
 	})
 	if err != nil {
