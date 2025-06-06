@@ -35,10 +35,10 @@ import (
 ////// CONTEXT
 
 type AirlineAgentContext struct {
-	PassengerName      optional.Optional[string]
-	ConfirmationNumber optional.Optional[string]
-	SeatNumber         optional.Optional[string]
-	FlightNumber       optional.Optional[string]
+	PassengerName      string
+	ConfirmationNumber string
+	SeatNumber         string
+	FlightNumber       string
 }
 
 ////// TOOLS
@@ -99,11 +99,11 @@ func UpdateSeat(cw *runcontext.RunContextWrapper, args UpdateSeatArgs) (string, 
 	ctx := cw.Context.(*AirlineAgentContext)
 
 	// Update the context based on the customer's input
-	ctx.ConfirmationNumber = optional.Value(args.ConfirmationNumber)
-	ctx.SeatNumber = optional.Value(args.NewSeat)
+	ctx.ConfirmationNumber = args.ConfirmationNumber
+	ctx.SeatNumber = args.NewSeat
 
 	// Ensure that the flight number has been set by the incoming handoff
-	if !ctx.FlightNumber.Present {
+	if ctx.FlightNumber == "" {
 		return "", errors.New("flight number is required")
 	}
 	return fmt.Sprintf(
@@ -148,7 +148,7 @@ var UpdateSeatTool = agents.FunctionTool{
 func OnSeatBookingHandoff(_ context.Context, cw *runcontext.RunContextWrapper) error {
 	flightNumber := fmt.Sprintf("FLT-%d", rand.Intn(900)+100)
 	ctx := cw.Context.(*AirlineAgentContext)
-	ctx.FlightNumber = optional.Value(flightNumber)
+	ctx.FlightNumber = flightNumber
 	return nil
 }
 
