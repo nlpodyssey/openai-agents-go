@@ -127,7 +127,7 @@ func (m *FakeModel) StreamResponse(ctx context.Context, params agents.ModelStrea
 		}
 
 		yield(&agents.TResponseStreamEvent{ // responses.ResponseCompletedEvent
-			Response: GetResponseObj(output.Value, optional.None[string](), m.HardcodedUsage),
+			Response: GetResponseObj(output.Value, "", m.HardcodedUsage),
 			Type:     "response.completed",
 		}, nil)
 	}, nil
@@ -135,9 +135,13 @@ func (m *FakeModel) StreamResponse(ctx context.Context, params agents.ModelStrea
 
 func GetResponseObj(
 	output []agents.TResponseOutputItem,
-	responseID optional.Optional[string],
+	responseID string,
 	u *usage.Usage,
 ) responses.Response {
+	if responseID == "" {
+		responseID = "123"
+	}
+
 	var responseUsage responses.ResponseUsage
 	if u != nil {
 		responseUsage.InputTokens = int64(u.InputTokens)
@@ -146,7 +150,7 @@ func GetResponseObj(
 	}
 
 	return responses.Response{
-		ID:        responseID.ValueOrFallback("123"),
+		ID:        responseID,
 		CreatedAt: 123,
 		Model:     "test_model",
 		Object:    "response",
