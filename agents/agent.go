@@ -104,7 +104,7 @@ type Agent struct {
 
 	// Whether to reset the tool choice to the default value after a tool has been called. Defaults
 	// to true. This ensures that the agent doesn't enter an infinite loop of tool usage.
-	ResetToolChoice optional.Optional[bool]
+	ResetToolChoice param.Opt[bool]
 }
 
 type AgentAsToolParams struct {
