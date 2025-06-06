@@ -25,6 +25,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +34,7 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
@@ -87,7 +88,7 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
@@ -137,7 +138,7 @@ func TestToolCallRunsStreamed(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 		},
@@ -178,15 +179,15 @@ func TestHandoffsStreaming(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
 		Name:     "agent_3",
-		Model:    optional.Value(agents.NewAgentModel(model)),
+		Model:    param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
@@ -230,7 +231,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
@@ -238,7 +239,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
@@ -285,11 +286,11 @@ func TestHandoffFiltersStreamed(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:       agent1,
@@ -326,7 +327,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	onInvokeHandoff := func(context.Context, *runcontext.RunContextWrapper, string) (*agents.Agent, error) {
@@ -340,7 +341,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{
 			agents.Handoff{
 				ToolName:        agents.DefaultHandoffToolName(agent1),
@@ -392,12 +393,12 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.AgentHandoff{
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
@@ -452,7 +453,7 @@ func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 			Name:              "guardrail_function",
 			GuardrailFunction: guardrailFunction,
 		}},
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
@@ -488,7 +489,7 @@ func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 			Name:              "guardrail_function",
 			GuardrailFunction: guardrailFunction,
 		}},
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
@@ -516,7 +517,7 @@ func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
@@ -554,7 +555,7 @@ func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 
 	agent := &agents.Agent{
 		Name:  "test",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
@@ -578,7 +579,7 @@ func TestStreamingEvents(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
 		Name:  "test_1",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
@@ -587,7 +588,7 @@ func TestStreamingEvents(t *testing.T) {
 
 	agent2 := &agents.Agent{
 		Name:  "test_2",
-		Model: optional.Value(agents.NewAgentModel(model)),
+		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},

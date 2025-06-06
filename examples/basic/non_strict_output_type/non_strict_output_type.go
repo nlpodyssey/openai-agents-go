@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -126,7 +126,7 @@ func main() {
 	agent := &agents.Agent{
 		Name:         "Assistant",
 		Instructions: agents.StringInstructions("You are a helpful assistant."),
-		Model:        optional.Value(agents.NewAgentModelName("gpt-4o")),
+		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
 	}
 
 	input := "Tell me 3 short jokes."

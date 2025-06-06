@@ -30,6 +30,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/usage"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
 
@@ -43,7 +44,7 @@ const DefaultMaxTurns = 10
 type RunConfig struct {
 	// The model to use for the entire agent run. If set, will override the model set on every
 	// agent. The model_provider passed in below must be able to resolve this model name.
-	Model optional.Optional[AgentModel]
+	Model param.Opt[AgentModel]
 
 	// Optional model provider to use when looking up string model names. Defaults to OpenAI (MultiProvider).
 	ModelProvider ModelProvider
@@ -994,7 +995,7 @@ func (r runner) getModel(agent *Agent, runConfig RunConfig) (Model, error) {
 		modelProvider = NewMultiProvider(NewMultiProviderParams{})
 	}
 
-	if runConfig.Model.Present {
+	if runConfig.Model.Valid() {
 		runConfigModel := runConfig.Model.Value
 		if v, ok := runConfigModel.SafeModel(); ok {
 			return v, nil
@@ -1002,7 +1003,7 @@ func (r runner) getModel(agent *Agent, runConfig RunConfig) (Model, error) {
 		return modelProvider.GetModel(runConfigModel.ModelName())
 	}
 
-	if agent.Model.Present {
+	if agent.Model.Valid() {
 		agentModel := agent.Model.Value
 		if v, ok := agentModel.SafeModel(); ok {
 			return v, nil

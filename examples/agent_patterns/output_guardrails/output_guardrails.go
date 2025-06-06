@@ -23,7 +23,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -125,7 +125,7 @@ var Agent = &agents.Agent{
 	Instructions:     agents.StringInstructions("You are a helpful assistant."),
 	OutputSchema:     MessageOutputSchema{},
 	OutputGuardrails: []agents.OutputGuardrail{SensitiveDataCheck},
-	Model:            optional.Value(agents.NewAgentModelName("gpt-4.1-nano")),
+	Model:            param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 }
 
 func main() {

@@ -24,7 +24,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -44,7 +44,7 @@ var Agent = &agents.Agent{
 		"You are a helpful assistant. You ALWAYS write long responses, " +
 			"making sure to be verbose and detailed.",
 	),
-	Model: optional.Value(Model),
+	Model: param.NewOpt(Model),
 }
 
 type GuardrailOutput struct {
@@ -97,7 +97,7 @@ var GuardrailAgent = &agents.Agent{
 			"is simple enough to be understood by a ten year old.",
 	),
 	OutputSchema: GuardrailOutputSchema{},
-	Model:        optional.Value(Model),
+	Model:        param.NewOpt(Model),
 }
 
 type CheckGuardrailResult struct {
