@@ -22,12 +22,13 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/packages/param"
 )
 
 type OpenAIProviderParams struct {
 	// The API key to use for the OpenAI client. If not provided, we will use the
 	// default API key.
-	APIKey optional.Optional[string]
+	APIKey param.Opt[string]
 
 	// The base URL to use for the OpenAI client. If not provided, we will use the
 	// default base URL.
@@ -55,7 +56,7 @@ type OpenAIProvider struct {
 
 // NewOpenAIProvider creates a new OpenAI provider.
 func NewOpenAIProvider(params OpenAIProviderParams) *OpenAIProvider {
-	if params.OpenaiClient.Present && (params.APIKey.Present || params.BaseURL.Present) {
+	if params.OpenaiClient.Present && (params.APIKey.Valid() || params.BaseURL.Present) {
 		panic(errors.New("OpenAIProvider: don't provide APIKey or BaseURL if you provide OpenaiClient"))
 	}
 
@@ -87,15 +88,18 @@ func (provider *OpenAIProvider) getClient() OpenaiClient {
 	if !provider.client.Present {
 		provider.client = optional.Value(
 			GetDefaultOpenaiClient().ValueOrFallbackFunc(func() OpenaiClient {
-				apiKey := provider.params.APIKey.ValueOrFallbackFunc(func() string {
-					return GetDefaultOpenaiKey().ValueOrFallbackFunc(func() string {
+				var apiKey string
+				if provider.params.APIKey.Valid() {
+					apiKey = provider.params.APIKey.Value
+				} else {
+					apiKey = GetDefaultOpenaiKey().ValueOrFallbackFunc(func() string {
 						v := os.Getenv("OPENAI_API_KEY")
 						if v == "" {
 							slog.Warn("OpenAIProvider: an API key is missing")
 						}
 						return v
 					})
-				})
+				}
 
 				options := make([]option.RequestOption, 0)
 				options = append(options, option.WithAPIKey(apiKey))
