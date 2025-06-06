@@ -160,10 +160,10 @@ func main() {
 			if taskResult.Canceled {
 				return errors.New("guardrail result canceled")
 			}
-			if err := taskResult.Result.Value.Error; err != nil {
+			if err := taskResult.Result.Error; err != nil {
 				return err
 			}
-			guardrailResult := taskResult.Result.Value.Output
+			guardrailResult := taskResult.Result.Output
 			if !guardrailResult.IsReadableByTenYearOld {
 				fmt.Print("\n\n================\n\n\n")
 				fmt.Printf("Guardrail triggered. Reasoning:\n%s\n", guardrailResult.Reasoning)
