@@ -220,7 +220,7 @@ func (r *RunResultStreaming) checkErrors() error {
 		if result.Canceled {
 			return NewCanceledError("run task has been canceled")
 		}
-		if err := result.Result.Value; err != nil {
+		if err := *result.Result; err != nil {
 			r.storedException = fmt.Errorf("run-impl task error: %w", err)
 		}
 	}
@@ -230,7 +230,7 @@ func (r *RunResultStreaming) checkErrors() error {
 		if result.Canceled {
 			return NewCanceledError("input guardrails task has been canceled")
 		}
-		if err := result.Result.Value; err != nil {
+		if err := *result.Result; err != nil {
 			r.storedException = fmt.Errorf("input guardrails task error: %w", err)
 		}
 	}
@@ -240,7 +240,7 @@ func (r *RunResultStreaming) checkErrors() error {
 		if result.Canceled {
 			return NewCanceledError("output guardrails task has been canceled")
 		}
-		if err := result.Result.Value.Err; err != nil {
+		if err := result.Result.Err; err != nil {
 			r.storedException = fmt.Errorf("output guardrails task error: %w", err)
 		}
 	}

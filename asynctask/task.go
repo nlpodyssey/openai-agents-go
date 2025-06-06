@@ -17,20 +17,18 @@ package asynctask
 import (
 	"context"
 	"sync/atomic"
-
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 )
 
 type Task[T any] struct {
 	ctx           context.Context
 	ctxCancelFunc context.CancelFunc
 	doneCh        chan struct{}
-	result        optional.Optional[T]
+	result        *T
 	canceled      *atomic.Bool
 }
 
 type TaskResult[T any] struct {
-	Result   optional.Optional[T]
+	Result   *T
 	Canceled bool
 }
 
@@ -86,7 +84,7 @@ func CreateTask[T any](
 		defer t.closeDoneCh()
 		result := fn(ctx)
 		if !t.canceled.Load() {
-			t.result = optional.Value(result)
+			t.result = &result
 		}
 	}()
 

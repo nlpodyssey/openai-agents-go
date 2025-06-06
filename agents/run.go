@@ -511,9 +511,9 @@ func (r runner) runStreamedImpl(
 			if taskResult.Canceled {
 				return NewCanceledError("output guardrails task has been canceled")
 			}
-			if taskResult.Result.Value.Err == nil {
+			if taskResult.Result.Err == nil {
 				// Errors will be checked in the stream-events loop
-				outputGuardrailResults = taskResult.Result.Value.Result
+				outputGuardrailResults = taskResult.Result.Result
 			}
 
 			streamedResult.OutputGuardrailResults = outputGuardrailResults
