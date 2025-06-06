@@ -21,7 +21,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -42,7 +41,7 @@ var HowManyJokesTool = agents.FunctionTool{
 	OnInvokeTool: func(_ context.Context, _ *runcontext.RunContextWrapper, arguments string) (any, error) {
 		return HowManyJokes(), nil
 	},
-	StrictJSONSchema: optional.Value(true),
+	StrictJSONSchema: param.NewOpt(true),
 }
 
 func main() {
