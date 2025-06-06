@@ -98,7 +98,7 @@ func TestNonStreamedRuntHooks(t *testing.T) {
 	output, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{"OnAgentStart": 1, "OnAgentEnd": 1}, hooks.Events, output)
@@ -123,7 +123,7 @@ func TestNonStreamedRuntHooks(t *testing.T) {
 	_, err = agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{
@@ -164,7 +164,7 @@ func TestNonStreamedRuntHooks(t *testing.T) {
 	_, err = agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{
@@ -210,7 +210,7 @@ func TestStreamedRuntHooks(t *testing.T) {
 	output, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -238,7 +238,7 @@ func TestStreamedRuntHooks(t *testing.T) {
 	output, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -280,7 +280,7 @@ func TestStreamedRuntHooks(t *testing.T) {
 	output, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -358,7 +358,7 @@ func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
 	output, err := agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{"OnAgentStart": 1, "OnAgentEnd": 1}, hooks.Events, output)
@@ -382,7 +382,7 @@ func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
 	_, err = agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 
@@ -421,7 +421,7 @@ func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
 	_, err = agents.Runner().Run(t.Context(), agents.RunParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 
@@ -465,7 +465,7 @@ func TestStructuredOutputStreamedRunHooks(t *testing.T) {
 	output, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -493,7 +493,7 @@ func TestStructuredOutputStreamedRunHooks(t *testing.T) {
 	output, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -534,7 +534,7 @@ func TestStructuredOutputStreamedRunHooks(t *testing.T) {
 	output, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent3,
 		Input:         agents.InputString("user_message"),
-		Hooks:         optional.Value[agents.RunHooks](hooks),
+		Hooks:         hooks,
 	})
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
