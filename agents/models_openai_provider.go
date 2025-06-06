@@ -45,7 +45,7 @@ type OpenAIProviderParams struct {
 	Project param.Opt[string]
 
 	// Whether to use the OpenAI responses API.
-	UseResponses optional.Optional[bool]
+	UseResponses param.Opt[bool]
 }
 
 type OpenAIProvider struct {
@@ -60,12 +60,17 @@ func NewOpenAIProvider(params OpenAIProviderParams) *OpenAIProvider {
 		panic(errors.New("OpenAIProvider: don't provide APIKey or BaseURL if you provide OpenaiClient"))
 	}
 
+	var useResponses bool
+	if params.UseResponses.Valid() {
+		useResponses = params.UseResponses.Value
+	} else {
+		useResponses = GetUseResponsesByDefault()
+	}
+
 	return &OpenAIProvider{
-		params: params,
-		useResponses: params.UseResponses.ValueOrFallbackFunc(func() bool {
-			return GetUseResponsesByDefault()
-		}),
-		client: params.OpenaiClient,
+		params:       params,
+		useResponses: useResponses,
+		client:       params.OpenaiClient,
 	}
 }
 
