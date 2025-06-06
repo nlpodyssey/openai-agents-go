@@ -23,6 +23,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -68,7 +69,7 @@ type Handoff struct {
 	// Whether the input JSON schema is in strict mode. We **strongly** recommend setting this to
 	// true, as it increases the likelihood of correct JSON input.
 	// Defaults to true if omitted.
-	StrictJSONSchema optional.Optional[bool]
+	StrictJSONSchema param.Opt[bool]
 }
 
 func (h Handoff) GetTransferMessage(agent *Agent) string {
@@ -225,6 +226,6 @@ func HandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 		OnInvokeHandoff:  invokeHandoff,
 		AgentName:        params.Agent.Name,
 		InputFilter:      params.InputFilter,
-		StrictJSONSchema: optional.Value(true),
+		StrictJSONSchema: param.NewOpt(true),
 	}, nil
 }
