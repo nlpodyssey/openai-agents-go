@@ -284,7 +284,7 @@ func (responsesConverter) convertTool(tool Tool) (responses.ToolUnionParam, *res
 			OfFunction: &responses.FunctionToolParam{
 				Name:        tool.Name,
 				Parameters:  tool.ParamsJSONSchema,
-				Strict:      param.NewOpt(tool.StrictJSONSchema.ValueOrFallback(true)),
+				Strict:      param.NewOpt(tool.StrictJSONSchema.Or(true)),
 				Description: param.NewOpt(tool.Description),
 				Type:        constant.ValueOf[constant.Function](),
 			},
