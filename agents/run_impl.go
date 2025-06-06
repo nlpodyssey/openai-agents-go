@@ -297,7 +297,7 @@ func (runImpl) MaybeResetToolChoice(
 	toolUseTracker *AgentToolUseTracker,
 	modelSettings modelsettings.ModelSettings,
 ) modelsettings.ModelSettings {
-	resetToolChoice := agent.ResetToolChoice.ValueOrFallback(true)
+	resetToolChoice := agent.ResetToolChoice.Or(true)
 	if resetToolChoice && toolUseTracker.HasUsedTools(agent) {
 		newSettings := modelSettings
 		newSettings.ToolChoice = ""

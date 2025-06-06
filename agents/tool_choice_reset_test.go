@@ -20,7 +20,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -254,7 +253,7 @@ func TestDontResetToolChoiceIfNotRequired(t *testing.T) {
 		Model:           param.NewOpt(agents.NewAgentModel(fakeModel)),
 		Tools:           []agents.Tool{customTool},
 		ModelSettings:   modelsettings.ModelSettings{ToolChoice: "required"},
-		ResetToolChoice: optional.Value(false),
+		ResetToolChoice: param.NewOpt(false),
 	}
 
 	_, err := agents.Runner().Run(t.Context(), agents.RunParams{
