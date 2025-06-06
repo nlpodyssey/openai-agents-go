@@ -522,13 +522,12 @@ func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("user_message"),
-		RunConfig: optional.Value(agents.RunConfig{
-
+		RunConfig: agents.RunConfig{
 			InputGuardrails: []agents.InputGuardrail{{
 				Name:              "guardrail_function",
 				GuardrailFunction: guardrailFunction,
 			}},
-		}),
+		},
 	})
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -561,12 +560,12 @@ func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("user_message"),
-		RunConfig: optional.Value(agents.RunConfig{
+		RunConfig: agents.RunConfig{
 			OutputGuardrails: []agents.OutputGuardrail{{
 				Name:              "guardrail_function",
 				GuardrailFunction: guardrailFunction,
 			}},
-		}),
+		},
 	})
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })

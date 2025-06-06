@@ -109,9 +109,9 @@ func main() {
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("What's the weather in Tokyo?"),
-		RunConfig: optional.Value(agents.RunConfig{
+		RunConfig: agents.RunConfig{
 			ModelProvider: CustomModelProvider,
-		}),
+		},
 	})
 	if err != nil {
 		panic(err)
