@@ -24,7 +24,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -375,7 +374,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 }
 
 func TestHandoffOnInputStreamed(t *testing.T) {
-	callOutput := optional.None[string]()
+	callOutput := ""
 
 	onInput := func(_ context.Context, _ *runcontext.RunContextWrapper, jsonInput any) error {
 		r := strings.NewReader(jsonInput.(string))
@@ -386,7 +385,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		callOutput = optional.Value(v.Bar)
+		callOutput = v.Bar
 		return nil
 	}
 
@@ -428,7 +427,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "last", result.FinalOutput)
-	assert.Equal(t, optional.Value("test_input"), callOutput)
+	assert.Equal(t, "test_input", callOutput)
 }
 
 func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
