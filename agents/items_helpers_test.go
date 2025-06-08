@@ -19,7 +19,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -109,8 +108,9 @@ func TestExtractLastTextReturnsTextOnly(t *testing.T) {
 		},
 	)
 
-	v := agents.ItemHelpers().ExtractLastText(message)
-	assert.Equal(t, optional.Value("part2"), v)
+	v, ok := agents.ItemHelpers().ExtractLastText(message)
+	assert.True(t, ok)
+	assert.Equal(t, "part2", v)
 
 	// Whereas when last content is a refusal, ExtractLastText returns None.
 	message = makeMessage(
@@ -121,8 +121,9 @@ func TestExtractLastTextReturnsTextOnly(t *testing.T) {
 		},
 	)
 
-	v = agents.ItemHelpers().ExtractLastText(message)
-	assert.Equal(t, optional.None[string](), v)
+	v, ok = agents.ItemHelpers().ExtractLastText(message)
+	assert.False(t, ok)
+	assert.Equal(t, "", v)
 }
 
 func TestInputToNewInputListFromString(t *testing.T) {

@@ -26,7 +26,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -241,17 +240,18 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	}
 
 	// We'll use the last content output as the final output
-	potentialFinalOutputText := optional.None[string]()
+	potentialFinalOutputText := ""
 	if len(messageItems) > 0 {
 		rawItem := messageItems[len(messageItems)-1].RawItem
-		potentialFinalOutputText = ItemHelpers().ExtractLastText(openaitypes.ResponseOutputItemUnionFromResponseOutputMessage(rawItem))
+		potentialFinalOutputText, _ = ItemHelpers().ExtractLastText(
+			openaitypes.ResponseOutputItemUnionFromResponseOutputMessage(rawItem))
 	}
 
 	// There are two possibilities that lead to a final output:
 	// 1. Structured output schema => always leads to a final output
 	// 2. Plain text output schema => only leads to a final output if there are no tool calls
-	if outputSchema != nil && !outputSchema.IsPlainText() && potentialFinalOutputText.Present {
-		finalOutput, err := outputSchema.ValidateJSON(potentialFinalOutputText.Value)
+	if outputSchema != nil && !outputSchema.IsPlainText() && potentialFinalOutputText != "" {
+		finalOutput, err := outputSchema.ValidateJSON(potentialFinalOutputText)
 		if err != nil {
 			return nil, fmt.Errorf("final output schema validation failed: %w", err)
 		}
@@ -274,7 +274,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			newResponse,
 			preStepItems,
 			newStepItems,
-			potentialFinalOutputText.ValueOrFallback(""),
+			potentialFinalOutputText,
 			hooks,
 			contextWrapper,
 		)
