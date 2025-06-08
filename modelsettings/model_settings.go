@@ -17,7 +17,6 @@ package modelsettings
 import (
 	"maps"
 
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -104,12 +103,6 @@ func (ms ModelSettings) Resolve(override ModelSettings) ModelSettings {
 	resolveOptionalMapValue(&newSettings.ExtraQuery, override.ExtraQuery)
 	resolveOptionalMapValue(&newSettings.ExtraHeaders, override.ExtraHeaders)
 	return newSettings
-}
-
-func resolveOptionalValue[T any](base *optional.Optional[T], override optional.Optional[T]) {
-	if override.Present {
-		*base = override
-	}
 }
 
 func resolveOptValue[T comparable](base *param.Opt[T], override param.Opt[T]) {
