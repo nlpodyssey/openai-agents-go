@@ -128,9 +128,7 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 		Temperature:       params.ModelSettings.Temperature.Or(0),
 		Tools:             nil,
 		ParallelToolCalls: body.ParallelToolCalls.Or(false),
-		Reasoning: openaitypes.ReasoningFromParam(
-			params.ModelSettings.Reasoning.ValueOrFallback(openai.ReasoningParam{}),
-		),
+		Reasoning:         openaitypes.ReasoningFromParam(params.ModelSettings.Reasoning),
 	}
 
 	return ChatCmplStreamHandler().HandleStream(response, stream), nil
@@ -197,11 +195,6 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 		)
 	}
 
-	var reasoningEffort openai.ReasoningEffort
-	if modelSettings.Reasoning.Present {
-		reasoningEffort = modelSettings.Reasoning.Value.Effort
-	}
-
 	store := ChatCmplHelpers().GetStoreParam(m.client, modelSettings)
 
 	streamOptions := ChatCmplHelpers().GetStreamOptionsParam(m.client, modelSettings, stream)
@@ -220,7 +213,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 		ParallelToolCalls: parallelToolCalls,
 		StreamOptions:     streamOptions,
 		Store:             store,
-		ReasoningEffort:   reasoningEffort,
+		ReasoningEffort:   modelSettings.Reasoning.Effort,
 		Metadata:          modelSettings.Metadata.ValueOrFallback(nil),
 	}
 

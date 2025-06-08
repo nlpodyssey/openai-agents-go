@@ -49,7 +49,7 @@ func TestModelSettings_BasicSerialization(t *testing.T) {
 		"parallel_tool_calls": nil,
 		"truncation":          nil,
 		"max_tokens":          json.Number("100"),
-		"reasoning":           nil,
+		"reasoning":           map[string]any{},
 		"metadata":            nil,
 		"store":               nil,
 		"include_usage":       nil,
@@ -70,7 +70,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		ParallelToolCalls: param.NewOpt(true),
 		Truncation:        param.NewOpt(TruncationAuto),
 		MaxTokens:         param.NewOpt[int64](100),
-		Reasoning:         optional.Value(openai.ReasoningParam{}),
+		Reasoning:         openai.ReasoningParam{},
 		Metadata:          optional.Value(map[string]string{"foo": "bar"}),
 		Store:             param.NewOpt(false),
 		IncludeUsage:      param.NewOpt(false),
@@ -120,10 +120,10 @@ func TestModelSettings_Resolve(t *testing.T) {
 		ParallelToolCalls: param.NewOpt(true),
 		Truncation:        param.NewOpt(TruncationAuto),
 		MaxTokens:         param.NewOpt[int64](100),
-		Reasoning: optional.Value(openai.ReasoningParam{
+		Reasoning: openai.ReasoningParam{
 			Effort:  openai.ReasoningEffortLow,
 			Summary: openai.ReasoningSummaryConcise,
-		}),
+		},
 		Metadata:     optional.Value(map[string]string{"foo": "bar"}),
 		Store:        param.NewOpt(false),
 		IncludeUsage: param.NewOpt(false),
@@ -137,10 +137,10 @@ func TestModelSettings_Resolve(t *testing.T) {
 			FrequencyPenalty: param.NewOpt(0.1),
 			ToolChoice:       "required",
 			Truncation:       param.NewOpt(TruncationDisabled),
-			Reasoning: optional.Value(openai.ReasoningParam{
+			Reasoning: openai.ReasoningParam{
 				Effort:  openai.ReasoningEffortMedium,
 				Summary: openai.ReasoningSummaryDetailed,
-			}),
+			},
 			Store:      param.NewOpt(true),
 			ExtraQuery: optional.Value(map[string]string{"a": "b"}),
 		}
@@ -156,10 +156,10 @@ func TestModelSettings_Resolve(t *testing.T) {
 			ParallelToolCalls: param.NewOpt(true),
 			Truncation:        param.NewOpt(TruncationDisabled),
 			MaxTokens:         param.NewOpt[int64](100),
-			Reasoning: optional.Value(openai.ReasoningParam{
+			Reasoning: openai.ReasoningParam{
 				Effort:  openai.ReasoningEffortMedium,
 				Summary: openai.ReasoningSummaryDetailed,
-			}),
+			},
 			Metadata:     optional.Value(map[string]string{"foo": "bar"}),
 			Store:        param.NewOpt(true),
 			IncludeUsage: param.NewOpt(false),
@@ -192,10 +192,10 @@ func TestModelSettings_Resolve(t *testing.T) {
 			ParallelToolCalls: param.NewOpt(false),
 			Truncation:        param.NewOpt(TruncationAuto),
 			MaxTokens:         param.NewOpt[int64](42),
-			Reasoning: optional.Value(openai.ReasoningParam{
+			Reasoning: openai.ReasoningParam{
 				Effort:  openai.ReasoningEffortLow,
 				Summary: openai.ReasoningSummaryConcise,
-			}),
+			},
 			Metadata:     optional.Value(map[string]string{"a": "b"}),
 			Store:        param.NewOpt(false),
 			IncludeUsage: param.NewOpt(true),
