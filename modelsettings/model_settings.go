@@ -88,37 +88,37 @@ const (
 // the override on top of this instance.
 func (ms ModelSettings) Resolve(override ModelSettings) ModelSettings {
 	newSettings := ms
-	resolveOptValue(&newSettings.Temperature, override.Temperature)
-	resolveOptValue(&newSettings.TopP, override.TopP)
-	resolveOptValue(&newSettings.FrequencyPenalty, override.FrequencyPenalty)
-	resolveOptValue(&newSettings.PresencePenalty, override.PresencePenalty)
-	resolveOptionalZeroValue(&newSettings.ToolChoice, override.ToolChoice)
-	resolveOptValue(&newSettings.ParallelToolCalls, override.ParallelToolCalls)
-	resolveOptValue(&newSettings.Truncation, override.Truncation)
-	resolveOptValue(&newSettings.MaxTokens, override.MaxTokens)
-	resolveOptionalZeroValue(&newSettings.Reasoning, override.Reasoning)
-	resolveOptionalMapValue(&newSettings.Metadata, override.Metadata)
-	resolveOptValue(&newSettings.Store, override.Store)
-	resolveOptValue(&newSettings.IncludeUsage, override.IncludeUsage)
-	resolveOptionalMapValue(&newSettings.ExtraQuery, override.ExtraQuery)
-	resolveOptionalMapValue(&newSettings.ExtraHeaders, override.ExtraHeaders)
+	resolveOpt(&newSettings.Temperature, override.Temperature)
+	resolveOpt(&newSettings.TopP, override.TopP)
+	resolveOpt(&newSettings.FrequencyPenalty, override.FrequencyPenalty)
+	resolveOpt(&newSettings.PresencePenalty, override.PresencePenalty)
+	resolveComparable(&newSettings.ToolChoice, override.ToolChoice)
+	resolveOpt(&newSettings.ParallelToolCalls, override.ParallelToolCalls)
+	resolveOpt(&newSettings.Truncation, override.Truncation)
+	resolveOpt(&newSettings.MaxTokens, override.MaxTokens)
+	resolveComparable(&newSettings.Reasoning, override.Reasoning)
+	resolveMap(&newSettings.Metadata, override.Metadata)
+	resolveOpt(&newSettings.Store, override.Store)
+	resolveOpt(&newSettings.IncludeUsage, override.IncludeUsage)
+	resolveMap(&newSettings.ExtraQuery, override.ExtraQuery)
+	resolveMap(&newSettings.ExtraHeaders, override.ExtraHeaders)
 	return newSettings
 }
 
-func resolveOptValue[T comparable](base *param.Opt[T], override param.Opt[T]) {
+func resolveOpt[T comparable](base *param.Opt[T], override param.Opt[T]) {
 	if override.Valid() {
 		*base = override
 	}
 }
 
-func resolveOptionalZeroValue[T comparable](base *T, override T) {
+func resolveComparable[T comparable](base *T, override T) {
 	var zero T
 	if override != zero {
 		*base = override
 	}
 }
 
-func resolveOptionalMapValue[M ~map[K]V, K comparable, V any](base *M, override M) {
+func resolveMap[M ~map[K]V, K comparable, V any](base *M, override M) {
 	if len(override) > 0 {
 		*base = maps.Clone(override)
 	}
