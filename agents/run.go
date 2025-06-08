@@ -28,7 +28,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -936,7 +935,7 @@ func (runner) runOutputGuardrails(
 func (r runner) getNewResponse(
 	ctx context.Context,
 	agent *Agent,
-	systemPrompt optional.Optional[string],
+	systemPrompt param.Opt[string],
 	input []TResponseInputItem,
 	outputSchema AgentOutputSchemaInterface,
 	allTools []Tool,

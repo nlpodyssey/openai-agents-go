@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +34,7 @@ func TestSystemInstructions(t *testing.T) {
 		}
 		prompt, err := agent.GetSystemPrompt(t.Context(), cw)
 		require.NoError(t, err)
-		assert.Equal(t, optional.Value("foo"), prompt)
+		assert.Equal(t, param.NewOpt("foo"), prompt)
 	})
 
 	t.Run("FunctionInstructions", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestSystemInstructions(t *testing.T) {
 		}
 		prompt, err := agent.GetSystemPrompt(t.Context(), cw)
 		require.NoError(t, err)
-		assert.Equal(t, optional.Value("bar"), prompt)
+		assert.Equal(t, param.NewOpt("bar"), prompt)
 	})
 }
 

@@ -19,7 +19,7 @@ import (
 	"iter"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 // Model is the base interface for calling an LLM.
@@ -33,7 +33,7 @@ type Model interface {
 
 type ModelGetResponseParams struct {
 	// The system instructions to use.
-	SystemInstructions optional.Optional[string]
+	SystemInstructions param.Opt[string]
 
 	// The input items to the model, in OpenAI Responses format.
 	Input Input
@@ -57,7 +57,7 @@ type ModelGetResponseParams struct {
 
 type ModelStreamResponseParams struct {
 	// The system instructions to use.
-	SystemInstructions optional.Optional[string]
+	SystemInstructions param.Opt[string]
 
 	// The input items to the model, in OpenAI Responses format.
 	Input Input
