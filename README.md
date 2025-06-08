@@ -41,14 +41,14 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 func main() {
 	agent := &agents.Agent{
 		Name:         "Assistant",
 		Instructions: agents.StringInstructions("You are a helpful assistant"),
-		Model:        optional.Value(agents.NewAgentModelName("gpt-4o")),
+		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
 	}
 
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
@@ -59,10 +59,10 @@ func main() {
 		panic(err)
 	}
 
-    fmt.Println(result.FinalOutput)
-    // Function calls itself,  
-    // Deep within the endless loop,  
-    // Code mirrors its form.
+	fmt.Println(result.FinalOutput)
+	// Function calls itself,
+	// Deep within the endless loop,
+	// Code mirrors its form.
 }
 ```
 
@@ -78,11 +78,11 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 func main() {
-	model := optional.Value(agents.NewAgentModelName("gpt-4o"))
+	model := param.NewOpt(agents.NewAgentModelName("gpt-4o"))
 
 	spanishAgent := &agents.Agent{
 		Name:         "Spanish agent",
@@ -130,7 +130,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
+	"github.com/openai/openai-go/packages/param"
 )
 
 type getWeatherParams struct {
@@ -168,7 +168,7 @@ var (
 		Name:         "Hello world",
 		Instructions: agents.StringInstructions("You are a helpful agent."),
 		Tools:        []agents.Tool{getWeatherTool},
-		Model:        optional.Value(agents.NewAgentModelName("gpt-4o")),
+		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
 	}
 )
 
