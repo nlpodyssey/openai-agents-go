@@ -71,11 +71,11 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		Truncation:        param.NewOpt(TruncationAuto),
 		MaxTokens:         param.NewOpt[int64](100),
 		Reasoning:         openai.ReasoningParam{},
-		Metadata:          optional.Value(map[string]string{"foo": "bar"}),
+		Metadata:          map[string]string{"foo": "bar"},
 		Store:             param.NewOpt(false),
 		IncludeUsage:      param.NewOpt(false),
-		ExtraQuery:        optional.Value(map[string]string{"foo": "bar"}),
-		ExtraHeaders:      optional.Value(map[string]string{"foo": "bar"}),
+		ExtraQuery:        map[string]string{"foo": "bar"},
+		ExtraHeaders:      map[string]string{"foo": "bar"},
 	}
 	res, err := json.Marshal(modelSettings)
 	require.NoError(t, err)
@@ -124,11 +124,11 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Effort:  openai.ReasoningEffortLow,
 			Summary: openai.ReasoningSummaryConcise,
 		},
-		Metadata:     optional.Value(map[string]string{"foo": "bar"}),
+		Metadata:     map[string]string{"foo": "bar"},
 		Store:        param.NewOpt(false),
 		IncludeUsage: param.NewOpt(false),
-		ExtraQuery:   optional.Value(map[string]string{"foo": "bar"}),
-		ExtraHeaders: optional.Value(map[string]string{"foo": "bar"}),
+		ExtraQuery:   map[string]string{"foo": "bar"},
+		ExtraHeaders: map[string]string{"foo": "bar"},
 	}
 
 	t.Run("overriding first set of properties", func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 				Summary: openai.ReasoningSummaryDetailed,
 			},
 			Store:      param.NewOpt(true),
-			ExtraQuery: optional.Value(map[string]string{"a": "b"}),
+			ExtraQuery: map[string]string{"a": "b"},
 		}
 
 		resolved := base.Resolve(optional.Value(override))
@@ -160,11 +160,11 @@ func TestModelSettings_Resolve(t *testing.T) {
 				Effort:  openai.ReasoningEffortMedium,
 				Summary: openai.ReasoningSummaryDetailed,
 			},
-			Metadata:     optional.Value(map[string]string{"foo": "bar"}),
+			Metadata:     map[string]string{"foo": "bar"},
 			Store:        param.NewOpt(true),
 			IncludeUsage: param.NewOpt(false),
-			ExtraQuery:   optional.Value(map[string]string{"a": "b"}),
-			ExtraHeaders: optional.Value(map[string]string{"foo": "bar"}),
+			ExtraQuery:   map[string]string{"a": "b"},
+			ExtraHeaders: map[string]string{"foo": "bar"},
 		}
 
 		assert.Equal(t, want, resolved)
@@ -176,9 +176,9 @@ func TestModelSettings_Resolve(t *testing.T) {
 			PresencePenalty:   param.NewOpt(0.2),
 			ParallelToolCalls: param.NewOpt(false),
 			MaxTokens:         param.NewOpt[int64](42),
-			Metadata:          optional.Value(map[string]string{"a": "b"}),
+			Metadata:          map[string]string{"a": "b"},
 			IncludeUsage:      param.NewOpt(true),
-			ExtraHeaders:      optional.Value(map[string]string{"c": "d"}),
+			ExtraHeaders:      map[string]string{"c": "d"},
 		}
 
 		resolved := base.Resolve(optional.Value(override))
@@ -196,11 +196,11 @@ func TestModelSettings_Resolve(t *testing.T) {
 				Effort:  openai.ReasoningEffortLow,
 				Summary: openai.ReasoningSummaryConcise,
 			},
-			Metadata:     optional.Value(map[string]string{"a": "b"}),
+			Metadata:     map[string]string{"a": "b"},
 			Store:        param.NewOpt(false),
 			IncludeUsage: param.NewOpt(true),
-			ExtraQuery:   optional.Value(map[string]string{"foo": "bar"}),
-			ExtraHeaders: optional.Value(map[string]string{"c": "d"}),
+			ExtraQuery:   map[string]string{"foo": "bar"},
+			ExtraHeaders: map[string]string{"c": "d"},
 		}
 
 		assert.Equal(t, want, resolved)
