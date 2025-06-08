@@ -15,6 +15,8 @@
 package modelsettings
 
 import (
+	"maps"
+
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
@@ -58,8 +60,8 @@ type ModelSettings struct {
 	// (see https://platform.openai.com/docs/guides/reasoning).
 	Reasoning openai.ReasoningParam `json:"reasoning"`
 
-	// Metadata to include with the model response call.
-	Metadata optional.Optional[map[string]string] `json:"metadata"`
+	// Optional metadata to include with the model response call.
+	Metadata map[string]string `json:"metadata"`
 
 	// Whether to store the generated model response for later retrieval.
 	// Defaults to true if not provided.
@@ -69,11 +71,11 @@ type ModelSettings struct {
 	// Defaults to true if not provided.
 	IncludeUsage param.Opt[bool] `json:"include_usage"`
 
-	// Additional query fields to provide with the request.
-	ExtraQuery optional.Optional[map[string]string] `json:"extra_query"`
+	// Optional additional query fields to provide with the request.
+	ExtraQuery map[string]string `json:"extra_query"`
 
-	// Additional headers to provide with the request.
-	ExtraHeaders optional.Optional[map[string]string] `json:"extra_headers"`
+	// Optional additional headers to provide with the request.
+	ExtraHeaders map[string]string `json:"extra_headers"`
 }
 
 type Truncation string
@@ -101,11 +103,11 @@ func (ms ModelSettings) Resolve(override optional.Optional[ModelSettings]) Model
 	resolveOptValue(&newSettings.Truncation, override.Value.Truncation)
 	resolveOptValue(&newSettings.MaxTokens, override.Value.MaxTokens)
 	resolveOptionalZeroValue(&newSettings.Reasoning, override.Value.Reasoning)
-	resolveOptionalValue(&newSettings.Metadata, override.Value.Metadata)
+	resolveOptionalMapValue(&newSettings.Metadata, override.Value.Metadata)
 	resolveOptValue(&newSettings.Store, override.Value.Store)
 	resolveOptValue(&newSettings.IncludeUsage, override.Value.IncludeUsage)
-	resolveOptionalValue(&newSettings.ExtraQuery, override.Value.ExtraQuery)
-	resolveOptionalValue(&newSettings.ExtraHeaders, override.Value.ExtraHeaders)
+	resolveOptionalMapValue(&newSettings.ExtraQuery, override.Value.ExtraQuery)
+	resolveOptionalMapValue(&newSettings.ExtraHeaders, override.Value.ExtraHeaders)
 
 	return newSettings
 }
@@ -126,5 +128,11 @@ func resolveOptionalZeroValue[T comparable](base *T, override T) {
 	var zero T
 	if override != zero {
 		*base = override
+	}
+}
+
+func resolveOptionalMapValue[M ~map[K]V, K comparable, V any](base *M, override M) {
+	if len(override) > 0 {
+		*base = maps.Clone(override)
 	}
 }

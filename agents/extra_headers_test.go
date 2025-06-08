@@ -22,7 +22,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +49,7 @@ func TestExtraHeadersPassedToOpenaiResponsesModel(t *testing.T) {
 	_, _ = model.GetResponse(t.Context(), agents.ModelGetResponseParams{
 		Input: agents.InputString("hi"),
 		ModelSettings: modelsettings.ModelSettings{
-			ExtraHeaders: optional.Value(extraHeaders),
+			ExtraHeaders: extraHeaders,
 		},
 	})
 
@@ -79,7 +78,7 @@ func TestExtraHeadersPassedToOpenaiChatCompletionsClient(t *testing.T) {
 	_, _ = model.GetResponse(t.Context(), agents.ModelGetResponseParams{
 		Input: agents.InputString("hi"),
 		ModelSettings: modelsettings.ModelSettings{
-			ExtraHeaders: optional.Value(extraHeaders),
+			ExtraHeaders: extraHeaders,
 		},
 	})
 

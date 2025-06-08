@@ -183,21 +183,16 @@ func (m OpenAIResponsesModel) prepareRequest(
 		Text:               responseFormat,
 		Store:              modelSettings.Store,
 		Reasoning:          modelSettings.Reasoning,
-		Metadata:           modelSettings.Metadata.ValueOrFallback(nil),
+		Metadata:           modelSettings.Metadata,
 	}
 
 	var opts []option.RequestOption
-	if modelSettings.ExtraHeaders.Present {
-		for k, v := range modelSettings.ExtraHeaders.Value {
-			opts = append(opts, option.WithHeader(k, v))
-		}
+	for k, v := range modelSettings.ExtraHeaders {
+		opts = append(opts, option.WithHeader(k, v))
 	}
-	if modelSettings.ExtraQuery.Present {
-		for k, v := range modelSettings.ExtraQuery.Value {
-			opts = append(opts, option.WithQuery(k, v))
-		}
+	for k, v := range modelSettings.ExtraQuery {
+		opts = append(opts, option.WithQuery(k, v))
 	}
-
 	return params, opts
 }
 
