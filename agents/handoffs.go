@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/xeipuuv/gojsonschema"
@@ -128,10 +127,10 @@ type HandoffFromAgentParams struct {
 	// Optional function that runs when the handoff is invoked.
 	OnHandoff OnHandoff
 
-	// JSON schema describing the type of the input to the handoff.
+	// Optional JSON schema describing the type of the input to the handoff.
 	// If provided, the input will be validated against this type.
 	// Only relevant if you pass a function that takes an input.
-	InputJSONSchema optional.Optional[map[string]any]
+	InputJSONSchema map[string]any
 
 	// Optional function that filters the inputs that are passed to the next agent.
 	InputFilter HandoffInputFilter
@@ -149,8 +148,8 @@ func UnsafeHandoffFromAgent(params HandoffFromAgentParams) Handoff {
 func HandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 	var rawInputJSONSchema map[string]any
 
-	if params.InputJSONSchema.Present {
-		rawInputJSONSchema = params.InputJSONSchema.Value
+	if len(params.InputJSONSchema) > 0 {
+		rawInputJSONSchema = params.InputJSONSchema
 		if params.OnHandoff == nil {
 			return nil, errors.New("OnHandoff must be present since InputJSONSchema is given")
 		}
@@ -178,7 +177,7 @@ func HandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 	}
 
 	invokeHandoff := func(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, jsonInput string) (*Agent, error) {
-		if params.InputJSONSchema.Present {
+		if len(params.InputJSONSchema) > 0 {
 			inputJSONLoader := gojsonschema.NewStringLoader(jsonInput)
 			result, err := inputJSONSchema.Validate(inputJSONLoader)
 			if err != nil {

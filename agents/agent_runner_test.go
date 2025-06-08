@@ -419,7 +419,7 @@ func TestHandoffOnInput(t *testing.T) {
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
-				InputJSONSchema: optional.Value(AgentRunnerTestFooSchema{}.JSONSchema()),
+				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
 			}),
 		},
 	}
@@ -463,7 +463,7 @@ func TestHandoffOnInputError(t *testing.T) {
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
-				InputJSONSchema: optional.Value(AgentRunnerTestFooSchema{}.JSONSchema()),
+				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
 			}),
 		},
 	}
@@ -493,7 +493,7 @@ func TestInvalidHandoffInputJSONCausesError(t *testing.T) {
 		OnHandoff: agents.OnHandoffWithInput(
 			func(context.Context, *runcontext.RunContextWrapper, any) error { return nil },
 		),
-		InputJSONSchema: optional.Value(AgentRunnerTestFooSchema{}.JSONSchema()),
+		InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
 	})
 
 	cw := runcontext.NewRunContextWrapper(nil)
