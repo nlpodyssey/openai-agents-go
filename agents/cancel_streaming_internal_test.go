@@ -55,10 +55,10 @@ func TestCancelCleansUpResources(t *testing.T) {
 
 type FakeModel struct{}
 
-func (m FakeModel) GetResponse(ctx context.Context, params ModelGetResponseParams) (*ModelResponse, error) {
+func (m FakeModel) GetResponse(context.Context, ModelGetResponseParams) (*ModelResponse, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (m FakeModel) StreamResponse(ctx context.Context, params ModelStreamResponseParams) (iter.Seq2[*TResponseStreamEvent, error], error) {
+func (m FakeModel) StreamResponse(context.Context, ModelStreamResponseParams) (iter.Seq2[*TResponseStreamEvent, error], error) {
 	return nil, errors.New("not implemented")
 }
