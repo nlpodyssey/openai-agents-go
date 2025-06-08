@@ -164,8 +164,8 @@ func TestHandoffsParsedCorrectly(t *testing.T) {
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
-		Name:     "test_3",
-		Handoffs: []AgentHandoff{agent1, agent2},
+		Name:          "test_3",
+		AgentHandoffs: []*Agent{agent1, agent2},
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
@@ -220,8 +220,8 @@ func TestMissingHandoffFails(t *testing.T) {
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
-		Name:     "test_3",
-		Handoffs: []AgentHandoff{agent1},
+		Name:          "test_3",
+		AgentHandoffs: []*Agent{agent1},
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
@@ -247,8 +247,8 @@ func TestMultipleHandoffsDoesntError(t *testing.T) {
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
-		Name:     "test_3",
-		Handoffs: []AgentHandoff{agent1, agent2},
+		Name:          "test_3",
+		AgentHandoffs: []*Agent{agent1, agent2},
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
@@ -322,7 +322,7 @@ func TestToolAndHandoffParsedCorrectly(t *testing.T) {
 		Tools: []Tool{
 			getFunctionTool("test", ""),
 		},
-		Handoffs: []AgentHandoff{agent1, agent2},
+		AgentHandoffs: []*Agent{agent1, agent2},
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{

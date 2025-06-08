@@ -79,15 +79,15 @@ func TestNonStreamedRuntHooks(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
-		Name:     "agent_3",
-		Model:    param.NewOpt(agents.NewAgentModel(model)),
-		Handoffs: []agents.AgentHandoff{agent1, agent2},
+		Name:          "agent_3",
+		Model:         param.NewOpt(agents.NewAgentModel(model)),
+		AgentHandoffs: []*agents.Agent{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 	}
 
-	agent1.Handoffs = append(agent1.Handoffs, agent3)
+	agent1.AgentHandoffs = append(agent1.AgentHandoffs, agent3)
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
@@ -191,15 +191,15 @@ func TestStreamedRuntHooks(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
-		Name:     "agent_3",
-		Model:    param.NewOpt(agents.NewAgentModel(model)),
-		Handoffs: []agents.AgentHandoff{agent1, agent2},
+		Name:          "agent_3",
+		Model:         param.NewOpt(agents.NewAgentModel(model)),
+		AgentHandoffs: []*agents.Agent{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 	}
 
-	agent1.Handoffs = append(agent1.Handoffs, agent3)
+	agent1.AgentHandoffs = append(agent1.AgentHandoffs, agent3)
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
@@ -341,16 +341,16 @@ func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
-		Name:     "test_3",
-		Model:    param.NewOpt(agents.NewAgentModel(model)),
-		Handoffs: []agents.AgentHandoff{agent1, agent2},
+		Name:          "test_3",
+		Model:         param.NewOpt(agents.NewAgentModel(model)),
+		AgentHandoffs: []*agents.Agent{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 		OutputSchema: GlobalHooksTestFooSchema{},
 	}
 
-	agent1.Handoffs = append(agent1.Handoffs, agent3)
+	agent1.AgentHandoffs = append(agent1.AgentHandoffs, agent3)
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{agentstesting.GetFinalOutputMessage(`{"a": "b"}`)},
@@ -447,16 +447,16 @@ func TestStructuredOutputStreamedRunHooks(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
-		Name:     "test_3",
-		Model:    param.NewOpt(agents.NewAgentModel(model)),
-		Handoffs: []agents.AgentHandoff{agent1, agent2},
+		Name:          "test_3",
+		Model:         param.NewOpt(agents.NewAgentModel(model)),
+		AgentHandoffs: []*agents.Agent{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 		OutputSchema: GlobalHooksTestFooSchema{},
 	}
 
-	agent1.Handoffs = append(agent1.Handoffs, agent3)
+	agent1.AgentHandoffs = append(agent1.AgentHandoffs, agent3)
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{agentstesting.GetFinalOutputMessage(`{"a": "b"}`)},

@@ -29,8 +29,8 @@ import (
 func TestSingleHandoffSetup(t *testing.T) {
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{
-		Name:     "test_2",
-		Handoffs: []AgentHandoff{agent1},
+		Name:          "test_2",
+		AgentHandoffs: []*Agent{agent1},
 	}
 
 	handoffs, err := Runner().getHandoffs(agent1)
@@ -51,8 +51,8 @@ func TestMultipleHandoffsSetup(t *testing.T) {
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
-		Name:     "test_3",
-		Handoffs: []AgentHandoff{agent1, agent2},
+		Name:          "test_3",
+		AgentHandoffs: []*Agent{agent1, agent2},
 	}
 
 	handoffs, err := Runner().getHandoffs(agent3)
@@ -74,8 +74,10 @@ func TestCustomHandoffSetup(t *testing.T) {
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
 		Name: "test_3",
-		Handoffs: []AgentHandoff{
+		AgentHandoffs: []*Agent{
 			agent1,
+		},
+		Handoffs: []Handoff{
 			UnsafeHandoffFromAgent(HandoffFromAgentParams{
 				Agent:                   agent2,
 				ToolNameOverride:        "custom_tool_name",
@@ -88,14 +90,14 @@ func TestCustomHandoffSetup(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, handoffs, 2)
 
-	assert.Equal(t, DefaultHandoffToolName(agent1), handoffs[0].ToolName)
-	assert.Equal(t, "custom_tool_name", handoffs[1].ToolName)
+	assert.Equal(t, "custom_tool_name", handoffs[0].ToolName)
+	assert.Equal(t, DefaultHandoffToolName(agent1), handoffs[1].ToolName)
 
-	assert.Equal(t, DefaultHandoffToolDescription(agent1), handoffs[0].ToolDescription)
-	assert.Equal(t, "custom tool description", handoffs[1].ToolDescription)
+	assert.Equal(t, "custom tool description", handoffs[0].ToolDescription)
+	assert.Equal(t, DefaultHandoffToolDescription(agent1), handoffs[1].ToolDescription)
 
-	assert.Equal(t, "test_1", handoffs[0].AgentName)
-	assert.Equal(t, "test_2", handoffs[1].AgentName)
+	assert.Equal(t, "test_2", handoffs[0].AgentName)
+	assert.Equal(t, "test_1", handoffs[1].AgentName)
 }
 
 type HandoffToolTestFoo struct {

@@ -101,7 +101,7 @@ func main() {
 		Instructions: agents.InstructionsStr(
 			"Handoff to the appropriate agent based on the language of the request.",
 		),
-		Handoffs: []agents.AgentHandoff{spanishAgent, englishAgent},
+		AgentHandoffs: []*agents.Agent{spanishAgent, englishAgent},
 		Model:    model,
 	}
 

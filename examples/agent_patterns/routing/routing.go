@@ -53,8 +53,8 @@ var (
 		Instructions: agents.InstructionsStr(
 			"Handoff to the appropriate agent based on the language of the request.",
 		),
-		Handoffs: []agents.AgentHandoff{FrenchAgent, SpanishAgent, EnglishAgent},
-		Model:    param.NewOpt(Model),
+		AgentHandoffs: []*agents.Agent{FrenchAgent, SpanishAgent, EnglishAgent},
+		Model:         param.NewOpt(Model),
 	}
 )
 

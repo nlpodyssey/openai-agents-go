@@ -971,21 +971,16 @@ func (r runner) getNewResponse(
 }
 
 func (runner) getHandoffs(agent *Agent) ([]Handoff, error) {
-	handoffs := make([]Handoff, len(agent.Handoffs))
-	for i, handoffItem := range agent.Handoffs {
-		switch v := handoffItem.(type) {
-		case Handoff:
-			handoffs[i] = v
-		case *Agent:
-			h, err := HandoffFromAgent(HandoffFromAgentParams{Agent: v})
-			if err != nil {
-				return nil, fmt.Errorf("failed to make Handoff from Agent: %w", err)
-			}
-			handoffs[i] = *h
-		default:
-			// This would be an unrecoverable implementation bug, so a panic is appropriate.
-			panic(fmt.Errorf("unexpected AgentHandoff type %T", v))
+	handoffs := make([]Handoff, 0, len(agent.Handoffs)+len(agent.AgentHandoffs))
+	for _, h := range agent.Handoffs {
+		handoffs = append(handoffs, h)
+	}
+	for _, a := range agent.AgentHandoffs {
+		h, err := HandoffFromAgent(HandoffFromAgentParams{Agent: a})
+		if err != nil {
+			return nil, fmt.Errorf("failed to make Handoff from Agent %q: %w", a.Name, err)
 		}
+		handoffs = append(handoffs, *h)
 	}
 	return handoffs, nil
 }
