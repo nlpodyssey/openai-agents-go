@@ -49,9 +49,9 @@ type RunConfig struct {
 	// Optional model provider to use when looking up string model names. Defaults to OpenAI (MultiProvider).
 	ModelProvider ModelProvider
 
-	// Configure global model settings. Any non-null values will override the agent-specific model
-	// settings.
-	ModelSettings optional.Optional[modelsettings.ModelSettings]
+	// Optional global model settings. Any non-null or non-zero values will
+	// override the agent-specific model settings.
+	ModelSettings modelsettings.ModelSettings
 
 	// Optional global input filter to apply to all handoffs. If `Handoff.InputFilter` is set, then that
 	// will take precedence. The input filter allows you to edit the inputs that are sent to the new

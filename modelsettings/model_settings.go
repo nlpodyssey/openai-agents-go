@@ -87,28 +87,22 @@ const (
 
 // Resolve produces a new ModelSettings by overlaying any present values from
 // the override on top of this instance.
-func (ms ModelSettings) Resolve(override optional.Optional[ModelSettings]) ModelSettings {
+func (ms ModelSettings) Resolve(override ModelSettings) ModelSettings {
 	newSettings := ms
-
-	if !override.Present {
-		return newSettings
-	}
-
-	resolveOptValue(&newSettings.Temperature, override.Value.Temperature)
-	resolveOptValue(&newSettings.TopP, override.Value.TopP)
-	resolveOptValue(&newSettings.FrequencyPenalty, override.Value.FrequencyPenalty)
-	resolveOptValue(&newSettings.PresencePenalty, override.Value.PresencePenalty)
-	resolveOptionalZeroValue(&newSettings.ToolChoice, override.Value.ToolChoice)
-	resolveOptValue(&newSettings.ParallelToolCalls, override.Value.ParallelToolCalls)
-	resolveOptValue(&newSettings.Truncation, override.Value.Truncation)
-	resolveOptValue(&newSettings.MaxTokens, override.Value.MaxTokens)
-	resolveOptionalZeroValue(&newSettings.Reasoning, override.Value.Reasoning)
-	resolveOptionalMapValue(&newSettings.Metadata, override.Value.Metadata)
-	resolveOptValue(&newSettings.Store, override.Value.Store)
-	resolveOptValue(&newSettings.IncludeUsage, override.Value.IncludeUsage)
-	resolveOptionalMapValue(&newSettings.ExtraQuery, override.Value.ExtraQuery)
-	resolveOptionalMapValue(&newSettings.ExtraHeaders, override.Value.ExtraHeaders)
-
+	resolveOptValue(&newSettings.Temperature, override.Temperature)
+	resolveOptValue(&newSettings.TopP, override.TopP)
+	resolveOptValue(&newSettings.FrequencyPenalty, override.FrequencyPenalty)
+	resolveOptValue(&newSettings.PresencePenalty, override.PresencePenalty)
+	resolveOptionalZeroValue(&newSettings.ToolChoice, override.ToolChoice)
+	resolveOptValue(&newSettings.ParallelToolCalls, override.ParallelToolCalls)
+	resolveOptValue(&newSettings.Truncation, override.Truncation)
+	resolveOptValue(&newSettings.MaxTokens, override.MaxTokens)
+	resolveOptionalZeroValue(&newSettings.Reasoning, override.Reasoning)
+	resolveOptionalMapValue(&newSettings.Metadata, override.Metadata)
+	resolveOptValue(&newSettings.Store, override.Store)
+	resolveOptValue(&newSettings.IncludeUsage, override.IncludeUsage)
+	resolveOptionalMapValue(&newSettings.ExtraQuery, override.ExtraQuery)
+	resolveOptionalMapValue(&newSettings.ExtraHeaders, override.ExtraHeaders)
 	return newSettings
 }
 

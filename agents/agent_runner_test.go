@@ -702,9 +702,9 @@ func TestModelSettingsOverride(t *testing.T) {
 		StartingAgent: agent,
 		Input:         agents.InputString("user_message"),
 		RunConfig: agents.RunConfig{
-			ModelSettings: optional.Value(modelsettings.ModelSettings{
+			ModelSettings: modelsettings.ModelSettings{
 				Temperature: param.NewOpt(0.5),
-			}),
+			},
 		},
 	})
 	require.NoError(t, err)

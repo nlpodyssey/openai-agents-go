@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
@@ -145,7 +144,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 			ExtraQuery: map[string]string{"a": "b"},
 		}
 
-		resolved := base.Resolve(optional.Value(override))
+		resolved := base.Resolve(override)
 
 		want := ModelSettings{
 			Temperature:       param.NewOpt(0.4),
@@ -181,7 +180,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 			ExtraHeaders:      map[string]string{"c": "d"},
 		}
 
-		resolved := base.Resolve(optional.Value(override))
+		resolved := base.Resolve(override)
 
 		want := ModelSettings{
 			Temperature:       param.NewOpt(0.5),
