@@ -55,17 +55,17 @@ var Client = agents.NewOpenaiClient(
 An alternate approach that would also work:
 
 provider := agents.NewOpenAIProvider(agents.OpenAIProviderParams{
-	OpenaiClient: optional.Value(Client),
+	OpenaiClient: &Client,
 })
 agent := &agents.Agent{
 	// ...
-	Model: agents.NewAgentModelName("some-custom-model"),
+	Model: param.NewOpt(agents.NewAgentModelName("some-custom-model")),
 }
 result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 	// ...
-	RunConfig: optional.Value(agents.RunConfig{
-		ModelProvider: optional.Value[agents.ModelProvider](provider),
-	}),
+	RunConfig: agents.RunConfig{
+		ModelProvider: provider,
+	},
 })
 */
 
