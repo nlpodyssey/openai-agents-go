@@ -122,7 +122,7 @@ var SensitiveDataCheck = agents.OutputGuardrail{
 
 var Agent = &agents.Agent{
 	Name:             "Assistant",
-	Instructions:     agents.StringInstructions("You are a helpful assistant."),
+	Instructions:     agents.InstructionsStr("You are a helpful assistant."),
 	OutputSchema:     MessageOutputSchema{},
 	OutputGuardrails: []agents.OutputGuardrail{SensitiveDataCheck},
 	Model:            param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),

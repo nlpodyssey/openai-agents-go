@@ -35,28 +35,28 @@ var (
 
 	SpanishAgent = &agents.Agent{
 		Name:               "spanish_agent",
-		Instructions:       agents.StringInstructions("You translate the user's message to Spanish"),
+		Instructions:       agents.InstructionsStr("You translate the user's message to Spanish"),
 		HandoffDescription: "An English to Spanish translator",
 		Model:              param.NewOpt(Model),
 	}
 
 	FrenchAgent = &agents.Agent{
 		Name:               "french_agent",
-		Instructions:       agents.StringInstructions("You translate the user's message to French"),
+		Instructions:       agents.InstructionsStr("You translate the user's message to French"),
 		HandoffDescription: "An English to French translator",
 		Model:              param.NewOpt(Model),
 	}
 
 	ItalianAgent = &agents.Agent{
 		Name:               "italian_agent",
-		Instructions:       agents.StringInstructions("You translate the user's message to Italian"),
+		Instructions:       agents.InstructionsStr("You translate the user's message to Italian"),
 		HandoffDescription: "An English to Italian translator",
 		Model:              param.NewOpt(Model),
 	}
 
 	OrchestratorAgent = &agents.Agent{
 		Name: "orchestrator_agent",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			"You are a translation agent. You use the tools given to you to translate. " +
 				"If asked for multiple translations, you call the relevant tools in order. " +
 				"You never translate on your own, you always use the provided tools.",
@@ -80,7 +80,7 @@ var (
 
 	SynthesizerAgent = &agents.Agent{
 		Name: "synthesizer_agent",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			"You inspect translations, correct them if needed, and produce a final concatenated response.",
 		),
 		Model: param.NewOpt(Model),

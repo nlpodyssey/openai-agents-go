@@ -159,7 +159,7 @@ var (
 	FAQAgent = &agents.Agent{
 		Name:               "FAQ Agent",
 		HandoffDescription: "A helpful agent that can answer questions about the airline.",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			handoff_prompt.RecommendedPromptPrefix + `
 You are an FAQ agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
 Use the following routine to support the customer.
@@ -174,7 +174,7 @@ Use the following routine to support the customer.
 	SeatBookingAgent = &agents.Agent{
 		Name:               "Seat Booking Agent",
 		HandoffDescription: "A helpful agent that can update a seat on a flight.",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			handoff_prompt.RecommendedPromptPrefix + `
 You are a seat booking agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
 Use the following routine to support the customer.
@@ -190,7 +190,7 @@ If the customer asks a question that is not related to the routine, transfer bac
 	TriageAgent = &agents.Agent{
 		Name:               "Triage Agent",
 		HandoffDescription: "A triage agent that can delegate a customer's request to the appropriate agent.",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			handoff_prompt.RecommendedPromptPrefix + `
 You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents.`),
 		Handoffs: []agents.AgentHandoff{

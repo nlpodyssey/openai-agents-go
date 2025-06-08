@@ -85,21 +85,21 @@ var (
 
 	FirstAgent = &agents.Agent{
 		Name:         "Assistant",
-		Instructions: agents.StringInstructions("Be extremely concise."),
+		Instructions: agents.InstructionsStr("Be extremely concise."),
 		Tools:        []agents.Tool{RandomNumberTool},
 		Model:        param.NewOpt(Model),
 	}
 
 	SpanishAgent = &agents.Agent{
 		Name:               "Spanish Assistant",
-		Instructions:       agents.StringInstructions("You only speak Spanish and are extremely concise."),
+		Instructions:       agents.InstructionsStr("You only speak Spanish and are extremely concise."),
 		HandoffDescription: "A Spanish-speaking assistant.",
 		Model:              param.NewOpt(Model),
 	}
 
 	SecondAgent = &agents.Agent{
 		Name: "Assistant",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			"Be a helpful assistant. If the user speaks Spanish, handoff to the Spanish assistant.",
 		),
 		Handoffs: []agents.AgentHandoff{

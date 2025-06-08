@@ -26,7 +26,7 @@ import (
 func main() {
 	agent := &agents.Agent{
 		Name:         "Joker",
-		Instructions: agents.StringInstructions("You are a helpful assistant."),
+		Instructions: agents.InstructionsStr("You are a helpful assistant."),
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 	}
 

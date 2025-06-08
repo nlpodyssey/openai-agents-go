@@ -125,7 +125,7 @@ func main() {
 
 	agent := &agents.Agent{
 		Name:         "Assistant",
-		Instructions: agents.StringInstructions("You are a helpful assistant."),
+		Instructions: agents.InstructionsStr("You are a helpful assistant."),
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
 	}
 

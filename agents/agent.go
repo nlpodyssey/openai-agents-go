@@ -48,11 +48,7 @@ type Agent struct {
 
 	// Optional instructions for the agent. Will be used as the "system prompt" when this agent is
 	// invoked. Describes what the agent should do, and how it responds.
-	//
-	// Can either be a string, or a function that dynamically generates instructions for the agent. If
-	// you provide a function, it will be called with the context and the agent instance, and must
-	// return a string.
-	Instructions Instructions
+	Instructions InstructionsGetter
 
 	// Optional description of the agent. This is used when the agent is used as a handoff, so that an
 	// LLM knows what it does and when to invoke it.
@@ -178,18 +174,14 @@ func (a *Agent) GetSystemPrompt(
 	ctx context.Context,
 	runContext *runcontext.Wrapper,
 ) (param.Opt[string], error) {
-	switch v := a.Instructions.(type) {
-	case StringInstructions:
-		return param.NewOpt[string](v.String()), nil
-	case FunctionInstructions:
-		value, err := v(ctx, runContext, a)
-		return param.NewOpt[string](value), err
-	case nil:
+	if a.Instructions == nil {
 		return param.Null[string](), nil
-	default:
-		// This would be an unrecoverable implementation bug, so a panic is appropriate.
-		panic(fmt.Errorf("unexpected Instructions type %T", v))
 	}
+	v, err := a.Instructions.GetInstructions(ctx, runContext, a)
+	if err != nil {
+		return param.Null[string](), err
+	}
+	return param.NewOpt(v), nil
 }
 
 // GetAllTools returns all agent tools.

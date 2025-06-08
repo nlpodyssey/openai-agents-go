@@ -40,7 +40,7 @@ var Model = agents.NewAgentModelName("gpt-4.1-nano")
 
 var Agent = &agents.Agent{
 	Name: "Assistant",
-	Instructions: agents.StringInstructions(
+	Instructions: agents.InstructionsStr(
 		"You are a helpful assistant. You ALWAYS write long responses, " +
 			"making sure to be verbose and detailed.",
 	),
@@ -92,7 +92,7 @@ func (s GuardrailOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 
 var GuardrailAgent = &agents.Agent{
 	Name: "Checker",
-	Instructions: agents.StringInstructions(
+	Instructions: agents.InstructionsStr(
 		"You will be given a question and a response. Your goal is to judge whether the response " +
 			"is simple enough to be understood by a ten year old.",
 	),

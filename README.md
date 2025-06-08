@@ -47,7 +47,7 @@ import (
 func main() {
 	agent := &agents.Agent{
 		Name:         "Assistant",
-		Instructions: agents.StringInstructions("You are a helpful assistant"),
+		Instructions: agents.InstructionsStr("You are a helpful assistant"),
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
 	}
 
@@ -86,19 +86,19 @@ func main() {
 
 	spanishAgent := &agents.Agent{
 		Name:         "Spanish agent",
-		Instructions: agents.StringInstructions("You only speak Spanish."),
+		Instructions: agents.InstructionsStr("You only speak Spanish."),
 		Model:        model,
 	}
 
 	englishAgent := &agents.Agent{
 		Name:         "English agent",
-		Instructions: agents.StringInstructions("You only speak English."),
+		Instructions: agents.InstructionsStr("You only speak English."),
 		Model:        model,
 	}
 
 	triageAgent := &agents.Agent{
 		Name: "Triage agent",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			"Handoff to the appropriate agent based on the language of the request.",
 		),
 		Handoffs: []agents.AgentHandoff{spanishAgent, englishAgent},
@@ -166,7 +166,7 @@ var (
 	}
 	agent = &agents.Agent{
 		Name:         "Hello world",
-		Instructions: agents.StringInstructions("You are a helpful agent."),
+		Instructions: agents.InstructionsStr("You are a helpful agent."),
 		Tools:        []agents.Tool{getWeatherTool},
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
 	}

@@ -35,7 +35,7 @@ with the outline.
 
 var StoryOutlineGenerator = &agents.Agent{
 	Name: "story_outline_generator",
-	Instructions: agents.StringInstructions(
+	Instructions: agents.InstructionsStr(
 		"You generate a very short story outline based on the user's input. " +
 			"If there is any feedback provided, use it to improve the outline.",
 	),
@@ -91,7 +91,7 @@ func (EvaluationFeedbackSchema) ValidateJSON(jsonStr string) (any, error) {
 
 var Evaluator = &agents.Agent{
 	Name: "evaluator",
-	Instructions: agents.StringInstructions(
+	Instructions: agents.InstructionsStr(
 		"You evaluate a story outline and decide if it's good enough. " +
 			"If it's not good enough, you provide feedback on what needs to be improved. " +
 			"Never give it a pass on the first try.",

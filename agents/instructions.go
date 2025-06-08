@@ -20,24 +20,27 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
 )
 
-// The Instructions for the agent.
-//
-// Can either be a string (StringInstructions), or a function (FunctionInstructions)
-// that dynamically generates instructions for the agent.
-// If you provide a function, it will be called with the context and the agent instance.
-// It must return a string.
-type Instructions interface {
-	isInstructions()
+// InstructionsGetter interface is implemented by objects that can provide instructions to an Agent.
+type InstructionsGetter interface {
+	GetInstructions(context.Context, *runcontext.Wrapper, *Agent) (string, error)
 }
 
-type StringInstructions string
+// InstructionsStr satisfies InstructionsGetter providing a simple constant string value.
+type InstructionsStr string
 
-func (StringInstructions) isInstructions() {}
-
-func (si StringInstructions) String() string {
-	return string(si)
+// GetInstructions returns the string value and always nil error.
+func (s InstructionsStr) GetInstructions(context.Context, *runcontext.Wrapper, *Agent) (string, error) {
+	return s.String(), nil
 }
 
-type FunctionInstructions func(context.Context, *runcontext.Wrapper, *Agent) (string, error)
+func (s InstructionsStr) String() string {
+	return string(s)
+}
 
-func (FunctionInstructions) isInstructions() {}
+// InstructionsFunc lets you implement a function that dynamically generates instructions for an Agent.
+type InstructionsFunc func(context.Context, *runcontext.Wrapper, *Agent) (string, error)
+
+// GetInstructions returns the string value and always nil error.
+func (fn InstructionsFunc) GetInstructions(ctx context.Context, rcw *runcontext.Wrapper, a *Agent) (string, error) {
+	return fn(ctx, rcw, a)
+}

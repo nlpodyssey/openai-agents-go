@@ -85,7 +85,7 @@ func (MathHomeworkOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 
 var GuardrailAgent = &agents.Agent{
 	Name:         "Guardrail check",
-	Instructions: agents.StringInstructions("Check if the user is asking you to do their math homework."),
+	Instructions: agents.InstructionsStr("Check if the user is asking you to do their math homework."),
 	OutputSchema: MathHomeworkOutputSchema{},
 	Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 }
@@ -124,7 +124,7 @@ var MathGuardrail = agents.InputGuardrail{
 func main() {
 	agent := &agents.Agent{
 		Name: "Customer support agent",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			"You are a customer support agent. You help customers with their questions.",
 		),
 		InputGuardrails: []agents.InputGuardrail{MathGuardrail},

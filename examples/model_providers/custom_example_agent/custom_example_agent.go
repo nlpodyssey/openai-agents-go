@@ -107,7 +107,7 @@ func main() {
 	// This agent will use the custom LLM provider
 	agent := &agents.Agent{
 		Name:         "Assistant",
-		Instructions: agents.StringInstructions("You only respond in haikus."),
+		Instructions: agents.InstructionsStr("You only respond in haikus."),
 		Model:        param.NewOpt(agents.NewAgentModel(agents.NewOpenAIChatCompletionsModel(ModelName, Client))),
 		Tools:        []agents.Tool{GetWeatherTool},
 	}

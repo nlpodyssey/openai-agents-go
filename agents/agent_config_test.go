@@ -30,7 +30,7 @@ func TestSystemInstructions(t *testing.T) {
 	t.Run("StringInstructions", func(t *testing.T) {
 		agent := &Agent{
 			Name:         "test",
-			Instructions: StringInstructions("foo"),
+			Instructions: InstructionsStr("foo"),
 		}
 		prompt, err := agent.GetSystemPrompt(t.Context(), cw)
 		require.NoError(t, err)
@@ -40,7 +40,7 @@ func TestSystemInstructions(t *testing.T) {
 	t.Run("FunctionInstructions", func(t *testing.T) {
 		agent := &Agent{
 			Name: "test",
-			Instructions: FunctionInstructions(
+			Instructions: InstructionsFunc(
 				func(context.Context, *runcontext.Wrapper, *Agent) (string, error) {
 					return "bar", nil
 				},
