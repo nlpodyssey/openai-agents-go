@@ -54,9 +54,9 @@ type ModelSettings struct {
 	// The maximum number of output tokens to generate.
 	MaxTokens param.Opt[int64] `json:"max_tokens"`
 
-	// Configuration options for reasoning models
+	// Optional configuration options for reasoning models
 	// (see https://platform.openai.com/docs/guides/reasoning).
-	Reasoning optional.Optional[openai.ReasoningParam] `json:"reasoning"`
+	Reasoning openai.ReasoningParam `json:"reasoning"`
 
 	// Metadata to include with the model response call.
 	Metadata optional.Optional[map[string]string] `json:"metadata"`
@@ -100,7 +100,7 @@ func (ms ModelSettings) Resolve(override optional.Optional[ModelSettings]) Model
 	resolveOptValue(&newSettings.ParallelToolCalls, override.Value.ParallelToolCalls)
 	resolveOptValue(&newSettings.Truncation, override.Value.Truncation)
 	resolveOptValue(&newSettings.MaxTokens, override.Value.MaxTokens)
-	resolveOptionalValue(&newSettings.Reasoning, override.Value.Reasoning)
+	resolveOptionalZeroValue(&newSettings.Reasoning, override.Value.Reasoning)
 	resolveOptionalValue(&newSettings.Metadata, override.Value.Metadata)
 	resolveOptValue(&newSettings.Store, override.Value.Store)
 	resolveOptValue(&newSettings.IncludeUsage, override.Value.IncludeUsage)

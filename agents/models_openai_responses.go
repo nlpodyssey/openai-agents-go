@@ -182,7 +182,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 		ParallelToolCalls:  parallelToolCalls,
 		Text:               responseFormat,
 		Store:              modelSettings.Store,
-		Reasoning:          modelSettings.Reasoning.ValueOrFallback(openai.ReasoningParam{}),
+		Reasoning:          modelSettings.Reasoning,
 		Metadata:           modelSettings.Metadata.ValueOrFallback(nil),
 	}
 
