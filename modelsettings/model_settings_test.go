@@ -21,6 +21,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,9 +29,9 @@ import (
 // Tests whether ModelSettings can be serialized to a JSON string.
 func TestModelSettings_BasicSerialization(t *testing.T) {
 	modelSettings := ModelSettings{
-		Temperature: optional.Value(0.5),
-		TopP:        optional.Value(0.9),
-		MaxTokens:   optional.Value[int64](100),
+		Temperature: param.NewOpt(0.5),
+		TopP:        param.NewOpt(0.9),
+		MaxTokens:   param.NewOpt[int64](100),
 	}
 	res, err := json.Marshal(modelSettings)
 	require.NoError(t, err)
@@ -61,18 +62,18 @@ func TestModelSettings_BasicSerialization(t *testing.T) {
 // Tests whether ModelSettings can be serialized to a JSON string.
 func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 	modelSettings := ModelSettings{
-		Temperature:       optional.Value(0.5),
-		TopP:              optional.Value(0.9),
-		FrequencyPenalty:  optional.Value(0.0),
-		PresencePenalty:   optional.Value(0.0),
+		Temperature:       param.NewOpt(0.5),
+		TopP:              param.NewOpt(0.9),
+		FrequencyPenalty:  param.NewOpt(0.0),
+		PresencePenalty:   param.NewOpt(0.0),
 		ToolChoice:        "auto",
-		ParallelToolCalls: optional.Value(true),
-		Truncation:        optional.Value(TruncationAuto),
-		MaxTokens:         optional.Value[int64](100),
+		ParallelToolCalls: param.NewOpt(true),
+		Truncation:        param.NewOpt(TruncationAuto),
+		MaxTokens:         param.NewOpt[int64](100),
 		Reasoning:         optional.Value(openai.ReasoningParam{}),
 		Metadata:          optional.Value(map[string]string{"foo": "bar"}),
-		Store:             optional.Value(false),
-		IncludeUsage:      optional.Value(false),
+		Store:             param.NewOpt(false),
+		IncludeUsage:      param.NewOpt(false),
 		ExtraQuery:        optional.Value(map[string]string{"foo": "bar"}),
 		ExtraHeaders:      optional.Value(map[string]string{"foo": "bar"}),
 	}
@@ -111,57 +112,57 @@ func unmarshal(data []byte, v any) error {
 
 func TestModelSettings_Resolve(t *testing.T) {
 	base := ModelSettings{
-		Temperature:       optional.Value[float64](0.5),
-		TopP:              optional.Value[float64](0.9),
-		FrequencyPenalty:  optional.Value[float64](0.0),
-		PresencePenalty:   optional.Value[float64](0.0),
+		Temperature:       param.NewOpt(0.5),
+		TopP:              param.NewOpt(0.9),
+		FrequencyPenalty:  param.NewOpt(0.0),
+		PresencePenalty:   param.NewOpt[float64](0.0),
 		ToolChoice:        "auto",
-		ParallelToolCalls: optional.Value(true),
-		Truncation:        optional.Value(TruncationAuto),
-		MaxTokens:         optional.Value[int64](100),
+		ParallelToolCalls: param.NewOpt(true),
+		Truncation:        param.NewOpt(TruncationAuto),
+		MaxTokens:         param.NewOpt[int64](100),
 		Reasoning: optional.Value(openai.ReasoningParam{
 			Effort:  openai.ReasoningEffortLow,
 			Summary: openai.ReasoningSummaryConcise,
 		}),
 		Metadata:     optional.Value(map[string]string{"foo": "bar"}),
-		Store:        optional.Value(false),
-		IncludeUsage: optional.Value(false),
+		Store:        param.NewOpt(false),
+		IncludeUsage: param.NewOpt(false),
 		ExtraQuery:   optional.Value(map[string]string{"foo": "bar"}),
 		ExtraHeaders: optional.Value(map[string]string{"foo": "bar"}),
 	}
 
 	t.Run("overriding first set of properties", func(t *testing.T) {
 		override := ModelSettings{
-			Temperature:      optional.Value(0.4),
-			FrequencyPenalty: optional.Value(0.1),
+			Temperature:      param.NewOpt(0.4),
+			FrequencyPenalty: param.NewOpt(0.1),
 			ToolChoice:       "required",
-			Truncation:       optional.Value(TruncationDisabled),
+			Truncation:       param.NewOpt(TruncationDisabled),
 			Reasoning: optional.Value(openai.ReasoningParam{
 				Effort:  openai.ReasoningEffortMedium,
 				Summary: openai.ReasoningSummaryDetailed,
 			}),
-			Store:      optional.Value(true),
+			Store:      param.NewOpt(true),
 			ExtraQuery: optional.Value(map[string]string{"a": "b"}),
 		}
 
 		resolved := base.Resolve(optional.Value(override))
 
 		want := ModelSettings{
-			Temperature:       optional.Value(0.4),
-			TopP:              optional.Value(0.9),
-			FrequencyPenalty:  optional.Value(0.1),
-			PresencePenalty:   optional.Value(0.0),
+			Temperature:       param.NewOpt(0.4),
+			TopP:              param.NewOpt(0.9),
+			FrequencyPenalty:  param.NewOpt(0.1),
+			PresencePenalty:   param.NewOpt(0.0),
 			ToolChoice:        "required",
-			ParallelToolCalls: optional.Value(true),
-			Truncation:        optional.Value(TruncationDisabled),
-			MaxTokens:         optional.Value[int64](100),
+			ParallelToolCalls: param.NewOpt(true),
+			Truncation:        param.NewOpt(TruncationDisabled),
+			MaxTokens:         param.NewOpt[int64](100),
 			Reasoning: optional.Value(openai.ReasoningParam{
 				Effort:  openai.ReasoningEffortMedium,
 				Summary: openai.ReasoningSummaryDetailed,
 			}),
 			Metadata:     optional.Value(map[string]string{"foo": "bar"}),
-			Store:        optional.Value(true),
-			IncludeUsage: optional.Value(false),
+			Store:        param.NewOpt(true),
+			IncludeUsage: param.NewOpt(false),
 			ExtraQuery:   optional.Value(map[string]string{"a": "b"}),
 			ExtraHeaders: optional.Value(map[string]string{"foo": "bar"}),
 		}
@@ -171,33 +172,33 @@ func TestModelSettings_Resolve(t *testing.T) {
 
 	t.Run("overriding second set of properties", func(t *testing.T) {
 		override := ModelSettings{
-			TopP:              optional.Value(0.8),
-			PresencePenalty:   optional.Value(0.2),
-			ParallelToolCalls: optional.Value(false),
-			MaxTokens:         optional.Value[int64](42),
+			TopP:              param.NewOpt(0.8),
+			PresencePenalty:   param.NewOpt(0.2),
+			ParallelToolCalls: param.NewOpt(false),
+			MaxTokens:         param.NewOpt[int64](42),
 			Metadata:          optional.Value(map[string]string{"a": "b"}),
-			IncludeUsage:      optional.Value(true),
+			IncludeUsage:      param.NewOpt(true),
 			ExtraHeaders:      optional.Value(map[string]string{"c": "d"}),
 		}
 
 		resolved := base.Resolve(optional.Value(override))
 
 		want := ModelSettings{
-			Temperature:       optional.Value(0.5),
-			TopP:              optional.Value(0.8),
-			FrequencyPenalty:  optional.Value(0.0),
-			PresencePenalty:   optional.Value(0.2),
+			Temperature:       param.NewOpt(0.5),
+			TopP:              param.NewOpt(0.8),
+			FrequencyPenalty:  param.NewOpt(0.0),
+			PresencePenalty:   param.NewOpt(0.2),
 			ToolChoice:        "auto",
-			ParallelToolCalls: optional.Value(false),
-			Truncation:        optional.Value(TruncationAuto),
-			MaxTokens:         optional.Value[int64](42),
+			ParallelToolCalls: param.NewOpt(false),
+			Truncation:        param.NewOpt(TruncationAuto),
+			MaxTokens:         param.NewOpt[int64](42),
 			Reasoning: optional.Value(openai.ReasoningParam{
 				Effort:  openai.ReasoningEffortLow,
 				Summary: openai.ReasoningSummaryConcise,
 			}),
 			Metadata:     optional.Value(map[string]string{"a": "b"}),
-			Store:        optional.Value(false),
-			IncludeUsage: optional.Value(true),
+			Store:        param.NewOpt(false),
+			IncludeUsage: param.NewOpt(true),
 			ExtraQuery:   optional.Value(map[string]string{"foo": "bar"}),
 			ExtraHeaders: optional.Value(map[string]string{"c": "d"}),
 		}

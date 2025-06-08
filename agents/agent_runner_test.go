@@ -687,8 +687,8 @@ func TestModelSettingsOverride(t *testing.T) {
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 		ModelSettings: modelsettings.ModelSettings{
-			Temperature: optional.Value(1.0),
-			MaxTokens:   optional.Value[int64](1000),
+			Temperature: param.NewOpt(1.0),
+			MaxTokens:   param.NewOpt[int64](1000),
 		},
 	}
 
@@ -703,15 +703,15 @@ func TestModelSettingsOverride(t *testing.T) {
 		Input:         agents.InputString("user_message"),
 		RunConfig: agents.RunConfig{
 			ModelSettings: optional.Value(modelsettings.ModelSettings{
-				Temperature: optional.Value(0.5),
+				Temperature: param.NewOpt(0.5),
 			}),
 		},
 	})
 	require.NoError(t, err)
 
 	// Temperature is overridden by Runner.run, but MaxTokens is not
-	assert.Equal(t, optional.Value(0.5), model.LastTurnArgs.ModelSettings.Temperature)
-	assert.Equal(t, optional.Value[int64](1000), model.LastTurnArgs.ModelSettings.MaxTokens)
+	assert.Equal(t, param.NewOpt(0.5), model.LastTurnArgs.ModelSettings.Temperature)
+	assert.Equal(t, param.NewOpt[int64](1000), model.LastTurnArgs.ModelSettings.MaxTokens)
 }
 
 func TestPreviousResponseIDPassedBetweenRuns(t *testing.T) {

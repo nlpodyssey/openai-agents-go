@@ -124,8 +124,8 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 		ToolChoice: responses.ResponseToolChoiceUnion{
 			OfToolChoiceMode: responses.ToolChoiceOptions(body.ToolChoice.OfAuto.Or("auto")),
 		},
-		TopP:              params.ModelSettings.TopP.ValueOrFallback(0),
-		Temperature:       params.ModelSettings.Temperature.ValueOrFallback(0),
+		TopP:              params.ModelSettings.TopP.Or(0),
+		Temperature:       params.ModelSettings.Temperature.Or(0),
 		Tools:             nil,
 		ParallelToolCalls: body.ParallelToolCalls.Or(false),
 		Reasoning: openaitypes.ReasoningFromParam(
@@ -163,7 +163,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 	}
 
 	var parallelToolCalls param.Opt[bool]
-	if modelSettings.ParallelToolCalls.Present {
+	if modelSettings.ParallelToolCalls.Valid() {
 		if modelSettings.ParallelToolCalls.Value && len(tools) > 0 {
 			parallelToolCalls = param.NewOpt(true)
 		} else if !modelSettings.ParallelToolCalls.Value {
@@ -210,16 +210,16 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 		Model:             m.Model,
 		Messages:          convertedMessages,
 		Tools:             convertedTools,
-		Temperature:       optional.ToParamOptOmitted(modelSettings.Temperature),
-		TopP:              optional.ToParamOptOmitted(modelSettings.TopP),
-		FrequencyPenalty:  optional.ToParamOptOmitted(modelSettings.FrequencyPenalty),
-		PresencePenalty:   optional.ToParamOptOmitted(modelSettings.PresencePenalty),
-		MaxTokens:         optional.ToParamOptOmitted(modelSettings.MaxTokens),
+		Temperature:       modelSettings.Temperature,
+		TopP:              modelSettings.TopP,
+		FrequencyPenalty:  modelSettings.FrequencyPenalty,
+		PresencePenalty:   modelSettings.PresencePenalty,
+		MaxTokens:         modelSettings.MaxTokens,
 		ToolChoice:        toolChoice,
 		ResponseFormat:    responseFormat,
 		ParallelToolCalls: parallelToolCalls,
 		StreamOptions:     streamOptions,
-		Store:             optional.ToParamOptOmitted(store),
+		Store:             store,
 		ReasoningEffort:   reasoningEffort,
 		Metadata:          modelSettings.Metadata.ValueOrFallback(nil),
 	}

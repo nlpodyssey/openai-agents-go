@@ -17,6 +17,7 @@ package modelsettings
 import (
 	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/packages/param"
 )
 
 // ModelSettings holds settings to use when calling an LLM.
@@ -28,16 +29,16 @@ import (
 // the API documentation for the specific model and provider you are using.
 type ModelSettings struct {
 	// The temperature to use when calling the model.
-	Temperature optional.Optional[float64] `json:"temperature"`
+	Temperature param.Opt[float64] `json:"temperature"`
 
 	// The top_p to use when calling the model.
-	TopP optional.Optional[float64] `json:"top_p"`
+	TopP param.Opt[float64] `json:"top_p"`
 
 	// The frequency penalty to use when calling the model.
-	FrequencyPenalty optional.Optional[float64] `json:"frequency_penalty"`
+	FrequencyPenalty param.Opt[float64] `json:"frequency_penalty"`
 
 	// The presence penalty to use when calling the model.
-	PresencePenalty optional.Optional[float64] `json:"presence_penalty"`
+	PresencePenalty param.Opt[float64] `json:"presence_penalty"`
 
 	// Optional tool choice to use when calling the model.
 	// Well-known values are: "auto", "required", "none".
@@ -45,13 +46,13 @@ type ModelSettings struct {
 
 	// Whether to use parallel tool calls when calling the model.
 	// Defaults to false if not provided.
-	ParallelToolCalls optional.Optional[bool] `json:"parallel_tool_calls"`
+	ParallelToolCalls param.Opt[bool] `json:"parallel_tool_calls"`
 
 	// The truncation strategy to use when calling the model.
-	Truncation optional.Optional[Truncation] `json:"truncation"`
+	Truncation param.Opt[Truncation] `json:"truncation"`
 
 	// The maximum number of output tokens to generate.
-	MaxTokens optional.Optional[int64] `json:"max_tokens"`
+	MaxTokens param.Opt[int64] `json:"max_tokens"`
 
 	// Configuration options for reasoning models
 	// (see https://platform.openai.com/docs/guides/reasoning).
@@ -62,11 +63,11 @@ type ModelSettings struct {
 
 	// Whether to store the generated model response for later retrieval.
 	// Defaults to true if not provided.
-	Store optional.Optional[bool] `json:"store"`
+	Store param.Opt[bool] `json:"store"`
 
 	// Whether to include usage chunk.
 	// Defaults to true if not provided.
-	IncludeUsage optional.Optional[bool] `json:"include_usage"`
+	IncludeUsage param.Opt[bool] `json:"include_usage"`
 
 	// Additional query fields to provide with the request.
 	ExtraQuery optional.Optional[map[string]string] `json:"extra_query"`
@@ -91,18 +92,18 @@ func (ms ModelSettings) Resolve(override optional.Optional[ModelSettings]) Model
 		return newSettings
 	}
 
-	resolveOptionalValue(&newSettings.Temperature, override.Value.Temperature)
-	resolveOptionalValue(&newSettings.TopP, override.Value.TopP)
-	resolveOptionalValue(&newSettings.FrequencyPenalty, override.Value.FrequencyPenalty)
-	resolveOptionalValue(&newSettings.PresencePenalty, override.Value.PresencePenalty)
+	resolveOptValue(&newSettings.Temperature, override.Value.Temperature)
+	resolveOptValue(&newSettings.TopP, override.Value.TopP)
+	resolveOptValue(&newSettings.FrequencyPenalty, override.Value.FrequencyPenalty)
+	resolveOptValue(&newSettings.PresencePenalty, override.Value.PresencePenalty)
 	resolveOptionalZeroValue(&newSettings.ToolChoice, override.Value.ToolChoice)
-	resolveOptionalValue(&newSettings.ParallelToolCalls, override.Value.ParallelToolCalls)
-	resolveOptionalValue(&newSettings.Truncation, override.Value.Truncation)
-	resolveOptionalValue(&newSettings.MaxTokens, override.Value.MaxTokens)
+	resolveOptValue(&newSettings.ParallelToolCalls, override.Value.ParallelToolCalls)
+	resolveOptValue(&newSettings.Truncation, override.Value.Truncation)
+	resolveOptValue(&newSettings.MaxTokens, override.Value.MaxTokens)
 	resolveOptionalValue(&newSettings.Reasoning, override.Value.Reasoning)
 	resolveOptionalValue(&newSettings.Metadata, override.Value.Metadata)
-	resolveOptionalValue(&newSettings.Store, override.Value.Store)
-	resolveOptionalValue(&newSettings.IncludeUsage, override.Value.IncludeUsage)
+	resolveOptValue(&newSettings.Store, override.Value.Store)
+	resolveOptValue(&newSettings.IncludeUsage, override.Value.IncludeUsage)
 	resolveOptionalValue(&newSettings.ExtraQuery, override.Value.ExtraQuery)
 	resolveOptionalValue(&newSettings.ExtraHeaders, override.Value.ExtraHeaders)
 
@@ -111,6 +112,12 @@ func (ms ModelSettings) Resolve(override optional.Optional[ModelSettings]) Model
 
 func resolveOptionalValue[T any](base *optional.Optional[T], override optional.Optional[T]) {
 	if override.Present {
+		*base = override
+	}
+}
+
+func resolveOptValue[T comparable](base *param.Opt[T], override param.Opt[T]) {
+	if override.Valid() {
 		*base = override
 	}
 }
