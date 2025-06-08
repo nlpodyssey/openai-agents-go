@@ -38,6 +38,6 @@ func (si StringInstructions) String() string {
 	return string(si)
 }
 
-type FunctionInstructions func(context.Context, *runcontext.RunContextWrapper, *Agent) (string, error)
+type FunctionInstructions func(context.Context, *runcontext.Wrapper, *Agent) (string, error)
 
 func (FunctionInstructions) isInstructions() {}

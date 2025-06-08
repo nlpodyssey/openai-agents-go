@@ -58,7 +58,7 @@ var GetWeatherTool = agents.FunctionTool{
 			},
 		},
 	},
-	OnInvokeTool: func(_ context.Context, _ *runcontext.RunContextWrapper, arguments string) (any, error) {
+	OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
 		var args GetWeatherArgs
 		err := json.Unmarshal([]byte(arguments), &args)
 		if err != nil {

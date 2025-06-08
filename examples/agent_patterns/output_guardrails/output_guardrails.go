@@ -98,7 +98,7 @@ type SensitiveDataCheckInfo struct {
 
 func SensitiveDataCheckFunction(
 	_ context.Context,
-	_ *runcontext.RunContextWrapper,
+	_ *runcontext.Wrapper,
 	_ *agents.Agent,
 	anyOutput any,
 ) (agents.GuardrailFunctionOutput, error) {

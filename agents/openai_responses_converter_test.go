@@ -116,7 +116,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 		Name:             "fn",
 		Description:      "...",
 		ParamsJSONSchema: map[string]any{"title": "Fn"},
-		OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
+		OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
 			return nil, errors.New("not implemented")
 		},
 	}

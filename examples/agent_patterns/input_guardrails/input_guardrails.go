@@ -94,7 +94,7 @@ var GuardrailAgent = &agents.Agent{
 // an agent to check if the input is a math homework question.
 func MathGuardrailFunction(
 	ctx context.Context,
-	cw *runcontext.RunContextWrapper,
+	cw *runcontext.Wrapper,
 	_ *agents.Agent,
 	input agents.Input,
 ) (agents.GuardrailFunctionOutput, error) {

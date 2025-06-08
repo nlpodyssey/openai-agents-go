@@ -40,7 +40,7 @@ type FunctionTool struct {
 	// You must return a string representation of the tool output, or something we can call `str()` on.
 	// In case of errors, you can either raise an Exception (which will cause the run to fail) or
 	// return a string error message (which will be sent back to the LLM).
-	OnInvokeTool func(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, arguments string) (any, error)
+	OnInvokeTool func(ctx context.Context, contextWrapper *runcontext.Wrapper, arguments string) (any, error)
 
 	// Whether the JSON schema is in strict mode.
 	// We **strongly** recommend setting this to True, as it increases the likelihood of correct JSON input.

@@ -18,12 +18,12 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/usage"
 )
 
-// RunContextWrapper wraps the context object that you passed to `Runner().Run()`.
+// Wrapper wraps the context object that you passed to `Runner().Run()`.
 // It also contains information about the usage of the agent run so far.
 //
 // NOTE: Contexts are not passed to the LLM. They're a way to pass dependencies
 // and data to code you implement, like tool functions, callbacks, hooks, etc.
-type RunContextWrapper struct {
+type Wrapper struct {
 	// Optional context object, passed by you to `Runner().Run()`.
 	Context any
 
@@ -32,8 +32,8 @@ type RunContextWrapper struct {
 	Usage *usage.Usage
 }
 
-func NewRunContextWrapper(ctx any) *RunContextWrapper {
-	return &RunContextWrapper{
+func NewWrapper(ctx any) *Wrapper {
+	return &Wrapper{
 		Context: ctx,
 		Usage:   usage.NewUsage(),
 	}

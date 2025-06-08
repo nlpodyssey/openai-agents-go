@@ -42,27 +42,27 @@ func (h *AgentHooksForTests) Reset() {
 	clear(h.Events)
 }
 
-func (h *AgentHooksForTests) OnStart(context.Context, *runcontext.RunContextWrapper, *agents.Agent) error {
+func (h *AgentHooksForTests) OnStart(context.Context, *runcontext.Wrapper, *agents.Agent) error {
 	h.Events["OnStart"] += 1
 	return nil
 }
 
-func (h *AgentHooksForTests) OnEnd(context.Context, *runcontext.RunContextWrapper, *agents.Agent, any) error {
+func (h *AgentHooksForTests) OnEnd(context.Context, *runcontext.Wrapper, *agents.Agent, any) error {
 	h.Events["OnEnd"] += 1
 	return nil
 }
 
-func (h *AgentHooksForTests) OnHandoff(context.Context, *runcontext.RunContextWrapper, *agents.Agent, *agents.Agent) error {
+func (h *AgentHooksForTests) OnHandoff(context.Context, *runcontext.Wrapper, *agents.Agent, *agents.Agent) error {
 	h.Events["OnHandoff"] += 1
 	return nil
 }
 
-func (h *AgentHooksForTests) OnToolStart(context.Context, *runcontext.RunContextWrapper, *agents.Agent, agents.Tool) error {
+func (h *AgentHooksForTests) OnToolStart(context.Context, *runcontext.Wrapper, *agents.Agent, agents.Tool) error {
 	h.Events["OnToolStart"] += 1
 	return nil
 }
 
-func (h *AgentHooksForTests) OnToolEnd(context.Context, *runcontext.RunContextWrapper, *agents.Agent, agents.Tool, any) error {
+func (h *AgentHooksForTests) OnToolEnd(context.Context, *runcontext.Wrapper, *agents.Agent, agents.Tool, any) error {
 	h.Events["OnToolEnd"] += 1
 	return nil
 }

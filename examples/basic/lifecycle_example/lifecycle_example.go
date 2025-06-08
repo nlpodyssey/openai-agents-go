@@ -39,7 +39,7 @@ func (*ExampleHooks) usageToStr(u *usage.Usage) string {
 	)
 }
 
-func (e *ExampleHooks) OnAgentStart(_ context.Context, cw *runcontext.RunContextWrapper, agent *agents.Agent) error {
+func (e *ExampleHooks) OnAgentStart(_ context.Context, cw *runcontext.Wrapper, agent *agents.Agent) error {
 	e.eventCounter += 1
 	fmt.Printf(
 		"### %d: Agent %s started. Usage: %s\n",
@@ -48,7 +48,7 @@ func (e *ExampleHooks) OnAgentStart(_ context.Context, cw *runcontext.RunContext
 	return nil
 }
 
-func (e *ExampleHooks) OnAgentEnd(_ context.Context, cw *runcontext.RunContextWrapper, agent *agents.Agent, output any) error {
+func (e *ExampleHooks) OnAgentEnd(_ context.Context, cw *runcontext.Wrapper, agent *agents.Agent, output any) error {
 	e.eventCounter += 1
 	fmt.Printf(
 		"### %d: Agent %s ended with output %#v. Usage: %s\n",
@@ -57,7 +57,7 @@ func (e *ExampleHooks) OnAgentEnd(_ context.Context, cw *runcontext.RunContextWr
 	return nil
 }
 
-func (e *ExampleHooks) OnToolStart(_ context.Context, cw *runcontext.RunContextWrapper, _ *agents.Agent, tool agents.Tool) error {
+func (e *ExampleHooks) OnToolStart(_ context.Context, cw *runcontext.Wrapper, _ *agents.Agent, tool agents.Tool) error {
 	e.eventCounter += 1
 	funcTool := tool.(agents.FunctionTool)
 	fmt.Printf(
@@ -67,7 +67,7 @@ func (e *ExampleHooks) OnToolStart(_ context.Context, cw *runcontext.RunContextW
 	return nil
 }
 
-func (e *ExampleHooks) OnToolEnd(_ context.Context, cw *runcontext.RunContextWrapper, _ *agents.Agent, tool agents.Tool, result any) error {
+func (e *ExampleHooks) OnToolEnd(_ context.Context, cw *runcontext.Wrapper, _ *agents.Agent, tool agents.Tool, result any) error {
 	e.eventCounter += 1
 	funcTool := tool.(agents.FunctionTool)
 	fmt.Printf(
@@ -77,7 +77,7 @@ func (e *ExampleHooks) OnToolEnd(_ context.Context, cw *runcontext.RunContextWra
 	return nil
 }
 
-func (e *ExampleHooks) OnHandoff(_ context.Context, cw *runcontext.RunContextWrapper, fromAgent, toAgent *agents.Agent) error {
+func (e *ExampleHooks) OnHandoff(_ context.Context, cw *runcontext.Wrapper, fromAgent, toAgent *agents.Agent) error {
 	e.eventCounter += 1
 	fmt.Printf(
 		"### %d: Handoff from %s to %s. Usage: %s\n",
@@ -155,7 +155,7 @@ var (
 				},
 			},
 		},
-		OnInvokeTool: func(_ context.Context, _ *runcontext.RunContextWrapper, arguments string) (any, error) {
+		OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
 			var args RandomNumberArgs
 			err := json.Unmarshal([]byte(arguments), &args)
 			if err != nil {
@@ -180,7 +180,7 @@ var (
 				},
 			},
 		},
-		OnInvokeTool: func(_ context.Context, _ *runcontext.RunContextWrapper, arguments string) (any, error) {
+		OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
 			var args MultiplyByTwoArgs
 			err := json.Unmarshal([]byte(arguments), &args)
 			if err != nil {

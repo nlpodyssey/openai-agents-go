@@ -25,7 +25,7 @@ import (
 )
 
 func TestSystemInstructions(t *testing.T) {
-	cw := runcontext.NewRunContextWrapper(nil)
+	cw := runcontext.NewWrapper(nil)
 
 	t.Run("StringInstructions", func(t *testing.T) {
 		agent := &Agent{
@@ -41,7 +41,7 @@ func TestSystemInstructions(t *testing.T) {
 		agent := &Agent{
 			Name: "test",
 			Instructions: FunctionInstructions(
-				func(context.Context, *runcontext.RunContextWrapper, *Agent) (string, error) {
+				func(context.Context, *runcontext.Wrapper, *Agent) (string, error) {
 					return "bar", nil
 				},
 			),
@@ -53,7 +53,7 @@ func TestSystemInstructions(t *testing.T) {
 }
 
 func TestHandoff(t *testing.T) {
-	cw := runcontext.NewRunContextWrapper(nil)
+	cw := runcontext.NewWrapper(nil)
 
 	t.Run("with agents", func(t *testing.T) {
 		agent1 := &Agent{Name: "agent_1"}

@@ -131,7 +131,7 @@ func (HandoffToolTestFooSchema) ValidateJSON(jsonStr string) (any, error) {
 }
 
 func TestHandoffInputType(t *testing.T) {
-	onHandoff := func(context.Context, *runcontext.RunContextWrapper, any) error {
+	onHandoff := func(context.Context, *runcontext.Wrapper, any) error {
 		return nil
 	}
 
@@ -143,7 +143,7 @@ func TestHandoffInputType(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewRunContextWrapper(nil)
+	cw := runcontext.NewWrapper(nil)
 
 	// Invalid JSON should raise an error
 	_, err = obj.OnInvokeHandoff(t.Context(), cw, "not json")
@@ -162,7 +162,7 @@ func TestHandoffInputType(t *testing.T) {
 func TestOnHandoffCalled(t *testing.T) {
 	wasCalled := false
 
-	onHandoff := func(context.Context, *runcontext.RunContextWrapper, any) error {
+	onHandoff := func(context.Context, *runcontext.Wrapper, any) error {
 		wasCalled = true
 		return nil
 	}
@@ -175,7 +175,7 @@ func TestOnHandoffCalled(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewRunContextWrapper(nil)
+	cw := runcontext.NewWrapper(nil)
 
 	// Valid JSON should call the OnHandoff function
 	invoked, err := obj.OnInvokeHandoff(t.Context(), cw, `{"bar": "baz"}`)
@@ -187,7 +187,7 @@ func TestOnHandoffCalled(t *testing.T) {
 func TestOnHandoffError(t *testing.T) {
 	handoffErr := errors.New("error")
 
-	onHandoff := func(context.Context, *runcontext.RunContextWrapper, any) error {
+	onHandoff := func(context.Context, *runcontext.Wrapper, any) error {
 		return handoffErr
 	}
 
@@ -199,7 +199,7 @@ func TestOnHandoffError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewRunContextWrapper(nil)
+	cw := runcontext.NewWrapper(nil)
 
 	// Valid JSON should call the OnHandoff function
 	_, err = obj.OnInvokeHandoff(t.Context(), cw, `{"bar": "baz"}`)
@@ -209,7 +209,7 @@ func TestOnHandoffError(t *testing.T) {
 func TestOnHandoffWithoutInputCalled(t *testing.T) {
 	wasCalled := false
 
-	onHandoff := func(context.Context, *runcontext.RunContextWrapper) error {
+	onHandoff := func(context.Context, *runcontext.Wrapper) error {
 		wasCalled = true
 		return nil
 	}
@@ -221,7 +221,7 @@ func TestOnHandoffWithoutInputCalled(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewRunContextWrapper(nil)
+	cw := runcontext.NewWrapper(nil)
 
 	// Valid JSON should call the OnHandoff function
 	invoked, err := obj.OnInvokeHandoff(t.Context(), cw, "")
@@ -233,7 +233,7 @@ func TestOnHandoffWithoutInputCalled(t *testing.T) {
 func TestOnHandoffWithoutInputError(t *testing.T) {
 	handoffErr := errors.New("error")
 
-	onHandoff := func(context.Context, *runcontext.RunContextWrapper) error {
+	onHandoff := func(context.Context, *runcontext.Wrapper) error {
 		return handoffErr
 	}
 
@@ -244,7 +244,7 @@ func TestOnHandoffWithoutInputError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewRunContextWrapper(nil)
+	cw := runcontext.NewWrapper(nil)
 
 	// Valid JSON should call the OnHandoff function
 	_, err = obj.OnInvokeHandoff(t.Context(), cw, `{"bar": "baz"}`)

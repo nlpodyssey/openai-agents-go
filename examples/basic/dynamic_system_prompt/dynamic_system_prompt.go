@@ -36,7 +36,7 @@ type CustomContext struct {
 	Style Style
 }
 
-func CustomInstructions(_ context.Context, cw *runcontext.RunContextWrapper, _ *agents.Agent) (string, error) {
+func CustomInstructions(_ context.Context, cw *runcontext.Wrapper, _ *agents.Agent) (string, error) {
 	customContext := cw.Context.(CustomContext)
 	switch customContext.Style {
 	case StyleHaiku:

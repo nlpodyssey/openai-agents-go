@@ -79,7 +79,7 @@ var FAQLookupTool = agents.FunctionTool{
 			},
 		},
 	},
-	OnInvokeTool: func(_ context.Context, _ *runcontext.RunContextWrapper, arguments string) (any, error) {
+	OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
 		var args FAQLookupArgs
 		err := json.Unmarshal([]byte(arguments), &args)
 		if err != nil {
@@ -94,7 +94,7 @@ type UpdateSeatArgs struct {
 	NewSeat            string `json:"new_seat"`
 }
 
-func UpdateSeat(cw *runcontext.RunContextWrapper, args UpdateSeatArgs) (string, error) {
+func UpdateSeat(cw *runcontext.Wrapper, args UpdateSeatArgs) (string, error) {
 	ctx := cw.Context.(*AirlineAgentContext)
 
 	// Update the context based on the customer's input
@@ -132,7 +132,7 @@ var UpdateSeatTool = agents.FunctionTool{
 			},
 		},
 	},
-	OnInvokeTool: func(_ context.Context, cw *runcontext.RunContextWrapper, arguments string) (any, error) {
+	OnInvokeTool: func(_ context.Context, cw *runcontext.Wrapper, arguments string) (any, error) {
 		var args UpdateSeatArgs
 		err := json.Unmarshal([]byte(arguments), &args)
 		if err != nil {
@@ -144,7 +144,7 @@ var UpdateSeatTool = agents.FunctionTool{
 
 ////// HOOKS
 
-func OnSeatBookingHandoff(_ context.Context, cw *runcontext.RunContextWrapper) error {
+func OnSeatBookingHandoff(_ context.Context, cw *runcontext.Wrapper) error {
 	flightNumber := fmt.Sprintf("FLT-%d", rand.Intn(900)+100)
 	ctx := cw.Context.(*AirlineAgentContext)
 	ctx.FlightNumber = flightNumber

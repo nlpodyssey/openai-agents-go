@@ -39,6 +39,6 @@ func (StopAtTools) isToolUseBehavior() {}
 
 // ToolsToFinalOutputFunction is a function that takes a run context and a list
 // of tool results, and returns a `ToolsToFinalOutputResult`.
-type ToolsToFinalOutputFunction func(*runcontext.RunContextWrapper, []FunctionToolResult) (ToolsToFinalOutputResult, error)
+type ToolsToFinalOutputFunction func(*runcontext.Wrapper, []FunctionToolResult) (ToolsToFinalOutputResult, error)
 
 func (ToolsToFinalOutputFunction) isToolUseBehavior() {}

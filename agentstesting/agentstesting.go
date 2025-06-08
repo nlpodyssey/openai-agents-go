@@ -59,7 +59,7 @@ func GetFunctionTool(name string, returnValue string) agents.FunctionTool {
 			"additionalProperties": false,
 			"properties":           map[string]any{},
 		},
-		OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
+		OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
 			return returnValue, nil
 		},
 	}

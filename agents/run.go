@@ -129,7 +129,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 		inputGuardrailResults []InputGuardrailResult
 	)
 
-	contextWrapper := runcontext.NewRunContextWrapper(params.Context)
+	contextWrapper := runcontext.NewWrapper(params.Context)
 
 	if params.StartingAgent == nil {
 		return nil, fmt.Errorf("StartingAgent must not be nil")
@@ -329,7 +329,7 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 	}
 
 	outputSchema := params.StartingAgent.OutputSchema
-	contextWrapper := runcontext.NewRunContextWrapper(params.Context)
+	contextWrapper := runcontext.NewWrapper(params.Context)
 
 	streamedResult := &RunResultStreaming{
 		RunResultBase: RunResultBase{
@@ -373,7 +373,7 @@ func (r runner) runInputGuardrailsWithQueue(
 	agent *Agent,
 	guardrails []InputGuardrail,
 	input Input,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	streamedResult *RunResultStreaming,
 ) error {
 	queue := streamedResult.inputGuardrailQueue
@@ -419,7 +419,7 @@ func (r runner) runStreamedImpl(
 	startingAgent *Agent,
 	maxTurns uint64,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	previousResponseID string,
 ) (err error) {
@@ -550,7 +550,7 @@ func (r runner) runSingleTurnStreamed(
 	streamedResult *RunResultStreaming,
 	agent *Agent,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	shouldRunAgentStartHooks bool,
 	toolUseTracker *AgentToolUseTracker,
@@ -700,7 +700,7 @@ func (r runner) runSingleTurn(
 	originalInput Input,
 	generatedItems []RunItem,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	shouldRunAgentStartHooks bool,
 	toolUseTracker *AgentToolUseTracker,
@@ -800,7 +800,7 @@ func (runner) getSingleStepResultFromResponse(
 	outputSchema AgentOutputSchemaInterface,
 	handoffs []Handoff,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	toolUseTracker *AgentToolUseTracker,
 ) (*SingleStepResult, error) {
@@ -835,7 +835,7 @@ func (runner) runInputGuardrails(
 	agent *Agent,
 	guardrails []InputGuardrail,
 	input Input,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 ) ([]InputGuardrailResult, error) {
 	if len(guardrails) == 0 {
 		return nil, nil
@@ -886,7 +886,7 @@ func (runner) runOutputGuardrails(
 	guardrails []OutputGuardrail,
 	agent *Agent,
 	agentOutput any,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 ) ([]OutputGuardrailResult, error) {
 	if len(guardrails) == 0 {
 		return nil, nil
@@ -940,7 +940,7 @@ func (r runner) getNewResponse(
 	outputSchema AgentOutputSchemaInterface,
 	allTools []Tool,
 	handoffs []Handoff,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	toolUseTracker *AgentToolUseTracker,
 	previousResponseID string,

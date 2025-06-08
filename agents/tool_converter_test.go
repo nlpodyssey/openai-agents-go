@@ -40,7 +40,7 @@ func TestToOpenaiWithFunctionTool(t *testing.T) {
 				"a": map[string]any{"title": "A", "type": "string"},
 			},
 		},
-		OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
+		OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
 			return nil, nil
 		},
 	}

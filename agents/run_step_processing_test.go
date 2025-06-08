@@ -209,7 +209,7 @@ func TestHandoffsParsedCorrectly(t *testing.T) {
 
 	handoffAgent, err := handoff.Handoff.OnInvokeHandoff(
 		t.Context(),
-		runcontext.NewRunContextWrapper(nil),
+		runcontext.NewWrapper(nil),
 		handoff.ToolCall.Arguments,
 	)
 	require.NoError(t, err)

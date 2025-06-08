@@ -138,7 +138,7 @@ func (a *Agent) AsTool(params AgentAsToolParams) Tool {
 		StrictJSONSchema: param.NewOpt(true),
 		OnInvokeTool: func(
 			ctx context.Context,
-			contextWrapper *runcontext.RunContextWrapper,
+			contextWrapper *runcontext.Wrapper,
 			input string,
 		) (any, error) {
 			output, err := Runner().Run(ctx, RunParams{
@@ -176,7 +176,7 @@ func (*Agent) agentAsToolParamsJSONSchema(title string) map[string]any {
 // GetSystemPrompt returns the system prompt for the agent.
 func (a *Agent) GetSystemPrompt(
 	ctx context.Context,
-	runContext *runcontext.RunContextWrapper,
+	runContext *runcontext.Wrapper,
 ) (param.Opt[string], error) {
 	switch v := a.Instructions.(type) {
 	case StringInstructions:

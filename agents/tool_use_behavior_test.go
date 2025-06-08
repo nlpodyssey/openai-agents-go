@@ -40,7 +40,7 @@ func getFunctionTool(
 			"additionalProperties": false,
 			"properties":           map[string]any{},
 		},
-		OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
+		OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
 			return returnValue, nil
 		},
 	}
@@ -73,7 +73,7 @@ func TestNoToolResultsReturnsNotFinalOutput(t *testing.T) {
 	result, err := RunImpl().checkForFinalOutputFromTools(
 		agent,
 		nil,
-		runcontext.NewRunContextWrapper(nil),
+		runcontext.NewWrapper(nil),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
@@ -94,7 +94,7 @@ func TestRunLlmAgainBehavior(t *testing.T) {
 	result, err := RunImpl().checkForFinalOutputFromTools(
 		agent,
 		toolResults,
-		runcontext.NewRunContextWrapper(nil),
+		runcontext.NewWrapper(nil),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
@@ -116,7 +116,7 @@ func TestStopOnFirstToolBehavior(t *testing.T) {
 	result, err := RunImpl().checkForFinalOutputFromTools(
 		agent,
 		toolResults,
-		runcontext.NewRunContextWrapper(nil),
+		runcontext.NewWrapper(nil),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
@@ -127,7 +127,7 @@ func TestStopOnFirstToolBehavior(t *testing.T) {
 
 func TestCustomToolUseBehavior(t *testing.T) {
 	// If ToolUseBehavior is a function, we should call it and propagate its return.
-	behavior := func(cw *runcontext.RunContextWrapper, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+	behavior := func(cw *runcontext.Wrapper, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
 		assert.Len(t, results, 3)
 		return ToolsToFinalOutputResult{
 			IsFinalOutput: true,
@@ -146,7 +146,7 @@ func TestCustomToolUseBehavior(t *testing.T) {
 	result, err := RunImpl().checkForFinalOutputFromTools(
 		agent,
 		toolResults,
-		runcontext.NewRunContextWrapper(nil),
+		runcontext.NewWrapper(nil),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
@@ -157,7 +157,7 @@ func TestCustomToolUseBehavior(t *testing.T) {
 
 func TestCustomToolUseBehaviorError(t *testing.T) {
 	behaviorErr := errors.New("error")
-	behavior := func(cw *runcontext.RunContextWrapper, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+	behavior := func(cw *runcontext.Wrapper, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
 		return ToolsToFinalOutputResult{}, behaviorErr
 	}
 	agent := &Agent{
@@ -172,7 +172,7 @@ func TestCustomToolUseBehaviorError(t *testing.T) {
 	_, err := RunImpl().checkForFinalOutputFromTools(
 		agent,
 		toolResults,
-		runcontext.NewRunContextWrapper(nil),
+		runcontext.NewWrapper(nil),
 	)
 	require.ErrorIs(t, err, behaviorErr)
 }
@@ -194,7 +194,7 @@ func TestToolNamesToStopAtBehavior(t *testing.T) {
 	result, err := RunImpl().checkForFinalOutputFromTools(
 		agent,
 		toolResults,
-		runcontext.NewRunContextWrapper(nil),
+		runcontext.NewWrapper(nil),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
@@ -211,7 +211,7 @@ func TestToolNamesToStopAtBehavior(t *testing.T) {
 	result, err = RunImpl().checkForFinalOutputFromTools(
 		agent,
 		toolResults,
-		runcontext.NewRunContextWrapper(nil),
+		runcontext.NewWrapper(nil),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{

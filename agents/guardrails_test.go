@@ -27,7 +27,7 @@ import (
 
 func TestInputGuardrail(t *testing.T) {
 	getGuardrail := func(triggers bool, outputInfo any, err error) agents.InputGuardrailFunction {
-		return func(context.Context, *runcontext.RunContextWrapper, *agents.Agent, agents.Input) (agents.GuardrailFunctionOutput, error) {
+		return func(context.Context, *runcontext.Wrapper, *agents.Agent, agents.Input) (agents.GuardrailFunctionOutput, error) {
 			return agents.GuardrailFunctionOutput{
 				OutputInfo:        outputInfo,
 				TripwireTriggered: triggers,
@@ -44,7 +44,7 @@ func TestInputGuardrail(t *testing.T) {
 			t.Context(),
 			&agents.Agent{Name: "test"},
 			agents.InputString("test"),
-			runcontext.NewRunContextWrapper(nil),
+			runcontext.NewWrapper(nil),
 		)
 		require.NoError(t, err)
 		assert.False(t, result.Output.TripwireTriggered)
@@ -60,7 +60,7 @@ func TestInputGuardrail(t *testing.T) {
 			t.Context(),
 			&agents.Agent{Name: "test"},
 			agents.InputString("test"),
-			runcontext.NewRunContextWrapper(nil),
+			runcontext.NewWrapper(nil),
 		)
 		require.NoError(t, err)
 		assert.True(t, result.Output.TripwireTriggered)
@@ -76,7 +76,7 @@ func TestInputGuardrail(t *testing.T) {
 			t.Context(),
 			&agents.Agent{Name: "test"},
 			agents.InputString("test"),
-			runcontext.NewRunContextWrapper(nil),
+			runcontext.NewWrapper(nil),
 		)
 		require.NoError(t, err)
 		assert.True(t, result.Output.TripwireTriggered)
@@ -93,7 +93,7 @@ func TestInputGuardrail(t *testing.T) {
 			t.Context(),
 			&agents.Agent{Name: "test"},
 			agents.InputString("test"),
-			runcontext.NewRunContextWrapper(nil),
+			runcontext.NewWrapper(nil),
 		)
 		require.ErrorIs(t, err, e)
 	})
@@ -101,7 +101,7 @@ func TestInputGuardrail(t *testing.T) {
 
 func TestOutputGuardrail(t *testing.T) {
 	getGuardrail := func(triggers bool, outputInfo any, err error) agents.OutputGuardrailFunction {
-		return func(context.Context, *runcontext.RunContextWrapper, *agents.Agent, any) (agents.GuardrailFunctionOutput, error) {
+		return func(context.Context, *runcontext.Wrapper, *agents.Agent, any) (agents.GuardrailFunctionOutput, error) {
 			return agents.GuardrailFunctionOutput{
 				OutputInfo:        outputInfo,
 				TripwireTriggered: triggers,
@@ -116,7 +116,7 @@ func TestOutputGuardrail(t *testing.T) {
 		}
 		result, err := guardrail.Run(
 			t.Context(),
-			runcontext.NewRunContextWrapper(nil),
+			runcontext.NewWrapper(nil),
 			&agents.Agent{Name: "test"},
 			agents.InputString("test"),
 		)
@@ -132,7 +132,7 @@ func TestOutputGuardrail(t *testing.T) {
 		}
 		result, err := guardrail.Run(
 			t.Context(),
-			runcontext.NewRunContextWrapper(nil),
+			runcontext.NewWrapper(nil),
 			&agents.Agent{Name: "test"},
 			agents.InputString("test"),
 		)
@@ -148,7 +148,7 @@ func TestOutputGuardrail(t *testing.T) {
 		}
 		result, err := guardrail.Run(
 			t.Context(),
-			runcontext.NewRunContextWrapper(nil),
+			runcontext.NewWrapper(nil),
 			&agents.Agent{Name: "test"},
 			agents.InputString("test"),
 		)
@@ -165,7 +165,7 @@ func TestOutputGuardrail(t *testing.T) {
 		}
 		_, err := guardrail.Run(
 			t.Context(),
-			runcontext.NewRunContextWrapper(nil),
+			runcontext.NewWrapper(nil),
 			&agents.Agent{Name: "test"},
 			agents.InputString("test"),
 		)
