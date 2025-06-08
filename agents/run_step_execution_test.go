@@ -379,7 +379,7 @@ type getExecuteResultParams struct {
 	generatedItems []RunItem
 	// optional
 	hooks          RunHooks
-	contextWrapper *runcontext.RunContextWrapper
+	contextWrapper *runcontext.Wrapper
 	// optional
 	runConfig RunConfig
 }
@@ -466,7 +466,7 @@ func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepRes
 
 	cw := params.contextWrapper
 	if cw == nil {
-		cw = runcontext.NewRunContextWrapper(nil)
+		cw = runcontext.NewWrapper(nil)
 	}
 
 	result, err := RunImpl().ExecuteToolsAndSideEffects(

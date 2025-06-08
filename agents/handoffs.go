@@ -46,7 +46,7 @@ type Handoff struct {
 	// 2. The arguments from the LLM, as a JSON string. Empty string if InputJSONSchema is empty.
 	//
 	//Must return an agent.
-	OnInvokeHandoff func(context.Context, *runcontext.RunContextWrapper, string) (*Agent, error)
+	OnInvokeHandoff func(context.Context, *runcontext.Wrapper, string) (*Agent, error)
 
 	// The name of the agent that is being handed off to.
 	AgentName string
@@ -106,11 +106,11 @@ type OnHandoff interface {
 	isOnHandoff()
 }
 
-type OnHandoffWithInput func(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, jsonInput any) error
+type OnHandoffWithInput func(ctx context.Context, contextWrapper *runcontext.Wrapper, jsonInput any) error
 
 func (OnHandoffWithInput) isOnHandoff() {}
 
-type OnHandoffWithoutInput func(context.Context, *runcontext.RunContextWrapper) error
+type OnHandoffWithoutInput func(context.Context, *runcontext.Wrapper) error
 
 func (OnHandoffWithoutInput) isOnHandoff() {}
 
@@ -176,7 +176,7 @@ func HandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 		return nil, fmt.Errorf("failed to load and compile JSON schema: %w", err)
 	}
 
-	invokeHandoff := func(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, jsonInput string) (*Agent, error) {
+	invokeHandoff := func(ctx context.Context, contextWrapper *runcontext.Wrapper, jsonInput string) (*Agent, error) {
 		if len(params.InputJSONSchema) > 0 {
 			inputJSONLoader := gojsonschema.NewStringLoader(jsonInput)
 			result, err := inputJSONSchema.Validate(inputJSONLoader)

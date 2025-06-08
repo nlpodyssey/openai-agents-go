@@ -329,7 +329,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	onInvokeHandoff := func(context.Context, *runcontext.RunContextWrapper, string) (*agents.Agent, error) {
+	onInvokeHandoff := func(context.Context, *runcontext.Wrapper, string) (*agents.Agent, error) {
 		return agent1, nil
 	}
 
@@ -376,7 +376,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 func TestHandoffOnInputStreamed(t *testing.T) {
 	callOutput := ""
 
-	onInput := func(_ context.Context, _ *runcontext.RunContextWrapper, jsonInput any) error {
+	onInput := func(_ context.Context, _ *runcontext.Wrapper, jsonInput any) error {
 		r := strings.NewReader(jsonInput.(string))
 		dec := json.NewDecoder(r)
 		dec.DisallowUnknownFields()
@@ -432,7 +432,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 
 func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	guardrailFunction := func(
-		context.Context, *runcontext.RunContextWrapper, *agents.Agent, agents.Input,
+		context.Context, *runcontext.Wrapper, *agents.Agent, agents.Input,
 	) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
@@ -468,7 +468,7 @@ func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 
 func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	guardrailFunction := func(
-		context.Context, *runcontext.RunContextWrapper, *agents.Agent, any,
+		context.Context, *runcontext.Wrapper, *agents.Agent, any,
 	) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
@@ -504,7 +504,7 @@ func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 
 func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	guardrailFunction := func(
-		context.Context, *runcontext.RunContextWrapper, *agents.Agent, agents.Input,
+		context.Context, *runcontext.Wrapper, *agents.Agent, agents.Input,
 	) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
@@ -538,7 +538,7 @@ func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 
 func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	guardrailFunction := func(
-		context.Context, *runcontext.RunContextWrapper, *agents.Agent, any,
+		context.Context, *runcontext.Wrapper, *agents.Agent, any,
 	) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,

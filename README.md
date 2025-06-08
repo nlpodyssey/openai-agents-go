@@ -155,7 +155,7 @@ var (
 	getWeatherTool = agents.FunctionTool{
 		Name:             "GetWeather",
 		ParamsJSONSchema: getWeatherParamsJSONSchema,
-		OnInvokeTool: func(_ context.Context, _ *runcontext.RunContextWrapper, args string) (any, error) {
+		OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, args string) (any, error) {
 			var params getWeatherParams
 			err := json.Unmarshal([]byte(args), &params)
 			if err != nil {

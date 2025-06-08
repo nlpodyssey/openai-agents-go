@@ -37,13 +37,13 @@ type InputGuardrail struct {
 	Name string
 }
 
-type InputGuardrailFunction = func(context.Context, *runcontext.RunContextWrapper, *Agent, Input) (GuardrailFunctionOutput, error)
+type InputGuardrailFunction = func(context.Context, *runcontext.Wrapper, *Agent, Input) (GuardrailFunctionOutput, error)
 
 func (ig InputGuardrail) Run(
 	ctx context.Context,
 	agent *Agent,
 	input Input,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 ) (InputGuardrailResult, error) {
 	output, err := ig.GuardrailFunction(ctx, contextWrapper, agent, input)
 	result := InputGuardrailResult{
@@ -87,11 +87,11 @@ type OutputGuardrail struct {
 	Name string
 }
 
-type OutputGuardrailFunction = func(context.Context, *runcontext.RunContextWrapper, *Agent, any) (GuardrailFunctionOutput, error)
+type OutputGuardrailFunction = func(context.Context, *runcontext.Wrapper, *Agent, any) (GuardrailFunctionOutput, error)
 
 func (og OutputGuardrail) Run(
 	ctx context.Context,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	agent *Agent,
 	agentOutput any,
 ) (OutputGuardrailResult, error) {

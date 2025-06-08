@@ -24,36 +24,36 @@ import (
 // lifecycle events in an agent run.
 type RunHooks interface {
 	// OnAgentStart is called before the agent is invoked. Called each time the current agent changes.
-	OnAgentStart(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent *Agent) error
+	OnAgentStart(ctx context.Context, contextWrapper *runcontext.Wrapper, agent *Agent) error
 
 	// OnAgentEnd is called when the agent produces a final output.
-	OnAgentEnd(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent *Agent, output any) error
+	OnAgentEnd(ctx context.Context, contextWrapper *runcontext.Wrapper, agent *Agent, output any) error
 
 	// OnHandoff is called when a handoff occurs.
-	OnHandoff(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, fromAgent, toAgent *Agent) error
+	OnHandoff(ctx context.Context, contextWrapper *runcontext.Wrapper, fromAgent, toAgent *Agent) error
 
 	// OnToolStart is called before a tool is invoked.
-	OnToolStart(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent *Agent, tool Tool) error
+	OnToolStart(ctx context.Context, contextWrapper *runcontext.Wrapper, agent *Agent, tool Tool) error
 
 	// OnToolEnd is called after a tool is invoked.
-	OnToolEnd(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent *Agent, tool Tool, result any) error
+	OnToolEnd(ctx context.Context, contextWrapper *runcontext.Wrapper, agent *Agent, tool Tool, result any) error
 }
 
 type NoOpRunHooks struct{}
 
-func (NoOpRunHooks) OnAgentStart(context.Context, *runcontext.RunContextWrapper, *Agent) error {
+func (NoOpRunHooks) OnAgentStart(context.Context, *runcontext.Wrapper, *Agent) error {
 	return nil
 }
-func (NoOpRunHooks) OnAgentEnd(context.Context, *runcontext.RunContextWrapper, *Agent, any) error {
+func (NoOpRunHooks) OnAgentEnd(context.Context, *runcontext.Wrapper, *Agent, any) error {
 	return nil
 }
-func (NoOpRunHooks) OnHandoff(context.Context, *runcontext.RunContextWrapper, *Agent, *Agent) error {
+func (NoOpRunHooks) OnHandoff(context.Context, *runcontext.Wrapper, *Agent, *Agent) error {
 	return nil
 }
-func (NoOpRunHooks) OnToolStart(context.Context, *runcontext.RunContextWrapper, *Agent, Tool) error {
+func (NoOpRunHooks) OnToolStart(context.Context, *runcontext.Wrapper, *Agent, Tool) error {
 	return nil
 }
-func (NoOpRunHooks) OnToolEnd(context.Context, *runcontext.RunContextWrapper, *Agent, Tool, any) error {
+func (NoOpRunHooks) OnToolEnd(context.Context, *runcontext.Wrapper, *Agent, Tool, any) error {
 	return nil
 }
 
@@ -62,18 +62,18 @@ func (NoOpRunHooks) OnToolEnd(context.Context, *runcontext.RunContextWrapper, *A
 // You can set this on `agent.Hooks` to receive events for that specific agent.
 type AgentHooks interface {
 	// OnStart is called before the agent is invoked. Called each time the running agent is changed to this agent.
-	OnStart(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent *Agent) error
+	OnStart(ctx context.Context, contextWrapper *runcontext.Wrapper, agent *Agent) error
 
 	// OnEnd is called when the agent produces a final output.
-	OnEnd(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent *Agent, output any) error
+	OnEnd(ctx context.Context, contextWrapper *runcontext.Wrapper, agent *Agent, output any) error
 
 	// OnHandoff is called when the agent is being handed off to.
 	// The `source` is the agent that is handing off to this agent.
-	OnHandoff(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent, source *Agent) error
+	OnHandoff(ctx context.Context, contextWrapper *runcontext.Wrapper, agent, source *Agent) error
 
 	// OnToolStart is called before a tool is invoked.
-	OnToolStart(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent *Agent, tool Tool) error
+	OnToolStart(ctx context.Context, contextWrapper *runcontext.Wrapper, agent *Agent, tool Tool) error
 
 	// OnToolEnd is called after a tool is invoked.
-	OnToolEnd(ctx context.Context, contextWrapper *runcontext.RunContextWrapper, agent *Agent, tool Tool, result any) error
+	OnToolEnd(ctx context.Context, contextWrapper *runcontext.Wrapper, agent *Agent, tool Tool, result any) error
 }

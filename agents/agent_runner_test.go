@@ -347,7 +347,7 @@ func TestInputFilterError(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	onInvokeHandoff := func(context.Context, *runcontext.RunContextWrapper, string) (*agents.Agent, error) {
+	onInvokeHandoff := func(context.Context, *runcontext.Wrapper, string) (*agents.Agent, error) {
 		return agent1, nil
 	}
 
@@ -392,7 +392,7 @@ func TestInputFilterError(t *testing.T) {
 func TestHandoffOnInput(t *testing.T) {
 	callOutput := ""
 
-	onInput := func(_ context.Context, _ *runcontext.RunContextWrapper, jsonInput any) error {
+	onInput := func(_ context.Context, _ *runcontext.Wrapper, jsonInput any) error {
 		r := strings.NewReader(jsonInput.(string))
 		dec := json.NewDecoder(r)
 		dec.DisallowUnknownFields()
@@ -445,7 +445,7 @@ func TestHandoffOnInput(t *testing.T) {
 
 func TestHandoffOnInputError(t *testing.T) {
 	onInputError := errors.New("on input error")
-	onInput := func(context.Context, *runcontext.RunContextWrapper, any) error {
+	onInput := func(context.Context, *runcontext.Wrapper, any) error {
 		return onInputError
 	}
 
@@ -490,12 +490,12 @@ func TestInvalidHandoffInputJSONCausesError(t *testing.T) {
 	h := agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 		Agent: agent,
 		OnHandoff: agents.OnHandoffWithInput(
-			func(context.Context, *runcontext.RunContextWrapper, any) error { return nil },
+			func(context.Context, *runcontext.Wrapper, any) error { return nil },
 		),
 		InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
 	})
 
-	cw := runcontext.NewRunContextWrapper(nil)
+	cw := runcontext.NewWrapper(nil)
 	var target agents.ModelBehaviorError
 
 	_, err := h.OnInvokeHandoff(t.Context(), cw, "")
@@ -507,7 +507,7 @@ func TestInvalidHandoffInputJSONCausesError(t *testing.T) {
 
 func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 	guardrailFunction := func(
-		context.Context, *runcontext.RunContextWrapper, *agents.Agent, agents.Input,
+		context.Context, *runcontext.Wrapper, *agents.Agent, agents.Input,
 	) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
@@ -540,7 +540,7 @@ func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 
 func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 	guardrailFunction := func(
-		context.Context, *runcontext.RunContextWrapper, *agents.Agent, any,
+		context.Context, *runcontext.Wrapper, *agents.Agent, any,
 	) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
@@ -581,7 +581,7 @@ var TestToolOne = agents.FunctionTool{
 		"additionalProperties": false,
 		"properties":           map[string]any{},
 	},
-	OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
+	OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
 		return AgentRunnerTestFoo{Bar: "tool_one_result"}, nil
 	},
 	StrictJSONSchema: param.NewOpt(true),
@@ -597,7 +597,7 @@ var TestToolTwo = agents.FunctionTool{
 		"additionalProperties": false,
 		"properties":           map[string]any{},
 	},
-	OnInvokeTool: func(context.Context, *runcontext.RunContextWrapper, string) (any, error) {
+	OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
 		return AgentRunnerTestFoo{Bar: "tool_two_result"}, nil
 	},
 	StrictJSONSchema: param.NewOpt(true),
@@ -634,7 +634,7 @@ func TestToolUseBehaviorFirstOutput(t *testing.T) {
 	assert.Equal(t, AgentRunnerTestFoo{Bar: "tool_one_result"}, result.FinalOutput)
 }
 
-var CustomToolUseBehavior = func(_ *runcontext.RunContextWrapper, results []agents.FunctionToolResult) (agents.ToolsToFinalOutputResult, error) {
+var CustomToolUseBehavior = func(_ *runcontext.Wrapper, results []agents.FunctionToolResult) (agents.ToolsToFinalOutputResult, error) {
 	if slices.ContainsFunc(results, func(r agents.FunctionToolResult) bool { return r.Tool.Name == "test_tool_one" }) {
 		return agents.ToolsToFinalOutputResult{
 			IsFinalOutput: true,

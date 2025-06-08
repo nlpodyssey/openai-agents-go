@@ -38,7 +38,7 @@ var HowManyJokesTool = agents.FunctionTool{
 		"additionalProperties": false,
 		"properties":           map[string]any{},
 	},
-	OnInvokeTool: func(_ context.Context, _ *runcontext.RunContextWrapper, arguments string) (any, error) {
+	OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
 		return HowManyJokes(), nil
 	},
 	StrictJSONSchema: param.NewOpt(true),

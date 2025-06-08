@@ -46,7 +46,7 @@ type RunResultBase struct {
 	OutputGuardrailResults []OutputGuardrailResult
 
 	// The context wrapper for the agent run.
-	ContextWrapper *runcontext.RunContextWrapper
+	ContextWrapper *runcontext.Wrapper
 }
 
 // ToInputList creates a new input list, merging the original input with all the new items generated.

@@ -161,7 +161,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	processedResponse ProcessedResponse,
 	outputSchema AgentOutputSchemaInterface,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 ) (*SingleStepResult, error) {
 	// Make a copy of the generated items
@@ -414,7 +414,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 	agent *Agent,
 	toolRuns []ToolRunFunction,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 ) ([]FunctionToolResult, error) {
 	runSingleTool := func(
 		ctx context.Context,
@@ -564,7 +564,7 @@ func (runImpl) ExecuteHandoffs(
 	newResponse ModelResponse,
 	runHandoffs []ToolRunHandoff,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 ) (*SingleStepResult, error) {
 	// If there is more than one handoff, add tool responses that reject those handoffs
@@ -678,7 +678,7 @@ func (ri runImpl) ExecuteFinalOutput(
 	newStepItems []RunItem,
 	finalOutput any,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 ) (*SingleStepResult, error) {
 	// Run the onEnd hooks
 	err := ri.RunFinalOutputHooks(ctx, agent, hooks, contextWrapper, finalOutput)
@@ -699,7 +699,7 @@ func (ri runImpl) RunFinalOutputHooks(
 	ctx context.Context,
 	agent *Agent,
 	hooks RunHooks,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 	finalOutput any,
 ) error {
 	var hooksErrors [2]error
@@ -740,7 +740,7 @@ func (runImpl) RunSingleInputGuardrail(
 	agent *Agent,
 	guardrail InputGuardrail,
 	input Input,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 ) (InputGuardrailResult, error) {
 	return guardrail.Run(ctx, agent, input, contextWrapper)
 }
@@ -750,7 +750,7 @@ func (runImpl) RunSingleOutputGuardrail(
 	guardrail OutputGuardrail,
 	agent *Agent,
 	agentOutput any,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 ) (OutputGuardrailResult, error) {
 	return guardrail.Run(ctx, contextWrapper, agent, agentOutput)
 }
@@ -809,7 +809,7 @@ func (runImpl) StreamStepResultToQueue(stepResult SingleStepResult, queue *async
 func (runImpl) checkForFinalOutputFromTools(
 	agent *Agent,
 	toolResults []FunctionToolResult,
-	contextWrapper *runcontext.RunContextWrapper,
+	contextWrapper *runcontext.Wrapper,
 ) (ToolsToFinalOutputResult, error) {
 	if len(toolResults) == 0 {
 		return notFinalOutput, nil
