@@ -28,7 +28,7 @@ const URL = "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridg
 func main() {
 	agent := &agents.Agent{
 		Name:         "Assistant",
-		Instructions: agents.StringInstructions("You are a helpful assistant."),
+		Instructions: agents.InstructionsStr("You are a helpful assistant."),
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 	}
 

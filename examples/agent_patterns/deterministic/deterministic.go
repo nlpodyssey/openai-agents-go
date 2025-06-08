@@ -40,7 +40,7 @@ var Model = agents.NewAgentModelName("gpt-4o-mini")
 
 var StoryOutlineAgent = &agents.Agent{
 	Name: "story_outline_agent",
-	Instructions: agents.StringInstructions(
+	Instructions: agents.InstructionsStr(
 		"Generate a very short story outline based on the user's input.",
 	),
 	Model: param.NewOpt(Model),
@@ -85,7 +85,7 @@ func (s OutlineCheckerOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 
 var OutlineCheckerAgent = &agents.Agent{
 	Name: "outline_checker_agent",
-	Instructions: agents.StringInstructions(
+	Instructions: agents.InstructionsStr(
 		"Read the given story outline, and judge the quality. Also, determine if it is a scifi story.",
 	),
 	OutputSchema: OutlineCheckerOutputSchema{},
@@ -94,7 +94,7 @@ var OutlineCheckerAgent = &agents.Agent{
 
 var StoryAgent = &agents.Agent{
 	Name: "story_agent",
-	Instructions: agents.StringInstructions(
+	Instructions: agents.InstructionsStr(
 		"Write a short story based on the given outline.",
 	),
 	Model: param.NewOpt(Model),

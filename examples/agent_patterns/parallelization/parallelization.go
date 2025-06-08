@@ -36,12 +36,12 @@ var (
 	Model        = agents.NewAgentModelName("gpt-4.1-nano")
 	SpanishAgent = &agents.Agent{
 		Name:         "spanish_agent",
-		Instructions: agents.StringInstructions("You translate the user's message to Spanish"),
+		Instructions: agents.InstructionsStr("You translate the user's message to Spanish"),
 		Model:        param.NewOpt(Model),
 	}
 	TranslationPicker = &agents.Agent{
 		Name:         "translation_picker",
-		Instructions: agents.StringInstructions("You pick the best Spanish translation from the given options."),
+		Instructions: agents.InstructionsStr("You pick the best Spanish translation from the given options."),
 		Model:        param.NewOpt(Model),
 	}
 )

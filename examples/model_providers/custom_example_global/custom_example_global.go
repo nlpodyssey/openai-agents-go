@@ -93,7 +93,7 @@ var GetWeatherTool = agents.FunctionTool{
 func main() {
 	agent := &agents.Agent{
 		Name:         "Assistant",
-		Instructions: agents.StringInstructions("You only respond in haikus."),
+		Instructions: agents.InstructionsStr("You only respond in haikus."),
 		Model:        param.NewOpt(agents.NewAgentModelName(ModelName)),
 		Tools:        []agents.Tool{GetWeatherTool},
 	}

@@ -142,7 +142,7 @@ func main() {
 
 	agent := &agents.Agent{
 		Name:            "Weather agent",
-		Instructions:    agents.StringInstructions("You are a helpful agent."),
+		Instructions:    agents.InstructionsStr("You are a helpful agent."),
 		Tools:           []agents.Tool{GetWeatherTool},
 		ToolUseBehavior: behavior,
 		ModelSettings: modelsettings.ModelSettings{

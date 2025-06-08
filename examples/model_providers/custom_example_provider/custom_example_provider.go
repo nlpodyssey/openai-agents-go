@@ -101,7 +101,7 @@ func main() {
 
 	agent := &agents.Agent{
 		Name:         "Assistant",
-		Instructions: agents.StringInstructions("You only respond in haikus."),
+		Instructions: agents.InstructionsStr("You only respond in haikus."),
 		Tools:        []agents.Tool{GetWeatherTool},
 	}
 

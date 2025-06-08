@@ -35,22 +35,22 @@ var (
 	Model       = agents.NewAgentModelName("gpt-4o-mini")
 	FrenchAgent = &agents.Agent{
 		Name:         "french_agent",
-		Instructions: agents.StringInstructions("You only speak French"),
+		Instructions: agents.InstructionsStr("You only speak French"),
 		Model:        param.NewOpt(Model),
 	}
 	SpanishAgent = &agents.Agent{
 		Name:         "spanish_agent",
-		Instructions: agents.StringInstructions("You only speak Spanish"),
+		Instructions: agents.InstructionsStr("You only speak Spanish"),
 		Model:        param.NewOpt(Model),
 	}
 	EnglishAgent = &agents.Agent{
 		Name:         "english_agent",
-		Instructions: agents.StringInstructions("You only speak English"),
+		Instructions: agents.InstructionsStr("You only speak English"),
 		Model:        param.NewOpt(Model),
 	}
 	TriageAgent = &agents.Agent{
 		Name: "triage_agent",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			"Handoff to the appropriate agent based on the language of the request.",
 		),
 		Handoffs: []agents.AgentHandoff{FrenchAgent, SpanishAgent, EnglishAgent},

@@ -187,7 +187,7 @@ var (
 
 	MultiplyAgent = &agents.Agent{
 		Name:         "Multiply Agent",
-		Instructions: agents.StringInstructions("Multiply the number by 2 and then return the final result."),
+		Instructions: agents.InstructionsStr("Multiply the number by 2 and then return the final result."),
 		Tools:        []agents.Tool{MultiplyByTwoTool},
 		OutputSchema: FinalResultOutputSchema{},
 		Hooks:        NewCustomAgentHooks("Multiply Agent"),
@@ -196,7 +196,7 @@ var (
 
 	StartAgent = &agents.Agent{
 		Name: "Start Agent",
-		Instructions: agents.StringInstructions(
+		Instructions: agents.InstructionsStr(
 			"Generate a random number. If it's even, stop. If it's odd, hand off to the multiply agent.",
 		),
 		Tools:        []agents.Tool{RandomNumberTool},

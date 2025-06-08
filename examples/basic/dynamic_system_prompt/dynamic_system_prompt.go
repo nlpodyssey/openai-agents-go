@@ -52,7 +52,7 @@ func CustomInstructions(_ context.Context, cw *runcontext.Wrapper, _ *agents.Age
 
 var Agent = &agents.Agent{
 	Name:         "Chat agent",
-	Instructions: agents.FunctionInstructions(CustomInstructions),
+	Instructions: agents.InstructionsFunc(CustomInstructions),
 	Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 }
 

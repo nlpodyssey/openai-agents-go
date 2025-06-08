@@ -47,7 +47,7 @@ var HowManyJokesTool = agents.FunctionTool{
 func main() {
 	agent := &agents.Agent{
 		Name:         "Joker",
-		Instructions: agents.StringInstructions("First call the `how_many_jokes` tool, then tell that many jokes."),
+		Instructions: agents.InstructionsStr("First call the `how_many_jokes` tool, then tell that many jokes."),
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
 		Tools: []agents.Tool{
 			HowManyJokesTool,
