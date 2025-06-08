@@ -138,14 +138,16 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 	currentAgent := params.StartingAgent
 	shouldRunAgentStartHooks := true
 
-	allTools := optional.None[[]Tool]()
+	shouldGetAgentTools := true
+	var allTools []Tool
 
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	for {
-		if !allTools.Present {
-			allTools = optional.Value(r.getAllTools(currentAgent))
+		if shouldGetAgentTools {
+			allTools = r.getAllTools(currentAgent)
+			shouldGetAgentTools = false
 		}
 
 		currentTurn += 1
@@ -185,7 +187,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 				turnResult, turnError = r.runSingleTurn(
 					childCtx,
 					currentAgent,
-					allTools.ValueOrFallback(nil),
+					allTools,
 					originalInput,
 					generatedItems,
 					hooks,
@@ -209,7 +211,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 			turnResult, err = r.runSingleTurn(
 				childCtx,
 				currentAgent,
-				allTools.ValueOrFallback(nil),
+				allTools,
 				originalInput,
 				generatedItems,
 				hooks,
@@ -256,7 +258,8 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 			}, nil
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
-			allTools = optional.None[[]Tool]()
+			allTools = nil
+			shouldGetAgentTools = true
 			shouldRunAgentStartHooks = true
 		case NextStepRunAgain:
 			// Nothing to do
@@ -438,15 +441,17 @@ func (r runner) runStreamedImpl(
 		Type:     "agent_updated_stream_event",
 	})
 
-	allTools := optional.None[[]Tool]()
+	shouldGetAgentTools := true
+	var allTools []Tool
 
 	for {
 		if streamedResult.IsComplete {
 			break
 		}
 
-		if !allTools.Present {
-			allTools = optional.Value(r.getAllTools(currentAgent))
+		if shouldGetAgentTools {
+			allTools = r.getAllTools(currentAgent)
+			shouldGetAgentTools = false
 		}
 
 		currentTurn += 1
@@ -480,7 +485,7 @@ func (r runner) runStreamedImpl(
 			runConfig,
 			shouldRunAgentStartHooks,
 			toolUseTracker,
-			allTools.ValueOrFallback(nil),
+			allTools,
 			previousResponseID,
 		)
 		if err != nil {
@@ -522,7 +527,8 @@ func (r runner) runStreamedImpl(
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
-			allTools = optional.None[[]Tool]()
+			allTools = nil
+			shouldGetAgentTools = true
 			shouldRunAgentStartHooks = true
 			streamedResult.eventQueue.Put(AgentUpdatedStreamEvent{
 				NewAgent: currentAgent,
