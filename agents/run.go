@@ -615,7 +615,7 @@ func (r runner) runSingleTurnStreamed(
 	modelSettings := agent.ModelSettings.Resolve(runConfig.ModelSettings)
 	modelSettings = RunImpl().MaybeResetToolChoice(agent, toolUseTracker, modelSettings)
 
-	finalResponse := optional.None[ModelResponse]()
+	var finalResponse *ModelResponse
 
 	input := ItemHelpers().InputToNewInputList(streamedResult.Input)
 	for _, item := range streamedResult.NewItems {
@@ -650,11 +650,11 @@ func (r runner) runSingleTurnStreamed(
 				u.OutputTokens = uint64(event.Response.Usage.OutputTokens)
 				u.TotalTokens = uint64(event.Response.Usage.TotalTokens)
 			}
-			finalResponse = optional.Value(ModelResponse{
+			finalResponse = &ModelResponse{
 				Output:     event.Response.Output,
 				Usage:      u,
 				ResponseID: event.Response.ID,
-			})
+			}
 			contextWrapper.Usage.Add(u)
 		}
 		streamedResult.eventQueue.Put(RawResponsesStreamEvent{
@@ -667,7 +667,7 @@ func (r runner) runSingleTurnStreamed(
 	}
 
 	// 2. At this point, the streaming is complete for this turn of the agent loop.
-	if !finalResponse.Present {
+	if finalResponse == nil {
 		return nil, NewModelBehaviorError("Model did not produce a final response!")
 	}
 
@@ -678,7 +678,7 @@ func (r runner) runSingleTurnStreamed(
 		allTools,
 		streamedResult.Input,
 		streamedResult.NewItems,
-		finalResponse.Value,
+		*finalResponse,
 		outputSchema,
 		handoffs,
 		hooks,
