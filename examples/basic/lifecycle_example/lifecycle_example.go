@@ -205,10 +205,10 @@ var (
 		Instructions: agents.InstructionsStr(
 			"Generate a random number. If it's even, stop. If it's odd, hand off to the multiplier agent.",
 		),
-		Tools:        []agents.Tool{RandomNumberTool},
-		OutputSchema: FinalResultOutputSchema{},
-		Handoffs:     []agents.AgentHandoff{MultiplyAgent},
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
+		Tools:         []agents.Tool{RandomNumberTool},
+		OutputSchema:  FinalResultOutputSchema{},
+		AgentHandoffs: []*agents.Agent{MultiplyAgent},
+		Model:         param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
 	}
 )
 

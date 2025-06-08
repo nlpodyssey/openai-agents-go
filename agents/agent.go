@@ -57,7 +57,14 @@ type Agent struct {
 	// Handoffs are sub-agents that the agent can delegate to. You can provide a list of handoffs,
 	// and the agent can choose to delegate to them if relevant. Allows for separation of concerns and
 	// modularity.
-	Handoffs []AgentHandoff
+	//
+	// Here you can provide a list of Handoff objects. In order to use Agent objects as
+	// handoffs, add them to AgentHandoffs.
+	Handoffs []Handoff
+
+	// List of Agent objects to be used as handoffs. They will be converted to Handoff objects
+	// before use. If you already have a Handoff, add it to Handoffs.
+	AgentHandoffs []*Agent
 
 	// The model implementation to use when invoking the LLM.
 	Model param.Opt[AgentModel]

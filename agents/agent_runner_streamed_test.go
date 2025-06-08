@@ -185,9 +185,9 @@ func TestHandoffsStreaming(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 	agent3 := &agents.Agent{
-		Name:     "agent_3",
-		Model:    param.NewOpt(agents.NewAgentModel(model)),
-		Handoffs: []agents.AgentHandoff{agent1, agent2},
+		Name:          "agent_3",
+		Model:         param.NewOpt(agents.NewAgentModel(model)),
+		AgentHandoffs: []*agents.Agent{agent1, agent2},
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
@@ -242,7 +242,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
-		Handoffs: []agents.AgentHandoff{agent1},
+		AgentHandoffs: []*agents.Agent{agent1},
 	}
 
 	model.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{
@@ -290,7 +290,7 @@ func TestHandoffFiltersStreamed(t *testing.T) {
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Handoffs: []agents.AgentHandoff{
+		Handoffs: []agents.Handoff{
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:       agent1,
 				InputFilter: RemoveNewItems,
@@ -341,8 +341,8 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Handoffs: []agents.AgentHandoff{
-			agents.Handoff{
+		Handoffs: []agents.Handoff{
+			{
 				ToolName:        agents.DefaultHandoffToolName(agent1),
 				ToolDescription: agents.DefaultHandoffToolDescription(agent1),
 				InputJSONSchema: map[string]any{},
@@ -398,7 +398,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Handoffs: []agents.AgentHandoff{
+		Handoffs: []agents.Handoff{
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
@@ -591,7 +591,7 @@ func TestStreamingEvents(t *testing.T) {
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
-		Handoffs: []agents.AgentHandoff{agent1},
+		AgentHandoffs: []*agents.Agent{agent1},
 	}
 
 	model.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{

@@ -193,8 +193,8 @@ If the customer asks a question that is not related to the routine, transfer bac
 		Instructions: agents.InstructionsStr(
 			handoff_prompt.RecommendedPromptPrefix + `
 You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents.`),
-		Handoffs: []agents.AgentHandoff{
-			FAQAgent,
+		AgentHandoffs: []*agents.Agent{FAQAgent},
+		Handoffs: []agents.Handoff{
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:     SeatBookingAgent,
 				OnHandoff: agents.OnHandoffWithoutInput(OnSeatBookingHandoff),
@@ -205,8 +205,8 @@ You are a helpful triaging agent. You can use your tools to delegate questions t
 )
 
 func init() {
-	FAQAgent.Handoffs = append(FAQAgent.Handoffs, TriageAgent)
-	SeatBookingAgent.Handoffs = append(SeatBookingAgent.Handoffs, TriageAgent)
+	FAQAgent.AgentHandoffs = append(FAQAgent.AgentHandoffs, TriageAgent)
+	SeatBookingAgent.AgentHandoffs = append(SeatBookingAgent.AgentHandoffs, TriageAgent)
 }
 
 ////// RUN

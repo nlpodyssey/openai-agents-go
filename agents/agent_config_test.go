@@ -59,8 +59,8 @@ func TestHandoff(t *testing.T) {
 		agent1 := &Agent{Name: "agent_1"}
 		agent2 := &Agent{Name: "agent_2"}
 		agent3 := &Agent{
-			Name:     "agent_3",
-			Handoffs: []AgentHandoff{agent1, agent2},
+			Name:          "agent_3",
+			AgentHandoffs: []*Agent{agent1, agent2},
 		}
 
 		handoffs, err := Runner().getHandoffs(agent3)
@@ -84,7 +84,7 @@ func TestHandoff(t *testing.T) {
 		agent2 := &Agent{Name: "agent_2"}
 		agent3 := &Agent{
 			Name: "agent_3",
-			Handoffs: []AgentHandoff{
+			Handoffs: []Handoff{
 				UnsafeHandoffFromAgent(HandoffFromAgentParams{Agent: agent1}),
 				UnsafeHandoffFromAgent(HandoffFromAgentParams{
 					Agent:                   agent2,
@@ -121,8 +121,10 @@ func TestHandoff(t *testing.T) {
 		agent2 := &Agent{Name: "agent_2"}
 		agent3 := &Agent{
 			Name: "agent_3",
-			Handoffs: []AgentHandoff{
+			Handoffs: []Handoff{
 				UnsafeHandoffFromAgent(HandoffFromAgentParams{Agent: agent1}),
+			},
+			AgentHandoffs: []*Agent{
 				agent2,
 			},
 		}

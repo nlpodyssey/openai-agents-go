@@ -199,11 +199,11 @@ var (
 		Instructions: agents.InstructionsStr(
 			"Generate a random number. If it's even, stop. If it's odd, hand off to the multiply agent.",
 		),
-		Tools:        []agents.Tool{RandomNumberTool},
-		OutputSchema: FinalResultOutputSchema{},
-		Handoffs:     []agents.AgentHandoff{MultiplyAgent},
-		Hooks:        NewCustomAgentHooks("Start Agent"),
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
+		Tools:         []agents.Tool{RandomNumberTool},
+		OutputSchema:  FinalResultOutputSchema{},
+		AgentHandoffs: []*agents.Agent{MultiplyAgent},
+		Hooks:         NewCustomAgentHooks("Start Agent"),
+		Model:         param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
 	}
 )
 

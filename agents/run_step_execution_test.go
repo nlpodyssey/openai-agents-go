@@ -170,8 +170,8 @@ func TestHandoffOutputLeadsToHandoffNextStep(t *testing.T) {
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
-		Name:     "test_3",
-		Handoffs: []AgentHandoff{agent1, agent2},
+		Name:          "test_3",
+		AgentHandoffs: []*Agent{agent1, agent2},
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
@@ -272,9 +272,9 @@ func TestHandoffAndFinalOutputLeadsToHandoffNextStep(t *testing.T) {
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
-		Name:         "test_3",
-		Handoffs:     []AgentHandoff{agent1, agent2},
-		OutputSchema: RunStepExecTestFooSchema{},
+		Name:          "test_3",
+		AgentHandoffs: []*Agent{agent1, agent2},
+		OutputSchema:  RunStepExecTestFooSchema{},
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
@@ -297,9 +297,9 @@ func TestMultipleFinalOutputLeadsToFinalOutputNextStep(t *testing.T) {
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
-		Name:         "test_3",
-		Handoffs:     []AgentHandoff{agent1, agent2},
-		OutputSchema: RunStepExecTestFooSchema{},
+		Name:          "test_3",
+		AgentHandoffs: []*Agent{agent1, agent2},
+		OutputSchema:  RunStepExecTestFooSchema{},
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
