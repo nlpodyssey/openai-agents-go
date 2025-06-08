@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -80,14 +79,14 @@ func (itemHelpers) ExtractLastContent(message TResponseOutputItem) string {
 }
 
 // ExtractLastText extracts the last text content from a message, if any. Ignores refusals.
-func (itemHelpers) ExtractLastText(message TResponseOutputItem) optional.Optional[string] {
+func (itemHelpers) ExtractLastText(message TResponseOutputItem) (string, bool) {
 	if message.Type == "message" {
 		lastContent := message.Content[len(message.Content)-1]
 		if lastContent.Type == "output_text" {
-			return optional.Value(lastContent.Text)
+			return lastContent.Text, true
 		}
 	}
-	return optional.None[string]()
+	return "", false
 }
 
 // InputToNewInputList converts a string or list of input items into a list of input items.
