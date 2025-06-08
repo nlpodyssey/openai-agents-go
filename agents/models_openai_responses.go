@@ -22,7 +22,6 @@ import (
 	"reflect"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -124,7 +123,7 @@ func (m OpenAIResponsesModel) StreamResponse(
 }
 
 func (m OpenAIResponsesModel) prepareRequest(
-	systemInstructions optional.Optional[string],
+	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
 	tools []Tool,
@@ -169,7 +168,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 
 	params := responses.ResponseNewParams{
 		PreviousResponseID: prevRespIDParam,
-		Instructions:       optional.ToParamOptOmitted(systemInstructions),
+		Instructions:       systemInstructions,
 		Model:              m.Model,
 		Input:              responses.ResponseNewParamsInputUnion{OfInputItemList: listInput},
 		Include:            convertedTools.Includes,

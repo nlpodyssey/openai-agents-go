@@ -20,8 +20,8 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/usage"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
 
@@ -37,7 +37,7 @@ type FakeModelTurnOutput struct {
 }
 
 type FakeModelLastTurnArgs struct {
-	SystemInstructions optional.Optional[string]
+	SystemInstructions param.Opt[string]
 	Input              agents.Input
 	ModelSettings      modelsettings.ModelSettings
 	Tools              []agents.Tool

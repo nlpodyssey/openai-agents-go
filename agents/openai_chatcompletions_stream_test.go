@@ -23,7 +23,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
@@ -95,7 +94,7 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 	require.NoError(t, err)
 
 	stream, err := model.StreamResponse(t.Context(), agents.ModelStreamResponseParams{
-		SystemInstructions: optional.None[string](),
+		SystemInstructions: param.Null[string](),
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -184,7 +183,7 @@ func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {
 	require.NoError(t, err)
 
 	stream, err := model.StreamResponse(t.Context(), agents.ModelStreamResponseParams{
-		SystemInstructions: optional.None[string](),
+		SystemInstructions: param.Null[string](),
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -266,7 +265,7 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 	require.NoError(t, err)
 
 	stream, err := model.StreamResponse(t.Context(), agents.ModelStreamResponseParams{
-		SystemInstructions: optional.None[string](),
+		SystemInstructions: param.Null[string](),
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,

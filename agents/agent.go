@@ -20,7 +20,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -178,15 +177,15 @@ func (*Agent) agentAsToolParamsJSONSchema(title string) map[string]any {
 func (a *Agent) GetSystemPrompt(
 	ctx context.Context,
 	runContext *runcontext.RunContextWrapper,
-) (optional.Optional[string], error) {
+) (param.Opt[string], error) {
 	switch v := a.Instructions.(type) {
 	case StringInstructions:
-		return optional.Value[string](v.String()), nil
+		return param.NewOpt[string](v.String()), nil
 	case FunctionInstructions:
 		value, err := v(ctx, runContext, a)
-		return optional.Value[string](value), err
+		return param.NewOpt[string](value), err
 	case nil:
-		return optional.None[string](), nil
+		return param.Null[string](), nil
 	default:
 		// This would be an unrecoverable implementation bug, so a panic is appropriate.
 		panic(fmt.Errorf("unexpected Instructions type %T", v))

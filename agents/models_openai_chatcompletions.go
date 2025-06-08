@@ -25,7 +25,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -135,7 +134,7 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 }
 
 func (m OpenAIChatCompletionsModel) prepareRequest(
-	systemInstructions optional.Optional[string],
+	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
 	tools []Tool,
@@ -149,7 +148,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 		return nil, nil, err
 	}
 
-	if systemInstructions.Present {
+	if systemInstructions.Valid() {
 		convertedMessages = slices.Insert(convertedMessages, 0, openai.ChatCompletionMessageParamUnion{
 			OfSystem: &openai.ChatCompletionSystemMessageParam{
 				Content: openai.ChatCompletionSystemMessageParamContentUnion{

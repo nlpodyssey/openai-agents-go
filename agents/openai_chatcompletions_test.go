@@ -22,7 +22,6 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
@@ -80,7 +79,7 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
-		SystemInstructions: optional.None[string](),
+		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -132,7 +131,7 @@ func TestGetResponseWithRefusal(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
-		SystemInstructions: optional.None[string](),
+		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -188,7 +187,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
-		SystemInstructions: optional.None[string](),
+		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -224,7 +223,7 @@ func TestPrepareRequestNonStream(t *testing.T) {
 
 	// Execute the private prepareRequest with a system instruction and simple string input.
 	params, opts, err := model.(OpenAIChatCompletionsModel).prepareRequest(
-		optional.Value("sys"),
+		param.NewOpt("sys"),
 		InputString("hi"),
 		modelsettings.ModelSettings{},
 		nil,
