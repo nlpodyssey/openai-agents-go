@@ -136,7 +136,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 	listInput := ItemHelpers().InputToNewInputList(input)
 
 	var parallelToolCalls param.Opt[bool]
-	if modelSettings.ParallelToolCalls.Present {
+	if modelSettings.ParallelToolCalls.Valid() {
 		if modelSettings.ParallelToolCalls.Value && len(tools) > 0 {
 			parallelToolCalls = param.NewOpt(true)
 		} else if !modelSettings.ParallelToolCalls.Value {
@@ -174,14 +174,14 @@ func (m OpenAIResponsesModel) prepareRequest(
 		Input:              responses.ResponseNewParamsInputUnion{OfInputItemList: listInput},
 		Include:            convertedTools.Includes,
 		Tools:              convertedTools.Tools,
-		Temperature:        optional.ToParamOptOmitted(modelSettings.Temperature),
-		TopP:               optional.ToParamOptOmitted(modelSettings.TopP),
-		Truncation:         responses.ResponseNewParamsTruncation(modelSettings.Truncation.ValueOrFallback("")),
-		MaxOutputTokens:    optional.ToParamOptOmitted(modelSettings.MaxTokens),
+		Temperature:        modelSettings.Temperature,
+		TopP:               modelSettings.TopP,
+		Truncation:         responses.ResponseNewParamsTruncation(modelSettings.Truncation.Or("")),
+		MaxOutputTokens:    modelSettings.MaxTokens,
 		ToolChoice:         toolChoice,
 		ParallelToolCalls:  parallelToolCalls,
 		Text:               responseFormat,
-		Store:              optional.ToParamOptOmitted(modelSettings.Store),
+		Store:              modelSettings.Store,
 		Reasoning:          modelSettings.Reasoning.ValueOrFallback(openai.ReasoningParam{}),
 		Metadata:           modelSettings.Metadata.ValueOrFallback(nil),
 	}

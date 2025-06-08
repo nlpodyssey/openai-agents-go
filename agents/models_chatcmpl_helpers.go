@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -35,16 +34,16 @@ func (chatCmplHelpers) IsOpenAI(client OpenaiClient) bool {
 func (h chatCmplHelpers) GetStoreParam(
 	client OpenaiClient,
 	modelSettings modelsettings.ModelSettings,
-) optional.Optional[bool] {
+) param.Opt[bool] {
 	// Match the behavior of Responses where store is True when not given
-	if modelSettings.Store.Present {
+	switch {
+	case modelSettings.Store.Valid():
 		return modelSettings.Store
+	case h.IsOpenAI(client):
+		return param.NewOpt(true)
+	default:
+		return param.Null[bool]()
 	}
-
-	if h.IsOpenAI(client) {
-		return optional.Value(true)
-	}
-	return optional.None[bool]()
 }
 
 func (h chatCmplHelpers) GetStreamOptionsParam(
@@ -57,7 +56,7 @@ func (h chatCmplHelpers) GetStreamOptionsParam(
 		return options
 	}
 
-	if modelSettings.IncludeUsage.Present {
+	if modelSettings.IncludeUsage.Valid() {
 		options.IncludeUsage = param.NewOpt(modelSettings.IncludeUsage.Value)
 	} else if h.IsOpenAI(client) {
 		options.IncludeUsage = param.NewOpt(true)
