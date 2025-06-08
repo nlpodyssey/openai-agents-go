@@ -22,7 +22,6 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
-	"github.com/nlpodyssey/openai-agents-go/types/optional"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -140,7 +139,7 @@ func TestHandoffInputType(t *testing.T) {
 	obj, err := HandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
-		InputJSONSchema: optional.Value(HandoffToolTestFooSchema{}.JSONSchema()),
+		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
 	})
 	require.NoError(t, err)
 
@@ -172,7 +171,7 @@ func TestOnHandoffCalled(t *testing.T) {
 	obj, err := HandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
-		InputJSONSchema: optional.Value(HandoffToolTestFooSchema{}.JSONSchema()),
+		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
 	})
 	require.NoError(t, err)
 
@@ -196,7 +195,7 @@ func TestOnHandoffError(t *testing.T) {
 	obj, err := HandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
-		InputJSONSchema: optional.Value(HandoffToolTestFooSchema{}.JSONSchema()),
+		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
 	})
 	require.NoError(t, err)
 

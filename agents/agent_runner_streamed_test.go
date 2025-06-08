@@ -403,7 +403,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
-				InputJSONSchema: optional.Value(AgentRunnerTestFooSchema{}.JSONSchema()),
+				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
 			}),
 		},
 	}
