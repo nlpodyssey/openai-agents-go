@@ -14,6 +14,8 @@
 
 package usage
 
+import "github.com/openai/openai-go/responses"
+
 type Usage struct {
 	// Total requests made to the LLM API.
 	Requests uint64
@@ -21,8 +23,14 @@ type Usage struct {
 	// Total input tokens sent, across all requests.
 	InputTokens uint64
 
+	// Details about the input tokens, matching responses API usage details.
+	InputTokensDetails responses.ResponseUsageInputTokensDetails
+
 	// Total output tokens received, across all requests.
 	OutputTokens uint64
+
+	// Details about the output tokens, matching responses API usage details.
+	OutputTokensDetails responses.ResponseUsageOutputTokensDetails
 
 	// Total tokens sent and received, across all requests.
 	TotalTokens uint64
@@ -37,4 +45,6 @@ func (u *Usage) Add(other *Usage) {
 	u.InputTokens += other.InputTokens
 	u.OutputTokens += other.OutputTokens
 	u.TotalTokens += other.TotalTokens
+	u.InputTokensDetails.CachedTokens += other.InputTokensDetails.CachedTokens
+	u.OutputTokensDetails.ReasoningTokens += other.OutputTokensDetails.ReasoningTokens
 }

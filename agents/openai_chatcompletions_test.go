@@ -67,7 +67,13 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 		"model":   "fake",
 		"object":  "chat.completion",
 		"choices": []any{choice},
-		"usage":   m{"prompt_tokens": 7, "completion_tokens": 5, "total_tokens": 12},
+		"usage": m{ // CompletionUsage
+			"completion_tokens": 5,
+			"prompt_tokens":     7,
+			"total_tokens":      12,
+			// completion_tokens_details left blank to test default
+			"prompt_tokens_details": m{"cached_tokens": 3}, // PromptTokensDetails
+		},
 	}
 	dummyClient := makeOpenaiClientWithResponse(t, chat)
 
@@ -102,6 +108,8 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 	assert.Equal(t, uint64(7), resp.Usage.InputTokens)
 	assert.Equal(t, uint64(5), resp.Usage.OutputTokens)
 	assert.Equal(t, uint64(12), resp.Usage.TotalTokens)
+	assert.Equal(t, int64(3), resp.Usage.InputTokensDetails.CachedTokens)
+	assert.Equal(t, int64(0), resp.Usage.OutputTokensDetails.ReasoningTokens)
 	assert.Equal(t, "", resp.ResponseID)
 }
 
@@ -154,6 +162,8 @@ func TestGetResponseWithRefusal(t *testing.T) {
 	assert.Equal(t, uint64(0), resp.Usage.InputTokens)
 	assert.Equal(t, uint64(0), resp.Usage.OutputTokens)
 	assert.Equal(t, uint64(0), resp.Usage.TotalTokens)
+	assert.Equal(t, int64(0), resp.Usage.InputTokensDetails.CachedTokens)
+	assert.Equal(t, int64(0), resp.Usage.OutputTokensDetails.ReasoningTokens)
 }
 
 func TestGetResponseWithToolCall(t *testing.T) {
