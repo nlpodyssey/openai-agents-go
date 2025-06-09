@@ -75,7 +75,7 @@ func (m OpenAIResponsesModel) GetResponse(
 	}
 
 	u := usage.NewUsage()
-	if !reflect.DeepEqual(response.Usage, responses.ResponseUsage{}) {
+	if !reflect.ValueOf(response.Usage).IsZero() {
 		u.Requests = 1
 		u.InputTokens = uint64(response.Usage.InputTokens)
 		u.OutputTokens = uint64(response.Usage.OutputTokens)

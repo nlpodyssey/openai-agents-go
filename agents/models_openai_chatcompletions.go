@@ -76,7 +76,7 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 	}
 
 	u := usage.NewUsage()
-	if !reflect.DeepEqual(response.Usage, openai.CompletionUsage{}) {
+	if !reflect.ValueOf(response.Usage).IsZero() {
 		u.Requests = 1
 		u.InputTokens = uint64(response.Usage.PromptTokens)
 		u.OutputTokens = uint64(response.Usage.CompletionTokens)
