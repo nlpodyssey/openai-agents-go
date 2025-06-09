@@ -19,6 +19,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -49,8 +50,8 @@ func GetTextMessage(content string) responses.ResponseOutputItemUnion {
 	}
 }
 
-func GetFunctionTool(name string, returnValue string) agents.FunctionTool {
-	return agents.FunctionTool{
+func GetFunctionTool(name string, returnValue string) tools.Function {
+	return tools.Function{
 		Name: name,
 		ParamsJSONSchema: map[string]any{
 			"title":                name + "_args",

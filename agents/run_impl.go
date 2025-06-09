@@ -26,6 +26,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -87,7 +88,7 @@ type ToolRunHandoff struct {
 
 type ToolRunFunction struct {
 	ToolCall     ResponseFunctionToolCall
-	FunctionTool FunctionTool
+	FunctionTool tools.Function
 }
 
 type ProcessedResponse struct {
@@ -308,7 +309,7 @@ func (runImpl) MaybeResetToolChoice(
 
 func (runImpl) ProcessModelResponse(
 	agent *Agent,
-	allTools []Tool,
+	allTools []tools.Tool,
 	response ModelResponse,
 	handoffs []Handoff,
 ) (*ProcessedResponse, error) {
@@ -324,9 +325,9 @@ func (runImpl) ProcessModelResponse(
 		handoffMap[handoff.ToolName] = handoff
 	}
 
-	functionMap := make(map[string]FunctionTool)
+	functionMap := make(map[string]tools.Function)
 	for _, tool := range allTools {
-		if functionTool, ok := tool.(FunctionTool); ok {
+		if functionTool, ok := tool.(tools.Function); ok {
 			functionMap[functionTool.Name] = functionTool
 		}
 	}
@@ -409,6 +410,17 @@ func (runImpl) ProcessModelResponse(
 	}, nil
 }
 
+type FunctionToolResult struct {
+	// The tool that was run.
+	Tool tools.Function
+
+	// The output of the tool.
+	Output any
+
+	// The run item that was produced as a result of the tool call.
+	RunItem RunItem
+}
+
 func (runImpl) ExecuteFunctionToolCalls(
 	ctx context.Context,
 	agent *Agent,
@@ -418,7 +430,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 ) ([]FunctionToolResult, error) {
 	runSingleTool := func(
 		ctx context.Context,
-		funcTool FunctionTool,
+		funcTool tools.Function,
 		toolCall ResponseFunctionToolCall,
 	) (any, error) {
 		var (

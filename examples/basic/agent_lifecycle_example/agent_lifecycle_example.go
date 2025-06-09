@@ -24,6 +24,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -63,22 +64,20 @@ func (h *CustomAgentHooks) OnHandoff(_ context.Context, _ *runcontext.Wrapper, a
 	return nil
 }
 
-func (h *CustomAgentHooks) OnToolStart(_ context.Context, _ *runcontext.Wrapper, agent *agents.Agent, tool agents.Tool) error {
+func (h *CustomAgentHooks) OnToolStart(_ context.Context, _ *runcontext.Wrapper, agent *agents.Agent, tool tools.Tool) error {
 	h.eventCounter += 1
-	funcTool := tool.(agents.FunctionTool)
 	fmt.Printf(
 		"### (%s) %d: Agent %s started tool %s\n",
-		h.displayName, h.eventCounter, agent.Name, funcTool.Name,
+		h.displayName, h.eventCounter, agent.Name, tool.ToolName(),
 	)
 	return nil
 }
 
-func (h *CustomAgentHooks) OnToolEnd(_ context.Context, _ *runcontext.Wrapper, agent *agents.Agent, tool agents.Tool, result any) error {
+func (h *CustomAgentHooks) OnToolEnd(_ context.Context, _ *runcontext.Wrapper, agent *agents.Agent, tool tools.Tool, result any) error {
 	h.eventCounter += 1
-	funcTool := tool.(agents.FunctionTool)
 	fmt.Printf(
 		"### (%s) %d: Agent %s ended tool %s with result %#v\n",
-		h.displayName, h.eventCounter, agent.Name, funcTool.Name, result,
+		h.displayName, h.eventCounter, agent.Name, tool.ToolName(), result,
 	)
 	return nil
 }
@@ -135,7 +134,7 @@ func (f FinalResultOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 }
 
 var (
-	RandomNumberTool = agents.FunctionTool{
+	RandomNumberTool = tools.Function{
 		Name:        "random_number",
 		Description: "Generate a random number up to the provided maximum.",
 		ParamsJSONSchema: map[string]any{
@@ -160,7 +159,7 @@ var (
 		},
 	}
 
-	MultiplyByTwoTool = agents.FunctionTool{
+	MultiplyByTwoTool = tools.Function{
 		Name:        "multiply_by_two",
 		Description: "Simple multiplication by two.",
 		ParamsJSONSchema: map[string]any{
@@ -188,7 +187,7 @@ var (
 	MultiplyAgent = &agents.Agent{
 		Name:         "Multiply Agent",
 		Instructions: agents.InstructionsStr("Multiply the number by 2 and then return the final result."),
-		Tools:        []agents.Tool{MultiplyByTwoTool},
+		Tools:        []tools.Tool{MultiplyByTwoTool},
 		OutputSchema: FinalResultOutputSchema{},
 		Hooks:        NewCustomAgentHooks("Multiply Agent"),
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
@@ -199,7 +198,7 @@ var (
 		Instructions: agents.InstructionsStr(
 			"Generate a random number. If it's even, stop. If it's odd, hand off to the multiply agent.",
 		),
-		Tools:         []agents.Tool{RandomNumberTool},
+		Tools:         []tools.Tool{RandomNumberTool},
 		OutputSchema:  FinalResultOutputSchema{},
 		AgentHandoffs: []*agents.Agent{MultiplyAgent},
 		Hooks:         NewCustomAgentHooks("Start Agent"),

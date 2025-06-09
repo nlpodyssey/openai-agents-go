@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -68,7 +69,7 @@ func TestNoToolCalls(t *testing.T) {
 func TestSingleToolCall(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []Tool{
+		Tools: []tools.Tool{
 			getFunctionTool("test", ""),
 		},
 	}
@@ -99,7 +100,7 @@ func TestSingleToolCall(t *testing.T) {
 func TestMissingToolCallRaisesError(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []Tool{
+		Tools: []tools.Tool{
 			getFunctionTool("test", ""),
 		},
 	}
@@ -124,7 +125,7 @@ func TestMissingToolCallRaisesError(t *testing.T) {
 func TestRunStepProcessingMultipleToolCalls(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []Tool{
+		Tools: []tools.Tool{
 			getFunctionTool("test_1", ""),
 			getFunctionTool("test_2", ""),
 			getFunctionTool("test_3", ""),
@@ -319,7 +320,7 @@ func TestToolAndHandoffParsedCorrectly(t *testing.T) {
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
 		Name: "test_3",
-		Tools: []Tool{
+		Tools: []tools.Tool{
 			getFunctionTool("test", ""),
 		},
 		AgentHandoffs: []*Agent{agent1, agent2},

@@ -20,6 +20,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -108,7 +109,7 @@ func TestRequiredToolChoiceWithMultipleRuns(t *testing.T) {
 	agent := &agents.Agent{
 		Name:          "test_agent",
 		Model:         param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:         []agents.Tool{customTool},
+		Tools:         []tools.Tool{customTool},
 		ModelSettings: modelsettings.ModelSettings{ToolChoice: "required"},
 	}
 
@@ -149,7 +150,7 @@ func TestRequiredWithStopAtToolName(t *testing.T) {
 	agent := &agents.Agent{
 		Name:            "test_agent",
 		Model:           param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:           []agents.Tool{firstTool, secondTool},
+		Tools:           []tools.Tool{firstTool, secondTool},
 		ModelSettings:   modelsettings.ModelSettings{ToolChoice: "required"},
 		ToolUseBehavior: agents.StopAtTools{StopAtToolNames: []string{"second_tool"}},
 	}
@@ -182,7 +183,7 @@ func TestSpecificToolChoice(t *testing.T) {
 	agent := &agents.Agent{
 		Name:          "test_agent",
 		Model:         param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:         []agents.Tool{tool1, tool2, tool3},
+		Tools:         []tools.Tool{tool1, tool2, tool3},
 		ModelSettings: modelsettings.ModelSettings{ToolChoice: "tool1"}, // Specific tool
 	}
 
@@ -217,7 +218,7 @@ func TestRequiredWithSingleTool(t *testing.T) {
 	agent := &agents.Agent{
 		Name:          "test_agent",
 		Model:         param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:         []agents.Tool{customTool},
+		Tools:         []tools.Tool{customTool},
 		ModelSettings: modelsettings.ModelSettings{ToolChoice: "required"},
 	}
 
@@ -251,7 +252,7 @@ func TestDontResetToolChoiceIfNotRequired(t *testing.T) {
 	agent := &agents.Agent{
 		Name:            "test_agent",
 		Model:           param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:           []agents.Tool{customTool},
+		Tools:           []tools.Tool{customTool},
 		ModelSettings:   modelsettings.ModelSettings{ToolChoice: "required"},
 		ResetToolChoice: param.NewOpt(false),
 	}

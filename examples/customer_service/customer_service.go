@@ -27,6 +27,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_prompt"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -64,7 +65,7 @@ func FAQLookup(args FAQLookupArgs) string {
 	}
 }
 
-var FAQLookupTool = agents.FunctionTool{
+var FAQLookupTool = tools.Function{
 	Name:        "faq_lookup_tool",
 	Description: "Lookup frequently asked questions.",
 	ParamsJSONSchema: map[string]any{
@@ -111,7 +112,7 @@ func UpdateSeat(cw *runcontext.Wrapper, args UpdateSeatArgs) (string, error) {
 	), nil
 }
 
-var UpdateSeatTool = agents.FunctionTool{
+var UpdateSeatTool = tools.Function{
 	Name:        "update_seat",
 	Description: "Update the seat for a given confirmation number.",
 	ParamsJSONSchema: map[string]any{
@@ -167,7 +168,7 @@ Use the following routine to support the customer.
 1. Identify the last question asked by the customer.
 2. Use the faq lookup tool to answer the question. Do not rely on your own knowledge.
 3. If you cannot answer the question, transfer back to the triage agent.`),
-		Tools: []agents.Tool{FAQLookupTool},
+		Tools: []tools.Tool{FAQLookupTool},
 		Model: param.NewOpt(Model),
 	}
 
@@ -183,7 +184,7 @@ Use the following routine to support the customer.
 2. Ask the customer what their desired seat number is.
 3. Use the update seat tool to update the seat on the flight.
 If the customer asks a question that is not related to the routine, transfer back to the triage agent.`),
-		Tools: []agents.Tool{UpdateSeatTool},
+		Tools: []tools.Tool{UpdateSeatTool},
 		Model: param.NewOpt(Model),
 	}
 

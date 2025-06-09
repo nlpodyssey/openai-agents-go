@@ -20,6 +20,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/shared/constant"
@@ -28,7 +29,7 @@ import (
 )
 
 func TestToOpenaiWithFunctionTool(t *testing.T) {
-	tool := agents.FunctionTool{
+	tool := tools.Function{
 		Name:        "some_function",
 		Description: "Function description.",
 		ParamsJSONSchema: map[string]any{
@@ -45,8 +46,9 @@ func TestToOpenaiWithFunctionTool(t *testing.T) {
 		},
 	}
 
-	result := agents.ChatCmplConverter().ToolToOpenai(tool)
-	assert.Equal(t, openai.ChatCompletionToolParam{
+	result, err := tool.ConvertToChatCompletions()
+	require.NoError(t, err)
+	assert.Equal(t, &openai.ChatCompletionToolParam{
 		Function: openai.FunctionDefinitionParam{
 			Name:        "some_function",
 			Strict:      param.Opt[bool]{},

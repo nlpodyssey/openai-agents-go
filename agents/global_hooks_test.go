@@ -23,6 +23,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,12 +58,12 @@ func (h *RunHooksForTests) OnHandoff(context.Context, *runcontext.Wrapper, *agen
 	return nil
 }
 
-func (h *RunHooksForTests) OnToolStart(context.Context, *runcontext.Wrapper, *agents.Agent, agents.Tool) error {
+func (h *RunHooksForTests) OnToolStart(context.Context, *runcontext.Wrapper, *agents.Agent, tools.Tool) error {
 	h.Events["OnToolStart"] += 1
 	return nil
 }
 
-func (h *RunHooksForTests) OnToolEnd(context.Context, *runcontext.Wrapper, *agents.Agent, agents.Tool, any) error {
+func (h *RunHooksForTests) OnToolEnd(context.Context, *runcontext.Wrapper, *agents.Agent, tools.Tool, any) error {
 	h.Events["OnToolEnd"] += 1
 	return nil
 }
@@ -82,7 +83,7 @@ func TestNonStreamedRuntHooks(t *testing.T) {
 		Name:          "agent_3",
 		Model:         param.NewOpt(agents.NewAgentModel(model)),
 		AgentHandoffs: []*agents.Agent{agent1, agent2},
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 	}
@@ -194,7 +195,7 @@ func TestStreamedRuntHooks(t *testing.T) {
 		Name:          "agent_3",
 		Model:         param.NewOpt(agents.NewAgentModel(model)),
 		AgentHandoffs: []*agents.Agent{agent1, agent2},
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 	}
@@ -344,7 +345,7 @@ func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
 		Name:          "test_3",
 		Model:         param.NewOpt(agents.NewAgentModel(model)),
 		AgentHandoffs: []*agents.Agent{agent1, agent2},
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 		OutputSchema: GlobalHooksTestFooSchema{},
@@ -450,7 +451,7 @@ func TestStructuredOutputStreamedRunHooks(t *testing.T) {
 		Name:          "test_3",
 		Model:         param.NewOpt(agents.NewAgentModel(model)),
 		AgentHandoffs: []*agents.Agent{agent1, agent2},
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 		OutputSchema: GlobalHooksTestFooSchema{},

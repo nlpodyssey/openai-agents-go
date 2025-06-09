@@ -22,6 +22,7 @@ import (
 	"reflect"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -47,7 +48,7 @@ func (m OpenAIResponsesModel) GetResponse(
 	ctx context.Context,
 	params ModelGetResponseParams,
 ) (*ModelResponse, error) {
-	body, opts := m.prepareRequest(
+	body, opts, err := m.prepareRequest(
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
@@ -57,8 +58,11 @@ func (m OpenAIResponsesModel) GetResponse(
 		params.PreviousResponseID,
 		false,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	response, err := m.client.Responses.New(ctx, body, opts...)
+	response, err := m.client.Responses.New(ctx, *body, opts...)
 	if err != nil {
 		slog.Error("error getting response", slog.String("error", err.Error()))
 		return nil, err
@@ -90,7 +94,7 @@ func (m OpenAIResponsesModel) StreamResponse(
 	ctx context.Context,
 	params ModelStreamResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
-	body, opts := m.prepareRequest(
+	body, opts, err := m.prepareRequest(
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
@@ -100,8 +104,11 @@ func (m OpenAIResponsesModel) StreamResponse(
 		params.PreviousResponseID,
 		true,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	stream := m.client.Responses.NewStreaming(ctx, body, opts...)
+	stream := m.client.Responses.NewStreaming(ctx, *body, opts...)
 	if err := stream.Err(); err != nil {
 		return nil, fmt.Errorf("error streaming response: %w", err)
 	}
@@ -126,12 +133,12 @@ func (m OpenAIResponsesModel) prepareRequest(
 	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
-	tools []Tool,
+	tools []tools.Tool,
 	outputSchema AgentOutputSchemaInterface,
 	handoffs []Handoff,
 	previousResponseID string,
 	stream bool,
-) (responses.ResponseNewParams, []option.RequestOption) {
+) (*responses.ResponseNewParams, []option.RequestOption, error) {
 	listInput := ItemHelpers().InputToNewInputList(input)
 
 	var parallelToolCalls param.Opt[bool]
@@ -144,7 +151,10 @@ func (m OpenAIResponsesModel) prepareRequest(
 	}
 
 	toolChoice := ResponsesConverter().ConvertToolChoice(modelSettings.ToolChoice)
-	convertedTools := ResponsesConverter().ConvertTools(tools, handoffs)
+	convertedTools, err := ResponsesConverter().ConvertTools(tools, handoffs)
+	if err != nil {
+		return nil, nil, err
+	}
 	responseFormat := ResponsesConverter().GetResponseFormat(outputSchema)
 
 	if DontLogModelData {
@@ -166,7 +176,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 		prevRespIDParam = param.NewOpt(previousResponseID)
 	}
 
-	params := responses.ResponseNewParams{
+	params := &responses.ResponseNewParams{
 		PreviousResponseID: prevRespIDParam,
 		Instructions:       systemInstructions,
 		Model:              m.Model,
@@ -192,7 +202,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 	for k, v := range modelSettings.ExtraQuery {
 		opts = append(opts, option.WithQuery(k, v))
 	}
-	return params, opts
+	return params, opts, nil
 }
 
 type ConvertedTools struct {
@@ -248,13 +258,16 @@ func (responsesConverter) GetResponseFormat(
 	}
 }
 
-func (conv responsesConverter) ConvertTools(tools []Tool, handoffs []Handoff) ConvertedTools {
+func (conv responsesConverter) ConvertTools(tools []tools.Tool, handoffs []Handoff) (*ConvertedTools, error) {
 	var convertedTools []responses.ToolUnionParam
 	var includes []responses.ResponseIncludable
 
 	for _, tool := range tools {
-		convertedTool, include := conv.convertTool(tool)
-		convertedTools = append(convertedTools, convertedTool)
+		convertedTool, include, err := tool.ConvertToResponses()
+		if err != nil {
+			return nil, err
+		}
+		convertedTools = append(convertedTools, *convertedTool)
 		if include != nil {
 			includes = append(includes, *include)
 		}
@@ -264,29 +277,10 @@ func (conv responsesConverter) ConvertTools(tools []Tool, handoffs []Handoff) Co
 		convertedTools = append(convertedTools, conv.convertHandoffTool(handoff))
 	}
 
-	return ConvertedTools{
+	return &ConvertedTools{
 		Tools:    convertedTools,
 		Includes: includes,
-	}
-}
-
-// convertTool returns converted tool and includes.
-func (responsesConverter) convertTool(tool Tool) (responses.ToolUnionParam, *responses.ResponseIncludable) {
-	switch tool := tool.(type) {
-	case FunctionTool:
-		return responses.ToolUnionParam{
-			OfFunction: &responses.FunctionToolParam{
-				Name:        tool.Name,
-				Parameters:  tool.ParamsJSONSchema,
-				Strict:      param.NewOpt(tool.StrictJSONSchema.Or(true)),
-				Description: param.NewOpt(tool.Description),
-				Type:        constant.ValueOf[constant.Function](),
-			},
-		}, nil
-	default:
-		// This would be an unrecoverable implementation bug, so a panic is appropriate.
-		panic(fmt.Errorf("unexpected Tool type %T", tool))
-	}
+	}, nil
 }
 
 func (responsesConverter) convertHandoffTool(handoff Handoff) responses.ToolUnionParam {

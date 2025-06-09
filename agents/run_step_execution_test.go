@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -100,7 +101,7 @@ func TestPlaintextAgentNoToolCallsMultipleMessagesIsFinalOutput(t *testing.T) {
 func TestPlaintextAgentWithToolCallIsRunAgain(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []Tool{
+		Tools: []tools.Tool{
 			getFunctionTool("test", "123"),
 		},
 	}
@@ -131,7 +132,7 @@ func TestPlaintextAgentWithToolCallIsRunAgain(t *testing.T) {
 func TestRunStepExecutionMultipleToolCalls(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []Tool{
+		Tools: []tools.Tool{
 			getFunctionTool("test_1", "123"),
 			getFunctionTool("test_2", "456"),
 			getFunctionTool("test_3", "789"),
@@ -228,7 +229,7 @@ func TestFinalOutputWithoutToolRunsAgain(t *testing.T) {
 	agent := &Agent{
 		Name:         "test",
 		OutputSchema: RunStepExecTestFooSchema{},
-		Tools: []Tool{
+		Tools: []tools.Tool{
 			getFunctionTool("tool_1", "result"),
 		},
 	}

@@ -22,6 +22,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -78,7 +79,7 @@ func GetWeather(args GetWeatherArgs) string {
 	return fmt.Sprintf("The weather in %s is sunny.", args.City)
 }
 
-var GetWeatherTool = agents.FunctionTool{
+var GetWeatherTool = tools.Function{
 	Name:        "get_weather",
 	Description: "",
 	ParamsJSONSchema: map[string]any{
@@ -109,7 +110,7 @@ func main() {
 		Name:         "Assistant",
 		Instructions: agents.InstructionsStr("You only respond in haikus."),
 		Model:        param.NewOpt(agents.NewAgentModel(agents.NewOpenAIChatCompletionsModel(ModelName, Client))),
-		Tools:        []agents.Tool{GetWeatherTool},
+		Tools:        []tools.Tool{GetWeatherTool},
 	}
 
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
