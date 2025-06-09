@@ -20,6 +20,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -40,7 +41,7 @@ type FakeModelLastTurnArgs struct {
 	SystemInstructions param.Opt[string]
 	Input              agents.Input
 	ModelSettings      modelsettings.ModelSettings
-	Tools              []agents.Tool
+	Tools              []tools.Tool
 	OutputSchema       agents.AgentOutputSchemaInterface
 	// optional
 	PreviousResponseID string

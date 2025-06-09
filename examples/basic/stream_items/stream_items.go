@@ -21,6 +21,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -28,7 +29,7 @@ func HowManyJokes() int64 {
 	return rand.Int63n(10) + 1
 }
 
-var HowManyJokesTool = agents.FunctionTool{
+var HowManyJokesTool = tools.Function{
 	Name:        "how_many_jokes",
 	Description: "",
 	ParamsJSONSchema: map[string]any{
@@ -49,7 +50,7 @@ func main() {
 		Name:         "Joker",
 		Instructions: agents.InstructionsStr("First call the `how_many_jokes` tool, then tell that many jokes."),
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			HowManyJokesTool,
 		},
 	}

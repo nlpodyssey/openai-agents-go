@@ -25,6 +25,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_filters"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -38,7 +39,7 @@ func RandomNumber(args RandomNumberArgs) int64 {
 	return rand.Int63n(args.Max + 1)
 }
 
-var RandomNumberTool = agents.FunctionTool{
+var RandomNumberTool = tools.Function{
 	Name:        "random_number",
 	Description: "Return a random integer between 0 and the given maximum.",
 	ParamsJSONSchema: map[string]any{
@@ -86,7 +87,7 @@ var (
 	FirstAgent = &agents.Agent{
 		Name:         "Assistant",
 		Instructions: agents.InstructionsStr("Be extremely concise."),
-		Tools:        []agents.Tool{RandomNumberTool},
+		Tools:        []tools.Tool{RandomNumberTool},
 		Model:        param.NewOpt(Model),
 	}
 

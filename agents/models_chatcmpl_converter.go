@@ -463,27 +463,6 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 	return result, nil
 }
 
-func (chatCmplConverter) ToolToOpenai(tool Tool) openai.ChatCompletionToolParam {
-	switch tool := tool.(type) {
-	case FunctionTool:
-		description := param.Null[string]()
-		if tool.Description != "" {
-			description = param.NewOpt(tool.Description)
-		}
-		return openai.ChatCompletionToolParam{
-			Function: openai.FunctionDefinitionParam{
-				Name:        tool.Name,
-				Description: description,
-				Parameters:  tool.ParamsJSONSchema,
-			},
-			Type: constant.ValueOf[constant.Function](),
-		}
-	default:
-		// This would be an unrecoverable implementation bug, so a panic is appropriate.
-		panic(fmt.Errorf("unexpected Tool type %T", tool))
-	}
-}
-
 func (chatCmplConverter) ConvertHandoffTool(handoff Handoff) openai.ChatCompletionToolParam {
 	description := param.Null[string]()
 	if handoff.ToolDescription != "" {

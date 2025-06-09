@@ -24,6 +24,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -138,7 +139,7 @@ func TestToolCallRunsStreamed(t *testing.T) {
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 		},
 	}
@@ -188,7 +189,7 @@ func TestHandoffsStreaming(t *testing.T) {
 		Name:          "agent_3",
 		Model:         param.NewOpt(agents.NewAgentModel(model)),
 		AgentHandoffs: []*agents.Agent{agent1, agent2},
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 	}
@@ -231,7 +232,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
 		OutputSchema: AgentRunnerTestFooSchema{},
@@ -239,7 +240,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
 		AgentHandoffs: []*agents.Agent{agent1},
@@ -579,7 +580,7 @@ func TestStreamingEvents(t *testing.T) {
 	agent1 := &agents.Agent{
 		Name:  "test_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
 		OutputSchema: AgentRunnerTestFooSchema{},
@@ -588,7 +589,7 @@ func TestStreamingEvents(t *testing.T) {
 	agent2 := &agents.Agent{
 		Name:  "test_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
 		AgentHandoffs: []*agents.Agent{agent1},

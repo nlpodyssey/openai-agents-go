@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -61,7 +62,7 @@ var (
 				"If asked for multiple translations, you call the relevant tools in order. " +
 				"You never translate on your own, you always use the provided tools.",
 		),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			SpanishAgent.AsTool(agents.AgentAsToolParams{
 				ToolName:        "translate_to_spanish",
 				ToolDescription: "Translate the user's message to Spanish",

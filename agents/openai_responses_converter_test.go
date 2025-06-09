@@ -21,6 +21,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -112,7 +113,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	// a matching list of tool param dicts and the expected includes.
 
 	// Simple function tool
-	toolFn := agents.FunctionTool{
+	toolFn := tools.Function{
 		Name:             "fn",
 		Description:      "...",
 		ParamsJSONSchema: map[string]any{"title": "Fn"},
@@ -121,9 +122,9 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 		},
 	}
 
-	tools := []agents.Tool{toolFn}
-	converted := agents.ResponsesConverter().ConvertTools(tools, nil)
-	assert.Equal(t, agents.ConvertedTools{
+	converted, err := agents.ResponsesConverter().ConvertTools([]tools.Tool{toolFn}, nil)
+	require.NoError(t, err)
+	assert.Equal(t, &agents.ConvertedTools{
 		Tools: []responses.ToolUnionParam{
 			{
 				OfFunction: &responses.FunctionToolParam{
@@ -151,8 +152,9 @@ func TestConvertToolsIncludesHandoffs(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, handoff)
 
-	converted := agents.ResponsesConverter().ConvertTools(nil, []agents.Handoff{*handoff})
-	assert.Equal(t, agents.ConvertedTools{
+	converted, err := agents.ResponsesConverter().ConvertTools(nil, []agents.Handoff{*handoff})
+	require.NoError(t, err)
+	assert.Equal(t, &agents.ConvertedTools{
 		Tools: []responses.ToolUnionParam{
 			{
 				OfFunction: &responses.FunctionToolParam{

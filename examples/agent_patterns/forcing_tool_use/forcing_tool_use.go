@@ -24,6 +24,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -65,7 +66,7 @@ func GetWeather(args GetWeatherArgs) Weather {
 	}
 }
 
-var GetWeatherTool = agents.FunctionTool{
+var GetWeatherTool = tools.Function{
 	Name: "get_weather",
 	ParamsJSONSchema: map[string]any{
 		"title":                "get_weather_args",
@@ -143,7 +144,7 @@ func main() {
 	agent := &agents.Agent{
 		Name:            "Weather agent",
 		Instructions:    agents.InstructionsStr("You are a helpful agent."),
-		Tools:           []agents.Tool{GetWeatherTool},
+		Tools:           []tools.Tool{GetWeatherTool},
 		ToolUseBehavior: behavior,
 		ModelSettings: modelsettings.ModelSettings{
 			ToolChoice: toolChoice,

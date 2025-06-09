@@ -25,6 +25,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -137,7 +138,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
-	tools []Tool,
+	tools []tools.Tool,
 	outputSchema AgentOutputSchemaInterface,
 	handoffs []Handoff,
 	previousResponseID string,
@@ -173,7 +174,11 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 
 	var convertedTools []openai.ChatCompletionToolParam
 	for _, tool := range tools {
-		convertedTools = append(convertedTools, ChatCmplConverter().ToolToOpenai(tool))
+		v, err := tool.ConvertToChatCompletions()
+		if err != nil {
+			return nil, nil, err
+		}
+		convertedTools = append(convertedTools, *v)
 	}
 
 	for _, handoff := range handoffs {

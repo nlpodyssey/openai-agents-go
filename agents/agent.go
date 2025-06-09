@@ -20,6 +20,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -73,7 +74,7 @@ type Agent struct {
 	ModelSettings modelsettings.ModelSettings
 
 	// A list of tools that the agent can use.
-	Tools []Tool
+	Tools []tools.Tool
 
 	// A list of checks that run in parallel to the agent's execution, before generating a
 	// response. Runs only if the agent is the first agent in the chain.
@@ -128,13 +129,13 @@ type AgentAsToolParams struct {
 //     receives generated input.
 //  2. In handoffs, the new agent takes over the conversation. In this tool, the new agent is
 //     called as a tool, and the conversation is continued by the original agent.
-func (a *Agent) AsTool(params AgentAsToolParams) Tool {
+func (a *Agent) AsTool(params AgentAsToolParams) tools.Tool {
 	name := params.ToolName
 	if name == "" {
 		name = transforms.TransformStringFunctionStyle(a.Name)
 	}
 
-	return FunctionTool{
+	return tools.Function{
 		Name:             name,
 		Description:      params.ToolDescription,
 		ParamsJSONSchema: a.agentAsToolParamsJSONSchema(name + "_args"),
@@ -193,6 +194,6 @@ func (a *Agent) GetSystemPrompt(
 
 // GetAllTools returns all agent tools.
 // It only includes function tools, since other types are omitted, as we don't need them.
-func (a *Agent) GetAllTools() []Tool {
+func (a *Agent) GetAllTools() []tools.Tool {
 	return a.Tools
 }

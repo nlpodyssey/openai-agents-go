@@ -26,6 +26,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -127,7 +128,7 @@ func TestToolCallRuns(t *testing.T) {
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 		},
 	}
@@ -174,7 +175,7 @@ func TestHandoffs(t *testing.T) {
 		Name:          "agent_3",
 		Model:         param.NewOpt(agents.NewAgentModel(model)),
 		AgentHandoffs: []*agents.Agent{agent1, agent2},
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
 	}
@@ -246,7 +247,7 @@ func TestStructuredOutput(t *testing.T) {
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
 		OutputSchema: AgentRunnerTestFooSchema{},
@@ -254,7 +255,7 @@ func TestStructuredOutput(t *testing.T) {
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
 		AgentHandoffs: []*agents.Agent{agent1},
@@ -571,7 +572,7 @@ func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 	assert.ErrorAs(t, err, &target)
 }
 
-var TestToolOne = agents.FunctionTool{
+var TestToolOne = tools.Function{
 	Name:        "test_tool_one",
 	Description: "",
 	ParamsJSONSchema: map[string]any{
@@ -587,7 +588,7 @@ var TestToolOne = agents.FunctionTool{
 	StrictJSONSchema: param.NewOpt(true),
 }
 
-var TestToolTwo = agents.FunctionTool{
+var TestToolTwo = tools.Function{
 	Name:        "test_tool_two",
 	Description: "",
 	ParamsJSONSchema: map[string]any{
@@ -608,7 +609,7 @@ func TestToolUseBehaviorFirstOutput(t *testing.T) {
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 			TestToolOne,
 			TestToolTwo,
@@ -635,7 +636,7 @@ func TestToolUseBehaviorFirstOutput(t *testing.T) {
 }
 
 var CustomToolUseBehavior = func(_ *runcontext.Wrapper, results []agents.FunctionToolResult) (agents.ToolsToFinalOutputResult, error) {
-	if slices.ContainsFunc(results, func(r agents.FunctionToolResult) bool { return r.Tool.Name == "test_tool_one" }) {
+	if slices.ContainsFunc(results, func(r agents.FunctionToolResult) bool { return r.Tool.ToolName() == "test_tool_one" }) {
 		return agents.ToolsToFinalOutputResult{
 			IsFinalOutput: true,
 			FinalOutput:   param.NewOpt[any]("the_final_output"),
@@ -649,7 +650,7 @@ func TestToolUseBehaviorCustomFunction(t *testing.T) {
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 			TestToolOne,
 			TestToolTwo,
@@ -742,7 +743,7 @@ func TestMultiTurnPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
 	}
@@ -802,7 +803,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamedMultiTurn(t *testing.T) {
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []agents.Tool{
+		Tools: []tools.Tool{
 			agentstesting.GetFunctionTool("foo", "foo_result"),
 		},
 	}

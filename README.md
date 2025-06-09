@@ -130,6 +130,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -152,7 +153,7 @@ var (
 			},
 		},
 	}
-	getWeatherTool = agents.FunctionTool{
+	getWeatherTool = tools.Function{
 		Name:             "GetWeather",
 		ParamsJSONSchema: getWeatherParamsJSONSchema,
 		OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, args string) (any, error) {
@@ -167,7 +168,7 @@ var (
 	agent = &agents.Agent{
 		Name:         "Hello world",
 		Instructions: agents.InstructionsStr("You are a helpful agent."),
-		Tools:        []agents.Tool{getWeatherTool},
+		Tools:        []tools.Tool{getWeatherTool},
 		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
 	}
 )

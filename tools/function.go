@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package agents
+package tools
 
 import (
 	"context"
 
 	"github.com/nlpodyssey/openai-agents-go/runcontext"
+	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/shared/constant"
 )
 
-// FunctionTool is a tool that wraps a function.
-type FunctionTool struct {
+// Function Tool that wraps a function.
+type Function struct {
 	// The name of the tool, as shown to the LLM. Generally the name of the function.
 	Name string
 
@@ -40,7 +43,7 @@ type FunctionTool struct {
 	// You must return a string representation of the tool output, or something we can call `str()` on.
 	// In case of errors, you can either raise an Exception (which will cause the run to fail) or
 	// return a string error message (which will be sent back to the LLM).
-	OnInvokeTool func(ctx context.Context, contextWrapper *runcontext.Wrapper, arguments string) (any, error)
+	OnInvokeTool func(ctx context.Context, rcw *runcontext.Wrapper, arguments string) (any, error)
 
 	// Whether the JSON schema is in strict mode.
 	// We **strongly** recommend setting this to True, as it increases the likelihood of correct JSON input.
@@ -48,25 +51,33 @@ type FunctionTool struct {
 	StrictJSONSchema param.Opt[bool]
 }
 
-// A Tool that can be used in an agent.
-type Tool interface {
-	isTool()
+func (f Function) ToolName() string {
+	return f.Name
 }
 
-// Other types that we don't need are omitted:
-//  - FileSearchTool
-//  - WebSearchTool
-//  - ComputerTool
+func (f Function) ConvertToResponses() (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+	return &responses.ToolUnionParam{
+		OfFunction: &responses.FunctionToolParam{
+			Name:        f.Name,
+			Parameters:  f.ParamsJSONSchema,
+			Strict:      param.NewOpt(f.StrictJSONSchema.Or(true)),
+			Description: param.NewOpt(f.Description),
+			Type:        constant.ValueOf[constant.Function](),
+		},
+	}, nil, nil
+}
 
-func (FunctionTool) isTool() {}
-
-type FunctionToolResult struct {
-	// The tool that was run.
-	Tool FunctionTool
-
-	// The output of the tool.
-	Output any
-
-	// The run item that was produced as a result of the tool call.
-	RunItem RunItem
+func (f Function) ConvertToChatCompletions() (*openai.ChatCompletionToolParam, error) {
+	description := param.Null[string]()
+	if f.Description != "" {
+		description = param.NewOpt(f.Description)
+	}
+	return &openai.ChatCompletionToolParam{
+		Function: openai.FunctionDefinitionParam{
+			Name:        f.Name,
+			Description: description,
+			Parameters:  f.ParamsJSONSchema,
+		},
+		Type: constant.ValueOf[constant.Function](),
+	}, nil
 }
