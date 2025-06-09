@@ -35,13 +35,14 @@ type Function struct {
 	// The JSON schema for the tool's parameters.
 	ParamsJSONSchema map[string]any
 
-	// A function that invokes the tool with the given context and parameters. The params passed
-	// are:
-	// 1. The tool run context.
-	// 2. The arguments from the LLM, as a JSON string.
+	// A function that invokes the tool with the given context and parameters.
 	//
-	// You must return a string representation of the tool output, or something we can call `str()` on.
-	// In case of errors, you can either raise an Exception (which will cause the run to fail) or
+	// The params passed are:
+	// 	1. The tool run context.
+	// 	2. The arguments from the LLM, as a JSON string.
+	//
+	// You must return a string representation of the tool output.
+	// In case of errors, you can either return an error (which will cause the run to fail) or
 	// return a string error message (which will be sent back to the LLM).
 	OnInvokeTool func(ctx context.Context, rcw *runcontext.Wrapper, arguments string) (any, error)
 

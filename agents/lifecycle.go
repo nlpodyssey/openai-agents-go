@@ -60,7 +60,7 @@ func (NoOpRunHooks) OnToolEnd(context.Context, *runcontext.Wrapper, *Agent, tool
 
 // AgentHooks is implemented by an object that receives callbacks on various
 // lifecycle events for a specific agent.
-// You can set this on `agent.Hooks` to receive events for that specific agent.
+// You can set this on `Agent.Hooks` to receive events for that specific agent.
 type AgentHooks interface {
 	// OnStart is called before the agent is invoked. Called each time the running agent is changed to this agent.
 	OnStart(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent) error
