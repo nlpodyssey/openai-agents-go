@@ -22,7 +22,7 @@ import (
 	"github.com/openai/openai-go/packages/param"
 )
 
-// RemoveAllTools filters out all tool items: function calls+output.
+// RemoveAllTools filters out all tool items: file search, web search and function calls+output.
 func RemoveAllTools(handoffInputData agents.HandoffInputData) agents.HandoffInputData {
 	history := handoffInputData.InputHistory
 	newItems := handoffInputData.NewItems
@@ -69,7 +69,9 @@ func removeToolsFromItems(items []agents.RunItem) []agents.RunItem {
 func removeToolTypesFromInput(items []agents.TResponseInputItem) []agents.TResponseInputItem {
 	filteredItems := make([]agents.TResponseInputItem, 0)
 	for _, item := range items {
-		if !param.IsOmitted(item.OfFunctionCall) || !param.IsOmitted(item.OfFunctionCallOutput) {
+		if !param.IsOmitted(item.OfFunctionCall) || !param.IsOmitted(item.OfFunctionCallOutput) ||
+			!param.IsOmitted(item.OfComputerCall) || !param.IsOmitted(item.OfComputerCallOutput) ||
+			!param.IsOmitted(item.OfFileSearchCall) || !param.IsOmitted(item.OfWebSearchCall) {
 			continue
 		}
 		filteredItems = append(filteredItems, item)
