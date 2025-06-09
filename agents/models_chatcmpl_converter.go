@@ -94,7 +94,7 @@ func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessa
 			Type:    "refusal",
 		})
 	}
-	if !reflect.DeepEqual(message.Audio, openai.ChatCompletionAudio{}) {
+	if !reflect.ValueOf(message.Audio).IsZero() {
 		panic(errors.New("audio is not currently supported"))
 	}
 

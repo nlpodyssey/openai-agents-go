@@ -31,7 +31,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
 )
 
 type runner struct{}
@@ -644,7 +643,7 @@ func (r runner) runSingleTurnStreamed(
 		}
 		if event.Type == "response.completed" {
 			u := usage.NewUsage()
-			if !reflect.DeepEqual(event.Response.Usage, responses.ResponseUsage{}) {
+			if !reflect.ValueOf(event.Response.Usage).IsZero() {
 				u.Requests = 1
 				u.InputTokens = uint64(event.Response.Usage.InputTokens)
 				u.OutputTokens = uint64(event.Response.Usage.OutputTokens)

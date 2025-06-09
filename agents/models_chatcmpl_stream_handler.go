@@ -76,11 +76,11 @@ func (chatCmplStreamHandler) HandleStream(
 			}
 
 			// This is always set by the OpenAI API, but not by others
-			if !reflect.DeepEqual(chunk.Usage, openai.CompletionUsage{}) {
+			if !reflect.ValueOf(chunk.Usage).IsZero() {
 				completionUsage = &chunk.Usage
 			}
 
-			if len(chunk.Choices) == 0 || reflect.DeepEqual(chunk.Choices[0].Delta, openai.ChatCompletionChunkChoiceDelta{}) {
+			if len(chunk.Choices) == 0 || reflect.ValueOf(chunk.Choices[0].Delta).IsZero() {
 				continue
 			}
 
