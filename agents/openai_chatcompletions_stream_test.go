@@ -80,8 +80,14 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 		"created": 1,
 		"model":   "fake",
 		"object":  "chat.completion.chunk",
-		"choices": []m{{"index": 0, "delta": m{"content": "llo"}}},                   // Choice / ChoiceDelta
-		"usage":   m{"completion_tokens": 5, "prompt_tokens": 7, "total_tokens": 12}, // CompletionUsage
+		"choices": []m{{"index": 0, "delta": m{"content": "llo"}}}, // Choice / ChoiceDelta
+		"usage": m{ // CompletionUsage
+			"completion_tokens":         5,
+			"prompt_tokens":             7,
+			"total_tokens":              12,
+			"prompt_tokens_details":     m{"cached_tokens": 2},    // PromptTokensDetails
+			"completion_tokens_details": m{"reasoning_tokens": 3}, // CompletionTokensDetails
+		},
 	}
 
 	dummyClient := makeOpenaiClientWithStreamResponse(t, chunk1, chunk2)
@@ -146,6 +152,8 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 	assert.Equal(t, int64(7), completedResp.Usage.InputTokens)
 	assert.Equal(t, int64(5), completedResp.Usage.OutputTokens)
 	assert.Equal(t, int64(12), completedResp.Usage.TotalTokens)
+	assert.Equal(t, int64(2), completedResp.Usage.InputTokensDetails.CachedTokens)
+	assert.Equal(t, int64(3), completedResp.Usage.OutputTokensDetails.ReasoningTokens)
 }
 
 func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {

@@ -145,9 +145,17 @@ func GetResponseObj(
 
 	var responseUsage responses.ResponseUsage
 	if u != nil {
-		responseUsage.InputTokens = int64(u.InputTokens)
-		responseUsage.OutputTokens = int64(u.OutputTokens)
-		responseUsage.TotalTokens = int64(u.TotalTokens)
+		responseUsage = responses.ResponseUsage{
+			InputTokens: int64(u.InputTokens),
+			InputTokensDetails: responses.ResponseUsageInputTokensDetails{
+				CachedTokens: 0,
+			},
+			OutputTokens: int64(u.OutputTokens),
+			OutputTokensDetails: responses.ResponseUsageOutputTokensDetails{
+				ReasoningTokens: 0,
+			},
+			TotalTokens: int64(u.TotalTokens),
+		}
 	}
 
 	return responses.Response{

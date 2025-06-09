@@ -17,29 +17,48 @@ package usage
 import (
 	"testing"
 
+	"github.com/openai/openai-go/responses"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUsage_Add(t *testing.T) {
 	u := &Usage{
-		Requests:     1,
-		InputTokens:  2,
-		OutputTokens: 3,
-		TotalTokens:  4,
+		Requests:    1,
+		InputTokens: 2,
+		InputTokensDetails: responses.ResponseUsageInputTokensDetails{
+			CachedTokens: 3,
+		},
+		OutputTokens: 4,
+		OutputTokensDetails: responses.ResponseUsageOutputTokensDetails{
+			ReasoningTokens: 5,
+		},
+		TotalTokens: 6,
 	}
 	other := &Usage{
-		Requests:     50,
-		InputTokens:  60,
+		Requests:    40,
+		InputTokens: 50,
+		InputTokensDetails: responses.ResponseUsageInputTokensDetails{
+			CachedTokens: 60,
+		},
 		OutputTokens: 70,
-		TotalTokens:  80,
+		OutputTokensDetails: responses.ResponseUsageOutputTokensDetails{
+			ReasoningTokens: 80,
+		},
+		TotalTokens: 90,
 	}
 	u.Add(other)
 
 	expected := &Usage{
-		Requests:     51,
-		InputTokens:  62,
-		OutputTokens: 73,
-		TotalTokens:  84,
+		Requests:    41,
+		InputTokens: 52,
+		InputTokensDetails: responses.ResponseUsageInputTokensDetails{
+			CachedTokens: 63,
+		},
+		OutputTokens: 74,
+		OutputTokensDetails: responses.ResponseUsageOutputTokensDetails{
+			ReasoningTokens: 85,
+		},
+		TotalTokens: 96,
 	}
 	assert.Equal(t, expected, u)
 }

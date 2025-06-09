@@ -644,10 +644,14 @@ func (r runner) runSingleTurnStreamed(
 		if event.Type == "response.completed" {
 			u := usage.NewUsage()
 			if !reflect.ValueOf(event.Response.Usage).IsZero() {
-				u.Requests = 1
-				u.InputTokens = uint64(event.Response.Usage.InputTokens)
-				u.OutputTokens = uint64(event.Response.Usage.OutputTokens)
-				u.TotalTokens = uint64(event.Response.Usage.TotalTokens)
+				*u = usage.Usage{
+					Requests:            1,
+					InputTokens:         uint64(event.Response.Usage.InputTokens),
+					InputTokensDetails:  event.Response.Usage.InputTokensDetails,
+					OutputTokens:        uint64(event.Response.Usage.OutputTokens),
+					OutputTokensDetails: event.Response.Usage.OutputTokensDetails,
+					TotalTokens:         uint64(event.Response.Usage.TotalTokens),
+				}
 			}
 			finalResponse = &ModelResponse{
 				Output:     event.Response.Output,
