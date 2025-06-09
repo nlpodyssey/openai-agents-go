@@ -24,4 +24,6 @@ func debugFlagEnabled(flag string) bool {
 	return ok && (v == "1" || strings.ToLower(v) == "true")
 }
 
+// DontLogModelData - By default we don't log LLM inputs/outputs, to prevent
+// exposing sensitive information. Set this flag to enable logging them.
 var DontLogModelData = debugFlagEnabled("OPENAI_AGENTS_DONT_LOG_MODEL_DATA")
