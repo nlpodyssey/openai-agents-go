@@ -56,14 +56,11 @@ func removeToolsFromItems(items []agents.RunItem) []agents.RunItem {
 	}
 	filteredItems := make([]agents.RunItem, 0)
 	for _, item := range items {
-		switch item := item.(type) {
+		switch item.(type) {
 		case agents.HandoffCallItem, agents.HandoffOutputItem, agents.ToolCallItem, agents.ToolCallOutputItem:
 			continue
-		case agents.MessageOutputItem, agents.ReasoningItem:
-			filteredItems = append(filteredItems, item)
 		default:
-			// This would be an unrecoverable implementation bug, so a panic is appropriate.
-			panic(fmt.Errorf("unexpected RunItem type %T", item))
+			filteredItems = append(filteredItems, item)
 		}
 	}
 	return filteredItems
