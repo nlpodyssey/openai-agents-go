@@ -27,7 +27,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
@@ -71,9 +70,6 @@ type RunParams struct {
 	// The initial input to the agent.
 	// You can pass a single string for a user message, or a list of input items.
 	Input Input
-
-	// Optional context to run the agent with.
-	Context any
 
 	// Optional maximum number of turns to run the agent for.
 	// A turn is defined as one AI invocation (including any tool calls that might occur).
@@ -129,7 +125,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 		inputGuardrailResults []InputGuardrailResult
 	)
 
-	contextWrapper := runcontext.NewWrapper(params.Context)
+	ctx = usage.NewContext(ctx, usage.NewUsage())
 
 	if params.StartingAgent == nil {
 		return nil, fmt.Errorf("StartingAgent must not be nil")
@@ -173,7 +169,6 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 					params.StartingAgent,
 					slices.Concat(params.StartingAgent.InputGuardrails, params.RunConfig.InputGuardrails),
 					CopyGeneralInput(params.Input),
-					contextWrapper,
 				)
 				if guardrailsError != nil {
 					cancel()
@@ -190,7 +185,6 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 					originalInput,
 					generatedItems,
 					hooks,
-					contextWrapper,
 					params.RunConfig,
 					shouldRunAgentStartHooks,
 					toolUseTracker,
@@ -214,7 +208,6 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 				originalInput,
 				generatedItems,
 				hooks,
-				contextWrapper,
 				params.RunConfig,
 				shouldRunAgentStartHooks,
 				toolUseTracker,
@@ -238,7 +231,6 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 				slices.Concat(currentAgent.OutputGuardrails, params.RunConfig.OutputGuardrails),
 				currentAgent,
 				nextStep.Output,
-				contextWrapper,
 			)
 			if err != nil {
 				return nil, err
@@ -251,7 +243,6 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 					FinalOutput:            nextStep.Output,
 					InputGuardrailResults:  inputGuardrailResults,
 					OutputGuardrailResults: outputGuardrailResults,
-					ContextWrapper:         contextWrapper,
 				},
 				lastAgent: currentAgent,
 			}, nil
@@ -276,9 +267,6 @@ type RunStreamedParams struct {
 	// The initial input to the agent.
 	// You can pass a single string for a user message, or a list of input items.
 	Input Input
-
-	// Optional context to run the agent with.
-	Context any
 
 	// Optional maximum number of turns to run the agent for.
 	// A turn is defined as one AI invocation (including any tool calls that might occur).
@@ -329,7 +317,7 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 	}
 
 	outputSchema := params.StartingAgent.OutputSchema
-	contextWrapper := runcontext.NewWrapper(params.Context)
+	ctx = usage.NewContext(ctx, usage.NewUsage())
 
 	streamedResult := &RunResultStreaming{
 		RunResultBase: RunResultBase{
@@ -339,7 +327,6 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 			FinalOutput:            nil,
 			InputGuardrailResults:  nil,
 			OutputGuardrailResults: nil,
-			ContextWrapper:         contextWrapper,
 		},
 		CurrentAgent:             params.StartingAgent,
 		CurrentTurn:              0,
@@ -359,7 +346,6 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 			params.StartingAgent,
 			maxTurns,
 			hooks,
-			contextWrapper,
 			params.RunConfig,
 			params.PreviousResponseID,
 		)
@@ -373,7 +359,6 @@ func (r runner) runInputGuardrailsWithQueue(
 	agent *Agent,
 	guardrails []InputGuardrail,
 	input Input,
-	contextWrapper *runcontext.Wrapper,
 	streamedResult *RunResultStreaming,
 ) error {
 	queue := streamedResult.inputGuardrailQueue
@@ -392,7 +377,7 @@ func (r runner) runInputGuardrailsWithQueue(
 		go func() {
 			defer wg.Done()
 
-			result, err := RunImpl().RunSingleInputGuardrail(childCtx, agent, guardrail, input, contextWrapper)
+			result, err := RunImpl().RunSingleInputGuardrail(childCtx, agent, guardrail, input)
 			if err != nil {
 				cancel()
 				guardrailErrors[i] = fmt.Errorf("failed to run input guardrail %s: %w", guardrail.Name, err)
@@ -419,7 +404,6 @@ func (r runner) runStreamedImpl(
 	startingAgent *Agent,
 	maxTurns uint64,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	previousResponseID string,
 ) (err error) {
@@ -469,7 +453,6 @@ func (r runner) runStreamedImpl(
 					startingAgent,
 					slices.Concat(startingAgent.InputGuardrails, runConfig.InputGuardrails),
 					InputItems(ItemHelpers().InputToNewInputList(startingInput)),
-					contextWrapper,
 					streamedResult,
 				)
 			})
@@ -480,7 +463,6 @@ func (r runner) runStreamedImpl(
 			streamedResult,
 			currentAgent,
 			hooks,
-			contextWrapper,
 			runConfig,
 			shouldRunAgentStartHooks,
 			toolUseTracker,
@@ -504,7 +486,6 @@ func (r runner) runStreamedImpl(
 					slices.Concat(currentAgent.OutputGuardrails, runConfig.OutputGuardrails),
 					currentAgent,
 					nextStep.Output,
-					contextWrapper,
 				)
 				return outputGuardrailsTaskResult{Result: result, Err: err}
 			})
@@ -550,7 +531,6 @@ func (r runner) runSingleTurnStreamed(
 	streamedResult *RunResultStreaming,
 	agent *Agent,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	shouldRunAgentStartHooks bool,
 	toolUseTracker *AgentToolUseTracker,
@@ -567,7 +547,7 @@ func (r runner) runSingleTurnStreamed(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := hooks.OnAgentStart(childCtx, contextWrapper, agent)
+			err := hooks.OnAgentStart(childCtx, agent)
 			if err != nil {
 				cancel()
 				hooksErrors[0] = fmt.Errorf("RunHooks.OnAgentStart failed: %w", err)
@@ -578,7 +558,7 @@ func (r runner) runSingleTurnStreamed(
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				err := agent.Hooks.OnStart(childCtx, contextWrapper, agent)
+				err := agent.Hooks.OnStart(childCtx, agent)
 				if err != nil {
 					cancel()
 					hooksErrors[1] = fmt.Errorf("AgentHooks.OnStart failed: %w", err)
@@ -597,7 +577,7 @@ func (r runner) runSingleTurnStreamed(
 	streamedResult.CurrentAgent = agent
 	streamedResult.currentAgentOutputSchema = outputSchema
 
-	systemPrompt, err := agent.GetSystemPrompt(ctx, contextWrapper)
+	systemPrompt, err := agent.GetSystemPrompt(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get system prompt: %w", err)
 	}
@@ -658,7 +638,9 @@ func (r runner) runSingleTurnStreamed(
 				Usage:      u,
 				ResponseID: event.Response.ID,
 			}
-			contextWrapper.Usage.Add(u)
+			if contextUsage, _ := usage.FromContext(ctx); contextUsage != nil {
+				contextUsage.Add(u)
+			}
 		}
 		streamedResult.eventQueue.Put(RawResponsesStreamEvent{
 			Data: *event,
@@ -685,7 +667,6 @@ func (r runner) runSingleTurnStreamed(
 		outputSchema,
 		handoffs,
 		hooks,
-		contextWrapper,
 		runConfig,
 		toolUseTracker,
 	)
@@ -704,7 +685,6 @@ func (r runner) runSingleTurn(
 	originalInput Input,
 	generatedItems []RunItem,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	shouldRunAgentStartHooks bool,
 	toolUseTracker *AgentToolUseTracker,
@@ -721,7 +701,7 @@ func (r runner) runSingleTurn(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := hooks.OnAgentStart(childCtx, contextWrapper, agent)
+			err := hooks.OnAgentStart(childCtx, agent)
 			if err != nil {
 				cancel()
 				hooksErrors[0] = fmt.Errorf("RunHooks.OnAgentStart failed: %w", err)
@@ -732,7 +712,7 @@ func (r runner) runSingleTurn(
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				err := agent.Hooks.OnStart(childCtx, contextWrapper, agent)
+				err := agent.Hooks.OnStart(childCtx, agent)
 				if err != nil {
 					cancel()
 					hooksErrors[1] = fmt.Errorf("AgentHooks.OnStart failed: %w", err)
@@ -746,7 +726,7 @@ func (r runner) runSingleTurn(
 		}
 	}
 
-	systemPrompt, err := agent.GetSystemPrompt(ctx, contextWrapper)
+	systemPrompt, err := agent.GetSystemPrompt(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get system prompt: %w", err)
 	}
@@ -769,7 +749,6 @@ func (r runner) runSingleTurn(
 		agent.OutputSchema,
 		allTools,
 		handoffs,
-		contextWrapper,
 		runConfig,
 		toolUseTracker,
 		previousResponseID,
@@ -788,7 +767,6 @@ func (r runner) runSingleTurn(
 		agent.OutputSchema,
 		handoffs,
 		hooks,
-		contextWrapper,
 		runConfig,
 		toolUseTracker,
 	)
@@ -804,7 +782,6 @@ func (runner) getSingleStepResultFromResponse(
 	outputSchema AgentOutputSchemaInterface,
 	handoffs []Handoff,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	toolUseTracker *AgentToolUseTracker,
 ) (*SingleStepResult, error) {
@@ -829,7 +806,6 @@ func (runner) getSingleStepResultFromResponse(
 		*processedResponse,
 		outputSchema,
 		hooks,
-		contextWrapper,
 		runConfig,
 	)
 }
@@ -839,7 +815,6 @@ func (runner) runInputGuardrails(
 	agent *Agent,
 	guardrails []InputGuardrail,
 	input Input,
-	contextWrapper *runcontext.Wrapper,
 ) ([]InputGuardrailResult, error) {
 	if len(guardrails) == 0 {
 		return nil, nil
@@ -859,7 +834,7 @@ func (runner) runInputGuardrails(
 		go func() {
 			defer wg.Done()
 
-			result, err := RunImpl().RunSingleInputGuardrail(childCtx, agent, guardrail, input, contextWrapper)
+			result, err := RunImpl().RunSingleInputGuardrail(childCtx, agent, guardrail, input)
 			if err != nil {
 				cancel()
 				guardrailErrors[i] = fmt.Errorf("failed to run input guardrail %s: %w", guardrail.Name, err)
@@ -890,7 +865,6 @@ func (runner) runOutputGuardrails(
 	guardrails []OutputGuardrail,
 	agent *Agent,
 	agentOutput any,
-	contextWrapper *runcontext.Wrapper,
 ) ([]OutputGuardrailResult, error) {
 	if len(guardrails) == 0 {
 		return nil, nil
@@ -910,7 +884,7 @@ func (runner) runOutputGuardrails(
 		go func() {
 			defer wg.Done()
 
-			result, err := RunImpl().RunSingleOutputGuardrail(childCtx, guardrail, agent, agentOutput, contextWrapper)
+			result, err := RunImpl().RunSingleOutputGuardrail(childCtx, guardrail, agent, agentOutput)
 			if err != nil {
 				cancel()
 				guardrailErrors[i] = fmt.Errorf("failed to run output guardrail %s: %w", guardrail.Name, err)
@@ -944,7 +918,6 @@ func (r runner) getNewResponse(
 	outputSchema AgentOutputSchemaInterface,
 	allTools []tools.Tool,
 	handoffs []Handoff,
-	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 	toolUseTracker *AgentToolUseTracker,
 	previousResponseID string,
@@ -970,7 +943,10 @@ func (r runner) getNewResponse(
 		return nil, err
 	}
 
-	contextWrapper.Usage.Add(newResponse.Usage)
+	if contextUsage, _ := usage.FromContext(ctx); contextUsage != nil {
+		contextUsage.Add(newResponse.Usage)
+	}
+
 	return newResponse, err
 }
 

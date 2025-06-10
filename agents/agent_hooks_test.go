@@ -22,7 +22,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
@@ -43,27 +42,27 @@ func (h *AgentHooksForTests) Reset() {
 	clear(h.Events)
 }
 
-func (h *AgentHooksForTests) OnStart(context.Context, *runcontext.Wrapper, *agents.Agent) error {
+func (h *AgentHooksForTests) OnStart(context.Context, *agents.Agent) error {
 	h.Events["OnStart"] += 1
 	return nil
 }
 
-func (h *AgentHooksForTests) OnEnd(context.Context, *runcontext.Wrapper, *agents.Agent, any) error {
+func (h *AgentHooksForTests) OnEnd(context.Context, *agents.Agent, any) error {
 	h.Events["OnEnd"] += 1
 	return nil
 }
 
-func (h *AgentHooksForTests) OnHandoff(context.Context, *runcontext.Wrapper, *agents.Agent, *agents.Agent) error {
+func (h *AgentHooksForTests) OnHandoff(context.Context, *agents.Agent, *agents.Agent) error {
 	h.Events["OnHandoff"] += 1
 	return nil
 }
 
-func (h *AgentHooksForTests) OnToolStart(context.Context, *runcontext.Wrapper, *agents.Agent, tools.Tool) error {
+func (h *AgentHooksForTests) OnToolStart(context.Context, *agents.Agent, tools.Tool) error {
 	h.Events["OnToolStart"] += 1
 	return nil
 }
 
-func (h *AgentHooksForTests) OnToolEnd(context.Context, *runcontext.Wrapper, *agents.Agent, tools.Tool, any) error {
+func (h *AgentHooksForTests) OnToolEnd(context.Context, *agents.Agent, tools.Tool, any) error {
 	h.Events["OnToolEnd"] += 1
 	return nil
 }

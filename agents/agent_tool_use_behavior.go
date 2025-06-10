@@ -14,7 +14,7 @@
 
 package agents
 
-import "github.com/nlpodyssey/openai-agents-go/runcontext"
+import "context"
 
 // ToolUseBehavior lets you configure how tool use is handled.
 // See Agent.ToolUseBehavior.
@@ -39,6 +39,6 @@ func (StopAtTools) isToolUseBehavior() {}
 
 // ToolsToFinalOutputFunction is a function that takes a run context and a list
 // of tool results, and returns a `ToolsToFinalOutputResult`.
-type ToolsToFinalOutputFunction func(*runcontext.Wrapper, []FunctionToolResult) (ToolsToFinalOutputResult, error)
+type ToolsToFinalOutputFunction func(context.Context, []FunctionToolResult) (ToolsToFinalOutputResult, error)
 
 func (ToolsToFinalOutputFunction) isToolUseBehavior() {}

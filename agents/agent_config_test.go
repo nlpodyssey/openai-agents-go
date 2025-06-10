@@ -18,21 +18,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSystemInstructions(t *testing.T) {
-	cw := runcontext.NewWrapper(nil)
-
 	t.Run("StringInstructions", func(t *testing.T) {
 		agent := &Agent{
 			Name:         "test",
 			Instructions: InstructionsStr("foo"),
 		}
-		prompt, err := agent.GetSystemPrompt(t.Context(), cw)
+		prompt, err := agent.GetSystemPrompt(t.Context())
 		require.NoError(t, err)
 		assert.Equal(t, param.NewOpt("foo"), prompt)
 	})
@@ -41,20 +38,18 @@ func TestSystemInstructions(t *testing.T) {
 		agent := &Agent{
 			Name: "test",
 			Instructions: InstructionsFunc(
-				func(context.Context, *runcontext.Wrapper, *Agent) (string, error) {
+				func(context.Context, *Agent) (string, error) {
 					return "bar", nil
 				},
 			),
 		}
-		prompt, err := agent.GetSystemPrompt(t.Context(), cw)
+		prompt, err := agent.GetSystemPrompt(t.Context())
 		require.NoError(t, err)
 		assert.Equal(t, param.NewOpt("bar"), prompt)
 	})
 }
 
 func TestHandoff(t *testing.T) {
-	cw := runcontext.NewWrapper(nil)
-
 	t.Run("with agents", func(t *testing.T) {
 		agent1 := &Agent{Name: "agent_1"}
 		agent2 := &Agent{Name: "agent_2"}
@@ -70,11 +65,11 @@ func TestHandoff(t *testing.T) {
 		assert.Equal(t, "agent_1", handoffs[0].AgentName)
 		assert.Equal(t, "agent_2", handoffs[1].AgentName)
 
-		firstReturn, err := handoffs[0].OnInvokeHandoff(t.Context(), cw, "")
+		firstReturn, err := handoffs[0].OnInvokeHandoff(t.Context(), "")
 		require.NoError(t, err)
 		assert.Same(t, agent1, firstReturn)
 
-		secondReturn, err := handoffs[1].OnInvokeHandoff(t.Context(), cw, "")
+		secondReturn, err := handoffs[1].OnInvokeHandoff(t.Context(), "")
 		require.NoError(t, err)
 		assert.Same(t, agent2, secondReturn)
 	})
@@ -107,11 +102,11 @@ func TestHandoff(t *testing.T) {
 		assert.Equal(t, DefaultHandoffToolDescription(agent1), handoffs[0].ToolDescription)
 		assert.Equal(t, "description_2", handoffs[1].ToolDescription)
 
-		firstReturn, err := handoffs[0].OnInvokeHandoff(t.Context(), cw, "")
+		firstReturn, err := handoffs[0].OnInvokeHandoff(t.Context(), "")
 		require.NoError(t, err)
 		assert.Same(t, agent1, firstReturn)
 
-		secondReturn, err := handoffs[1].OnInvokeHandoff(t.Context(), cw, "")
+		secondReturn, err := handoffs[1].OnInvokeHandoff(t.Context(), "")
 		require.NoError(t, err)
 		assert.Same(t, agent2, secondReturn)
 	})
@@ -142,11 +137,11 @@ func TestHandoff(t *testing.T) {
 		assert.Equal(t, DefaultHandoffToolDescription(agent1), handoffs[0].ToolDescription)
 		assert.Equal(t, DefaultHandoffToolDescription(agent2), handoffs[1].ToolDescription)
 
-		firstReturn, err := handoffs[0].OnInvokeHandoff(t.Context(), cw, "")
+		firstReturn, err := handoffs[0].OnInvokeHandoff(t.Context(), "")
 		require.NoError(t, err)
 		assert.Same(t, agent1, firstReturn)
 
-		secondReturn, err := handoffs[1].OnInvokeHandoff(t.Context(), cw, "")
+		secondReturn, err := handoffs[1].OnInvokeHandoff(t.Context(), "")
 		require.NoError(t, err)
 		assert.Same(t, agent2, secondReturn)
 	})

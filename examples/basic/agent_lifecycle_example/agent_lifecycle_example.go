@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -37,7 +36,7 @@ func NewCustomAgentHooks(displayName string) *CustomAgentHooks {
 	return &CustomAgentHooks{displayName: displayName}
 }
 
-func (h *CustomAgentHooks) OnStart(_ context.Context, _ *runcontext.Wrapper, agent *agents.Agent) error {
+func (h *CustomAgentHooks) OnStart(_ context.Context, agent *agents.Agent) error {
 	h.eventCounter += 1
 	fmt.Printf(
 		"### (%s) %d: Agent %s started\n",
@@ -46,7 +45,7 @@ func (h *CustomAgentHooks) OnStart(_ context.Context, _ *runcontext.Wrapper, age
 	return nil
 }
 
-func (h *CustomAgentHooks) OnEnd(_ context.Context, _ *runcontext.Wrapper, agent *agents.Agent, output any) error {
+func (h *CustomAgentHooks) OnEnd(_ context.Context, agent *agents.Agent, output any) error {
 	h.eventCounter += 1
 	fmt.Printf(
 		"### (%s) %d: Agent %s ended with output %#v\n",
@@ -55,7 +54,7 @@ func (h *CustomAgentHooks) OnEnd(_ context.Context, _ *runcontext.Wrapper, agent
 	return nil
 }
 
-func (h *CustomAgentHooks) OnHandoff(_ context.Context, _ *runcontext.Wrapper, agent, source *agents.Agent) error {
+func (h *CustomAgentHooks) OnHandoff(_ context.Context, agent, source *agents.Agent) error {
 	h.eventCounter += 1
 	fmt.Printf(
 		"### (%s) %d: Agent %s handed off to %s\n",
@@ -64,7 +63,7 @@ func (h *CustomAgentHooks) OnHandoff(_ context.Context, _ *runcontext.Wrapper, a
 	return nil
 }
 
-func (h *CustomAgentHooks) OnToolStart(_ context.Context, _ *runcontext.Wrapper, agent *agents.Agent, tool tools.Tool) error {
+func (h *CustomAgentHooks) OnToolStart(_ context.Context, agent *agents.Agent, tool tools.Tool) error {
 	h.eventCounter += 1
 	fmt.Printf(
 		"### (%s) %d: Agent %s started tool %s\n",
@@ -73,7 +72,7 @@ func (h *CustomAgentHooks) OnToolStart(_ context.Context, _ *runcontext.Wrapper,
 	return nil
 }
 
-func (h *CustomAgentHooks) OnToolEnd(_ context.Context, _ *runcontext.Wrapper, agent *agents.Agent, tool tools.Tool, result any) error {
+func (h *CustomAgentHooks) OnToolEnd(_ context.Context, agent *agents.Agent, tool tools.Tool, result any) error {
 	h.eventCounter += 1
 	fmt.Printf(
 		"### (%s) %d: Agent %s ended tool %s with result %#v\n",
@@ -149,7 +148,7 @@ var (
 				},
 			},
 		},
-		OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
+		OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
 			var args RandomNumberArgs
 			err := json.Unmarshal([]byte(arguments), &args)
 			if err != nil {
@@ -174,7 +173,7 @@ var (
 				},
 			},
 		},
-		OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
+		OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
 			var args MultiplyByTwoArgs
 			err := json.Unmarshal([]byte(arguments), &args)
 			if err != nil {

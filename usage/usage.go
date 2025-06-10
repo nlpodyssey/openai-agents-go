@@ -14,7 +14,11 @@
 
 package usage
 
-import "github.com/openai/openai-go/responses"
+import (
+	"context"
+
+	"github.com/openai/openai-go/responses"
+)
 
 type Usage struct {
 	// Total requests made to the LLM API.
@@ -47,4 +51,18 @@ func (u *Usage) Add(other *Usage) {
 	u.TotalTokens += other.TotalTokens
 	u.InputTokensDetails.CachedTokens += other.InputTokensDetails.CachedTokens
 	u.OutputTokensDetails.ReasoningTokens += other.OutputTokensDetails.ReasoningTokens
+}
+
+// usageContextKey is the key type for Usage values in Contexts.
+type usageContextKey struct{}
+
+// NewContext returns a new Context that carries the given Usage.
+func NewContext(ctx context.Context, u *Usage) context.Context {
+	return context.WithValue(ctx, usageContextKey{}, u)
+}
+
+// FromContext returns the Usage value stored in ctx, if any.
+func FromContext(ctx context.Context) (*Usage, bool) {
+	u, ok := ctx.Value(usageContextKey{}).(*Usage)
+	return u, ok
 }

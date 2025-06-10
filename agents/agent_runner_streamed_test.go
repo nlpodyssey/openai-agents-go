@@ -23,7 +23,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
@@ -330,7 +329,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	onInvokeHandoff := func(context.Context, *runcontext.Wrapper, string) (*agents.Agent, error) {
+	onInvokeHandoff := func(context.Context, string) (*agents.Agent, error) {
 		return agent1, nil
 	}
 
@@ -377,7 +376,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 func TestHandoffOnInputStreamed(t *testing.T) {
 	callOutput := ""
 
-	onInput := func(_ context.Context, _ *runcontext.Wrapper, jsonInput any) error {
+	onInput := func(_ context.Context, jsonInput any) error {
 		r := strings.NewReader(jsonInput.(string))
 		dec := json.NewDecoder(r)
 		dec.DisallowUnknownFields()
@@ -433,7 +432,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 
 func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	guardrailFunction := func(
-		context.Context, *runcontext.Wrapper, *agents.Agent, agents.Input,
+		context.Context, *agents.Agent, agents.Input,
 	) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
@@ -468,9 +467,7 @@ func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 }
 
 func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
-	guardrailFunction := func(
-		context.Context, *runcontext.Wrapper, *agents.Agent, any,
-	) (agents.GuardrailFunctionOutput, error) {
+	guardrailFunction := func(context.Context, *agents.Agent, any) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
 			TripwireTriggered: true,
@@ -504,9 +501,7 @@ func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 }
 
 func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
-	guardrailFunction := func(
-		context.Context, *runcontext.Wrapper, *agents.Agent, agents.Input,
-	) (agents.GuardrailFunctionOutput, error) {
+	guardrailFunction := func(context.Context, *agents.Agent, agents.Input) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
 			TripwireTriggered: true,
@@ -538,9 +533,7 @@ func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 }
 
 func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
-	guardrailFunction := func(
-		context.Context, *runcontext.Wrapper, *agents.Agent, any,
-	) (agents.GuardrailFunctionOutput, error) {
+	guardrailFunction := func(context.Context, *agents.Agent, any) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
 			TripwireTriggered: true,

@@ -17,7 +17,6 @@ package agents
 import (
 	"context"
 
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 )
 
@@ -25,36 +24,36 @@ import (
 // lifecycle events in an agent run.
 type RunHooks interface {
 	// OnAgentStart is called before the agent is invoked. Called each time the current agent changes.
-	OnAgentStart(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent) error
+	OnAgentStart(ctx context.Context, agent *Agent) error
 
 	// OnAgentEnd is called when the agent produces a final output.
-	OnAgentEnd(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent, output any) error
+	OnAgentEnd(ctx context.Context, agent *Agent, output any) error
 
 	// OnHandoff is called when a handoff occurs.
-	OnHandoff(ctx context.Context, rcw *runcontext.Wrapper, fromAgent, toAgent *Agent) error
+	OnHandoff(ctx context.Context, fromAgent, toAgent *Agent) error
 
 	// OnToolStart is called before a tool is invoked.
-	OnToolStart(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent, tool tools.Tool) error
+	OnToolStart(ctx context.Context, agent *Agent, tool tools.Tool) error
 
 	// OnToolEnd is called after a tool is invoked.
-	OnToolEnd(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent, tool tools.Tool, result any) error
+	OnToolEnd(ctx context.Context, agent *Agent, tool tools.Tool, result any) error
 }
 
 type NoOpRunHooks struct{}
 
-func (NoOpRunHooks) OnAgentStart(context.Context, *runcontext.Wrapper, *Agent) error {
+func (NoOpRunHooks) OnAgentStart(context.Context, *Agent) error {
 	return nil
 }
-func (NoOpRunHooks) OnAgentEnd(context.Context, *runcontext.Wrapper, *Agent, any) error {
+func (NoOpRunHooks) OnAgentEnd(context.Context, *Agent, any) error {
 	return nil
 }
-func (NoOpRunHooks) OnHandoff(context.Context, *runcontext.Wrapper, *Agent, *Agent) error {
+func (NoOpRunHooks) OnHandoff(context.Context, *Agent, *Agent) error {
 	return nil
 }
-func (NoOpRunHooks) OnToolStart(context.Context, *runcontext.Wrapper, *Agent, tools.Tool) error {
+func (NoOpRunHooks) OnToolStart(context.Context, *Agent, tools.Tool) error {
 	return nil
 }
-func (NoOpRunHooks) OnToolEnd(context.Context, *runcontext.Wrapper, *Agent, tools.Tool, any) error {
+func (NoOpRunHooks) OnToolEnd(context.Context, *Agent, tools.Tool, any) error {
 	return nil
 }
 
@@ -63,18 +62,18 @@ func (NoOpRunHooks) OnToolEnd(context.Context, *runcontext.Wrapper, *Agent, tool
 // You can set this on `Agent.Hooks` to receive events for that specific agent.
 type AgentHooks interface {
 	// OnStart is called before the agent is invoked. Called each time the running agent is changed to this agent.
-	OnStart(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent) error
+	OnStart(ctx context.Context, agent *Agent) error
 
 	// OnEnd is called when the agent produces a final output.
-	OnEnd(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent, output any) error
+	OnEnd(ctx context.Context, agent *Agent, output any) error
 
 	// OnHandoff is called when the agent is being handed off to.
 	// The `source` is the agent that is handing off to this agent.
-	OnHandoff(ctx context.Context, rcw *runcontext.Wrapper, agent, source *Agent) error
+	OnHandoff(ctx context.Context, agent, source *Agent) error
 
 	// OnToolStart is called before a tool is invoked.
-	OnToolStart(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent, tool tools.Tool) error
+	OnToolStart(ctx context.Context, agent *Agent, tool tools.Tool) error
 
 	// OnToolEnd is called after a tool is invoked.
-	OnToolEnd(ctx context.Context, rcw *runcontext.Wrapper, agent *Agent, tool tools.Tool, result any) error
+	OnToolEnd(ctx context.Context, agent *Agent, tool tools.Tool, result any) error
 }

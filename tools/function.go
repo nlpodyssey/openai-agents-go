@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	"github.com/invopop/jsonschema"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -47,7 +46,7 @@ type Function struct {
 	// You must return a string representation of the tool output.
 	// In case of errors, you can either return an error (which will cause the run to fail) or
 	// return a string error message (which will be sent back to the LLM).
-	OnInvokeTool func(ctx context.Context, rcw *runcontext.Wrapper, arguments string) (any, error)
+	OnInvokeTool func(ctx context.Context, arguments string) (any, error)
 
 	// Whether the JSON schema is in strict mode.
 	// We **strongly** recommend setting this to True, as it increases the likelihood of correct JSON input.
@@ -102,7 +101,7 @@ func (f Function) ConvertToChatCompletions() (*openai.ChatCompletionToolParam, e
 //   - handler: Function that processes the tool invocation
 //
 // The handler function receives:
-//   - ctx: Context with the runcontext.Wrapper attached via runcontext.WithWrapper
+//   - ctx: Context
 //   - args: Parsed arguments of type T
 //
 // Schema generation behavior:
@@ -153,12 +152,12 @@ func NewFunctionTool[T, R any](name string, description string, handler func(ctx
 		Name:             name,
 		ParamsJSONSchema: schemaMap,
 		StrictJSONSchema: param.NewOpt(true),
-		OnInvokeTool: func(ctx context.Context, runCtx *runcontext.Wrapper, arguments string) (any, error) {
+		OnInvokeTool: func(ctx context.Context, arguments string) (any, error) {
 			var args T
 			if err := json.Unmarshal([]byte(arguments), &args); err != nil {
 				return nil, fmt.Errorf("failed to parse arguments: %w", err)
 			}
-			return handler(runcontext.WithWrapper(ctx, runCtx), args)
+			return handler(ctx, args)
 		},
 	}
 }

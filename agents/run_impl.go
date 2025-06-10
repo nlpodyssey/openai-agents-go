@@ -26,7 +26,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -163,7 +162,6 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	processedResponse ProcessedResponse,
 	outputSchema AgentOutputSchemaInterface,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 ) (*SingleStepResult, error) {
 	// Make a copy of the generated items
@@ -178,7 +176,6 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 		agent,
 		processedResponse.Functions,
 		hooks,
-		contextWrapper,
 	)
 	if err != nil {
 		return nil, err
@@ -199,17 +196,12 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			newResponse,
 			runHandoffs,
 			hooks,
-			contextWrapper,
 			runConfig,
 		)
 	}
 
 	// Third, we'll check if the tool use should result in a final output
-	checkToolUse, err := ri.checkForFinalOutputFromTools(
-		agent,
-		functionResults,
-		contextWrapper,
-	)
+	checkToolUse, err := ri.checkForFinalOutputFromTools(ctx, agent, functionResults)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +221,6 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			newStepItems,
 			checkToolUse.FinalOutput.Or(nil),
 			hooks,
-			contextWrapper,
 		)
 	}
 
@@ -266,7 +257,6 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			newStepItems,
 			finalOutput,
 			hooks,
-			contextWrapper,
 		)
 	} else if (outputSchema == nil || outputSchema.IsPlainText()) && !processedResponse.HasToolsToRun() {
 		return ri.ExecuteFinalOutput(
@@ -278,7 +268,6 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			newStepItems,
 			potentialFinalOutputText,
 			hooks,
-			contextWrapper,
 		)
 	} else {
 		// If there's no final output, we can just run again
@@ -427,7 +416,6 @@ func (runImpl) ExecuteFunctionToolCalls(
 	agent *Agent,
 	toolRuns []ToolRunFunction,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 ) ([]FunctionToolResult, error) {
 	runSingleTool := func(
 		ctx context.Context,
@@ -448,7 +436,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := hooks.OnToolStart(childCtx, contextWrapper, agent, funcTool)
+			err := hooks.OnToolStart(childCtx, agent, funcTool)
 			if err != nil {
 				cancel()
 				hooksErrors[0] = fmt.Errorf("RunHooks.OnToolStart failed: %w", err)
@@ -459,7 +447,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				err := agent.Hooks.OnToolStart(childCtx, contextWrapper, agent, funcTool)
+				err := agent.Hooks.OnToolStart(childCtx, agent, funcTool)
 				if err != nil {
 					cancel()
 					hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolStart failed: %w", err)
@@ -470,7 +458,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			result, toolError = funcTool.OnInvokeTool(childCtx, contextWrapper, toolCall.Arguments)
+			result, toolError = funcTool.OnInvokeTool(childCtx, toolCall.Arguments)
 			if toolError != nil {
 				cancel()
 			}
@@ -488,7 +476,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := hooks.OnToolEnd(childCtx, contextWrapper, agent, funcTool, result)
+			err := hooks.OnToolEnd(childCtx, agent, funcTool, result)
 			if err != nil {
 				cancel()
 				hooksErrors[0] = fmt.Errorf("RunHooks.OnToolEnd failed: %w", err)
@@ -499,7 +487,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				err := agent.Hooks.OnToolEnd(childCtx, contextWrapper, agent, funcTool, result)
+				err := agent.Hooks.OnToolEnd(childCtx, agent, funcTool, result)
 				if err != nil {
 					cancel()
 					hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolEnd failed: %w", err)
@@ -580,7 +568,6 @@ func (runImpl) ExecuteHandoffs(
 	newResponse ModelResponse,
 	runHandoffs []ToolRunHandoff,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 	runConfig RunConfig,
 ) (*SingleStepResult, error) {
 	// If there is more than one handoff, add tool responses that reject those handoffs
@@ -600,7 +587,7 @@ func (runImpl) ExecuteHandoffs(
 
 	actualHandoff := runHandoffs[0]
 	handoff := actualHandoff.Handoff
-	newAgent, err := handoff.OnInvokeHandoff(ctx, contextWrapper, actualHandoff.ToolCall.Arguments)
+	newAgent, err := handoff.OnInvokeHandoff(ctx, actualHandoff.ToolCall.Arguments)
 	if err != nil {
 		return nil, fmt.Errorf("failed to invoke handoff: %w", err)
 	}
@@ -630,7 +617,7 @@ func (runImpl) ExecuteHandoffs(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := hooks.OnHandoff(childCtx, contextWrapper, agent, newAgent)
+		err := hooks.OnHandoff(childCtx, agent, newAgent)
 		if err != nil {
 			cancel()
 			handoffErrors[0] = fmt.Errorf("RunHooks.OnHandoff failed: %w", err)
@@ -641,7 +628,7 @@ func (runImpl) ExecuteHandoffs(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := agent.Hooks.OnHandoff(childCtx, contextWrapper, newAgent, agent)
+			err := agent.Hooks.OnHandoff(childCtx, newAgent, agent)
 			if err != nil {
 				cancel()
 				handoffErrors[0] = fmt.Errorf("AgentHooks.OnHandoff failed: %w", err)
@@ -694,10 +681,9 @@ func (ri runImpl) ExecuteFinalOutput(
 	newStepItems []RunItem,
 	finalOutput any,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 ) (*SingleStepResult, error) {
 	// Run the onEnd hooks
-	err := ri.RunFinalOutputHooks(ctx, agent, hooks, contextWrapper, finalOutput)
+	err := ri.RunFinalOutputHooks(ctx, agent, hooks, finalOutput)
 	if err != nil {
 		return nil, err
 	}
@@ -715,7 +701,6 @@ func (ri runImpl) RunFinalOutputHooks(
 	ctx context.Context,
 	agent *Agent,
 	hooks RunHooks,
-	contextWrapper *runcontext.Wrapper,
 	finalOutput any,
 ) error {
 	var hooksErrors [2]error
@@ -728,7 +713,7 @@ func (ri runImpl) RunFinalOutputHooks(
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := hooks.OnAgentEnd(childCtx, contextWrapper, agent, finalOutput)
+		err := hooks.OnAgentEnd(childCtx, agent, finalOutput)
 		if err != nil {
 			cancel()
 			hooksErrors[0] = fmt.Errorf("RunHooks.OnAgentEnd failed: %w", err)
@@ -739,7 +724,7 @@ func (ri runImpl) RunFinalOutputHooks(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := agent.Hooks.OnEnd(childCtx, contextWrapper, agent, finalOutput)
+			err := agent.Hooks.OnEnd(childCtx, agent, finalOutput)
 			if err != nil {
 				cancel()
 				hooksErrors[1] = fmt.Errorf("AgentHooks.OnEnd failed: %w", err)
@@ -756,9 +741,8 @@ func (runImpl) RunSingleInputGuardrail(
 	agent *Agent,
 	guardrail InputGuardrail,
 	input Input,
-	contextWrapper *runcontext.Wrapper,
 ) (InputGuardrailResult, error) {
-	return guardrail.Run(ctx, agent, input, contextWrapper)
+	return guardrail.Run(ctx, agent, input)
 }
 
 func (runImpl) RunSingleOutputGuardrail(
@@ -766,9 +750,8 @@ func (runImpl) RunSingleOutputGuardrail(
 	guardrail OutputGuardrail,
 	agent *Agent,
 	agentOutput any,
-	contextWrapper *runcontext.Wrapper,
 ) (OutputGuardrailResult, error) {
-	return guardrail.Run(ctx, contextWrapper, agent, agentOutput)
+	return guardrail.Run(ctx, agent, agentOutput)
 }
 
 func (runImpl) StreamStepResultToQueue(stepResult SingleStepResult, queue *asyncqueue.Queue[StreamEvent]) {
@@ -823,9 +806,9 @@ func (runImpl) StreamStepResultToQueue(stepResult SingleStepResult, queue *async
 
 // Returns (i, final_output).
 func (runImpl) checkForFinalOutputFromTools(
+	ctx context.Context,
 	agent *Agent,
 	toolResults []FunctionToolResult,
-	contextWrapper *runcontext.Wrapper,
 ) (ToolsToFinalOutputResult, error) {
 	if len(toolResults) == 0 {
 		return notFinalOutput, nil
@@ -855,7 +838,7 @@ func (runImpl) checkForFinalOutputFromTools(
 		}
 		return notFinalOutput, nil
 	case ToolsToFinalOutputFunction:
-		return v(contextWrapper, toolResults)
+		return v(ctx, toolResults)
 	default:
 		// This would be an unrecoverable implementation bug, so a panic is appropriate.
 		panic(fmt.Errorf("unexpected ToolUseBehavior type %T", v))

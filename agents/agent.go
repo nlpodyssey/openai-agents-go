@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
 	"github.com/openai/openai-go/packages/param"
@@ -140,15 +139,10 @@ func (a *Agent) AsTool(params AgentAsToolParams) tools.Tool {
 		Description:      params.ToolDescription,
 		ParamsJSONSchema: a.agentAsToolParamsJSONSchema(name + "_args"),
 		StrictJSONSchema: param.NewOpt(true),
-		OnInvokeTool: func(
-			ctx context.Context,
-			contextWrapper *runcontext.Wrapper,
-			input string,
-		) (any, error) {
+		OnInvokeTool: func(ctx context.Context, input string) (any, error) {
 			output, err := Runner().Run(ctx, RunParams{
 				StartingAgent: a,
 				Input:         InputString(input),
-				Context:       contextWrapper.Context,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to run agent %s as tool: %w", a.Name, err)
@@ -178,14 +172,11 @@ func (*Agent) agentAsToolParamsJSONSchema(title string) map[string]any {
 }
 
 // GetSystemPrompt returns the system prompt for the agent.
-func (a *Agent) GetSystemPrompt(
-	ctx context.Context,
-	runContext *runcontext.Wrapper,
-) (param.Opt[string], error) {
+func (a *Agent) GetSystemPrompt(ctx context.Context) (param.Opt[string], error) {
 	if a.Instructions == nil {
 		return param.Null[string](), nil
 	}
-	v, err := a.Instructions.GetInstructions(ctx, runContext, a)
+	v, err := a.Instructions.GetInstructions(ctx, a)
 	if err != nil {
 		return param.Null[string](), err
 	}

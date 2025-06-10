@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
@@ -41,7 +40,7 @@ func TestToOpenaiWithFunctionTool(t *testing.T) {
 				"a": map[string]any{"title": "A", "type": "string"},
 			},
 		},
-		OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
+		OnInvokeTool: func(context.Context, string) (any, error) {
 			return nil, nil
 		},
 	}

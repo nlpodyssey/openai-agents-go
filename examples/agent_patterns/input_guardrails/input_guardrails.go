@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -94,14 +93,12 @@ var GuardrailAgent = &agents.Agent{
 // an agent to check if the input is a math homework question.
 func MathGuardrailFunction(
 	ctx context.Context,
-	cw *runcontext.Wrapper,
 	_ *agents.Agent,
 	input agents.Input,
 ) (agents.GuardrailFunctionOutput, error) {
 	result, err := agents.Runner().Run(ctx, agents.RunParams{
 		StartingAgent: GuardrailAgent,
 		Input:         input,
-		Context:       cw.Context,
 	})
 	if err != nil {
 		return agents.GuardrailFunctionOutput{}, err

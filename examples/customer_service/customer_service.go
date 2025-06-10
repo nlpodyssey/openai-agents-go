@@ -26,13 +26,14 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_prompt"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
 
 ////// CONTEXT
+
+type airlineAgentContextKey struct{}
 
 type AirlineAgentContext struct {
 	PassengerName      string
@@ -80,7 +81,7 @@ var FAQLookupTool = tools.Function{
 			},
 		},
 	},
-	OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
+	OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
 		var args FAQLookupArgs
 		err := json.Unmarshal([]byte(arguments), &args)
 		if err != nil {
@@ -95,15 +96,15 @@ type UpdateSeatArgs struct {
 	NewSeat            string `json:"new_seat"`
 }
 
-func UpdateSeat(cw *runcontext.Wrapper, args UpdateSeatArgs) (string, error) {
-	ctx := cw.Context.(*AirlineAgentContext)
+func UpdateSeat(ctx context.Context, args UpdateSeatArgs) (string, error) {
+	airlineCtx := ctx.Value(airlineAgentContextKey{}).(*AirlineAgentContext)
 
 	// Update the context based on the customer's input
-	ctx.ConfirmationNumber = args.ConfirmationNumber
-	ctx.SeatNumber = args.NewSeat
+	airlineCtx.ConfirmationNumber = args.ConfirmationNumber
+	airlineCtx.SeatNumber = args.NewSeat
 
 	// Ensure that the flight number has been set by the incoming handoff
-	if ctx.FlightNumber == "" {
+	if airlineCtx.FlightNumber == "" {
 		return "", errors.New("flight number is required")
 	}
 	return fmt.Sprintf(
@@ -133,22 +134,22 @@ var UpdateSeatTool = tools.Function{
 			},
 		},
 	},
-	OnInvokeTool: func(_ context.Context, cw *runcontext.Wrapper, arguments string) (any, error) {
+	OnInvokeTool: func(ctx context.Context, arguments string) (any, error) {
 		var args UpdateSeatArgs
 		err := json.Unmarshal([]byte(arguments), &args)
 		if err != nil {
 			return nil, err
 		}
-		return UpdateSeat(cw, args)
+		return UpdateSeat(ctx, args)
 	},
 }
 
 ////// HOOKS
 
-func OnSeatBookingHandoff(_ context.Context, cw *runcontext.Wrapper) error {
+func OnSeatBookingHandoff(ctx context.Context) error {
 	flightNumber := fmt.Sprintf("FLT-%d", rand.Intn(900)+100)
-	ctx := cw.Context.(*AirlineAgentContext)
-	ctx.FlightNumber = flightNumber
+	airlineCtx := ctx.Value(airlineAgentContextKey{}).(*AirlineAgentContext)
+	airlineCtx.FlightNumber = flightNumber
 	return nil
 }
 
@@ -215,7 +216,7 @@ func init() {
 func main() {
 	currentAgent := TriageAgent
 	var inputItems []agents.TResponseInputItem
-	ctx := new(AirlineAgentContext)
+	ctx := context.WithValue(context.Background(), airlineAgentContextKey{}, new(AirlineAgentContext))
 
 	for {
 		fmt.Print("Enter your message: ")
@@ -236,10 +237,9 @@ func main() {
 			},
 		})
 
-		result, err := agents.Runner().Run(context.Background(), agents.RunParams{
+		result, err := agents.Runner().Run(ctx, agents.RunParams{
 			StartingAgent: currentAgent,
 			Input:         agents.InputItems(inputItems),
-			Context:       ctx,
 		})
 		if err != nil {
 			panic(err)
