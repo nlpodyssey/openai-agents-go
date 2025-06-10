@@ -292,7 +292,7 @@ func TestHandoffFiltersStreamed(t *testing.T) {
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.Handoff{
-			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
+			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:       agent1,
 				InputFilter: RemoveNewItems,
 			}),
@@ -400,7 +400,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.Handoff{
-			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
+			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
 				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),

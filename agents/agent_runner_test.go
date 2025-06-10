@@ -312,7 +312,7 @@ func TestHandoffFilters(t *testing.T) {
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.Handoff{
-			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
+			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:       agent1,
 				InputFilter: RemoveNewItems,
 			}),
@@ -416,7 +416,7 @@ func TestHandoffOnInput(t *testing.T) {
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.Handoff{
-			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
+			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
 				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
@@ -460,7 +460,7 @@ func TestHandoffOnInputError(t *testing.T) {
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 		Handoffs: []agents.Handoff{
-			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
+			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
 				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
@@ -488,7 +488,7 @@ func TestHandoffOnInputError(t *testing.T) {
 
 func TestInvalidHandoffInputJSONCausesError(t *testing.T) {
 	agent := &agents.Agent{Name: "test"}
-	h := agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
+	h := agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 		Agent: agent,
 		OnHandoff: agents.OnHandoffWithInput(
 			func(context.Context, *runcontext.Wrapper, any) error { return nil },

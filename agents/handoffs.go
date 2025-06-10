@@ -136,7 +136,8 @@ type HandoffFromAgentParams struct {
 	InputFilter HandoffInputFilter
 }
 
-func UnsafeHandoffFromAgent(params HandoffFromAgentParams) Handoff {
+// HandoffFromAgent creates a Handoff from an Agent. It panics in case of problems.
+func HandoffFromAgent(params HandoffFromAgentParams) Handoff {
 	h, err := SafeHandoffFromAgent(params)
 	if err != nil {
 		panic(err)

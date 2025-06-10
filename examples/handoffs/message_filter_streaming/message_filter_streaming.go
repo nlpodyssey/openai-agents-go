@@ -104,7 +104,7 @@ var (
 			"Be a helpful assistant. If the user speaks Spanish, handoff to the Spanish assistant.",
 		),
 		Handoffs: []agents.Handoff{
-			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
+			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:       SpanishAgent,
 				InputFilter: SpanishHandoffMessageFilter,
 			}),
