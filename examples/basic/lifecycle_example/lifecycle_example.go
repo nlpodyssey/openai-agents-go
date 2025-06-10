@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
@@ -40,47 +39,52 @@ func (*ExampleHooks) usageToStr(u *usage.Usage) string {
 	)
 }
 
-func (e *ExampleHooks) OnAgentStart(_ context.Context, cw *runcontext.Wrapper, agent *agents.Agent) error {
+func (e *ExampleHooks) OnAgentStart(ctx context.Context, agent *agents.Agent) error {
 	e.eventCounter += 1
+	u, _ := usage.FromContext(ctx)
 	fmt.Printf(
 		"### %d: Agent %s started. Usage: %s\n",
-		e.eventCounter, agent.Name, e.usageToStr(cw.Usage),
+		e.eventCounter, agent.Name, e.usageToStr(u),
 	)
 	return nil
 }
 
-func (e *ExampleHooks) OnAgentEnd(_ context.Context, cw *runcontext.Wrapper, agent *agents.Agent, output any) error {
+func (e *ExampleHooks) OnAgentEnd(ctx context.Context, agent *agents.Agent, output any) error {
 	e.eventCounter += 1
+	u, _ := usage.FromContext(ctx)
 	fmt.Printf(
 		"### %d: Agent %s ended with output %#v. Usage: %s\n",
-		e.eventCounter, agent.Name, output, e.usageToStr(cw.Usage),
+		e.eventCounter, agent.Name, output, e.usageToStr(u),
 	)
 	return nil
 }
 
-func (e *ExampleHooks) OnToolStart(_ context.Context, cw *runcontext.Wrapper, _ *agents.Agent, tool tools.Tool) error {
+func (e *ExampleHooks) OnToolStart(ctx context.Context, _ *agents.Agent, tool tools.Tool) error {
 	e.eventCounter += 1
+	u, _ := usage.FromContext(ctx)
 	fmt.Printf(
 		"### %d: Tool %s started. Usage: %s\n",
-		e.eventCounter, tool.ToolName(), e.usageToStr(cw.Usage),
+		e.eventCounter, tool.ToolName(), e.usageToStr(u),
 	)
 	return nil
 }
 
-func (e *ExampleHooks) OnToolEnd(_ context.Context, cw *runcontext.Wrapper, _ *agents.Agent, tool tools.Tool, result any) error {
+func (e *ExampleHooks) OnToolEnd(ctx context.Context, _ *agents.Agent, tool tools.Tool, result any) error {
 	e.eventCounter += 1
+	u, _ := usage.FromContext(ctx)
 	fmt.Printf(
 		"### %d: Tool %s ended with result %#v. Usage: %s\n",
-		e.eventCounter, tool.ToolName(), result, e.usageToStr(cw.Usage),
+		e.eventCounter, tool.ToolName(), result, e.usageToStr(u),
 	)
 	return nil
 }
 
-func (e *ExampleHooks) OnHandoff(_ context.Context, cw *runcontext.Wrapper, fromAgent, toAgent *agents.Agent) error {
+func (e *ExampleHooks) OnHandoff(ctx context.Context, fromAgent, toAgent *agents.Agent) error {
 	e.eventCounter += 1
+	u, _ := usage.FromContext(ctx)
 	fmt.Printf(
 		"### %d: Handoff from %s to %s. Usage: %s\n",
-		e.eventCounter, fromAgent.Name, toAgent.Name, e.usageToStr(cw.Usage),
+		e.eventCounter, fromAgent.Name, toAgent.Name, e.usageToStr(u),
 	)
 	return nil
 }
@@ -154,7 +158,7 @@ var (
 				},
 			},
 		},
-		OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
+		OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
 			var args RandomNumberArgs
 			err := json.Unmarshal([]byte(arguments), &args)
 			if err != nil {
@@ -179,7 +183,7 @@ var (
 				},
 			},
 		},
-		OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
+		OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
 			var args MultiplyByTwoArgs
 			err := json.Unmarshal([]byte(arguments), &args)
 			if err != nil {

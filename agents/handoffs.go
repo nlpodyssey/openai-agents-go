@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/xeipuuv/gojsonschema"
@@ -46,7 +45,7 @@ type Handoff struct {
 	// 2. The arguments from the LLM, as a JSON string. Empty string if InputJSONSchema is empty.
 	//
 	//Must return an agent.
-	OnInvokeHandoff func(context.Context, *runcontext.Wrapper, string) (*Agent, error)
+	OnInvokeHandoff func(context.Context, string) (*Agent, error)
 
 	// The name of the agent that is being handed off to.
 	AgentName string
@@ -106,11 +105,11 @@ type OnHandoff interface {
 	isOnHandoff()
 }
 
-type OnHandoffWithInput func(ctx context.Context, contextWrapper *runcontext.Wrapper, jsonInput any) error
+type OnHandoffWithInput func(ctx context.Context, jsonInput any) error
 
 func (OnHandoffWithInput) isOnHandoff() {}
 
-type OnHandoffWithoutInput func(context.Context, *runcontext.Wrapper) error
+type OnHandoffWithoutInput func(context.Context) error
 
 func (OnHandoffWithoutInput) isOnHandoff() {}
 
@@ -177,7 +176,7 @@ func SafeHandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 		return nil, fmt.Errorf("failed to load and compile JSON schema: %w", err)
 	}
 
-	invokeHandoff := func(ctx context.Context, contextWrapper *runcontext.Wrapper, jsonInput string) (*Agent, error) {
+	invokeHandoff := func(ctx context.Context, jsonInput string) (*Agent, error) {
 		if len(params.InputJSONSchema) > 0 {
 			inputJSONLoader := gojsonschema.NewStringLoader(jsonInput)
 			result, err := inputJSONSchema.Validate(inputJSONLoader)
@@ -194,13 +193,13 @@ func SafeHandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 			}
 
 			inputFunc := params.OnHandoff.(OnHandoffWithInput)
-			err = inputFunc(ctx, contextWrapper, jsonInput)
+			err = inputFunc(ctx, jsonInput)
 			if err != nil {
 				return params.Agent, err
 			}
 		} else if params.OnHandoff != nil {
 			noInputFunc := params.OnHandoff.(OnHandoffWithoutInput)
-			err = noInputFunc(ctx, contextWrapper)
+			err = noInputFunc(ctx)
 			if err != nil {
 				return params.Agent, err
 			}

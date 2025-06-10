@@ -19,7 +19,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -41,7 +40,7 @@ func getFunctionTool(
 			"additionalProperties": false,
 			"properties":           map[string]any{},
 		},
-		OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
+		OnInvokeTool: func(context.Context, string) (any, error) {
 			return returnValue, nil
 		},
 	}
@@ -71,11 +70,7 @@ func makeFunctionToolResult(agent *Agent, output string, toolName string) Functi
 func TestNoToolResultsReturnsNotFinalOutput(t *testing.T) {
 	// If there are no tool results at all, ToolUseBehavior should not produce a final output.
 	agent := &Agent{Name: "test"}
-	result, err := RunImpl().checkForFinalOutputFromTools(
-		agent,
-		nil,
-		runcontext.NewWrapper(nil),
-	)
+	result, err := RunImpl().checkForFinalOutputFromTools(t.Context(), agent, nil)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
@@ -92,11 +87,7 @@ func TestRunLlmAgainBehavior(t *testing.T) {
 	toolResults := []FunctionToolResult{
 		makeFunctionToolResult(agent, "ignored", ""),
 	}
-	result, err := RunImpl().checkForFinalOutputFromTools(
-		agent,
-		toolResults,
-		runcontext.NewWrapper(nil),
-	)
+	result, err := RunImpl().checkForFinalOutputFromTools(t.Context(), agent, toolResults)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
@@ -114,11 +105,7 @@ func TestStopOnFirstToolBehavior(t *testing.T) {
 		makeFunctionToolResult(agent, "first_tool_output", ""),
 		makeFunctionToolResult(agent, "ignored", ""),
 	}
-	result, err := RunImpl().checkForFinalOutputFromTools(
-		agent,
-		toolResults,
-		runcontext.NewWrapper(nil),
-	)
+	result, err := RunImpl().checkForFinalOutputFromTools(t.Context(), agent, toolResults)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: true,
@@ -128,7 +115,7 @@ func TestStopOnFirstToolBehavior(t *testing.T) {
 
 func TestCustomToolUseBehavior(t *testing.T) {
 	// If ToolUseBehavior is a function, we should call it and propagate its return.
-	behavior := func(cw *runcontext.Wrapper, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+	behavior := func(ctx context.Context, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
 		assert.Len(t, results, 3)
 		return ToolsToFinalOutputResult{
 			IsFinalOutput: true,
@@ -144,11 +131,7 @@ func TestCustomToolUseBehavior(t *testing.T) {
 		makeFunctionToolResult(agent, "ignored2", ""),
 		makeFunctionToolResult(agent, "ignored3", ""),
 	}
-	result, err := RunImpl().checkForFinalOutputFromTools(
-		agent,
-		toolResults,
-		runcontext.NewWrapper(nil),
-	)
+	result, err := RunImpl().checkForFinalOutputFromTools(t.Context(), agent, toolResults)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: true,
@@ -158,7 +141,7 @@ func TestCustomToolUseBehavior(t *testing.T) {
 
 func TestCustomToolUseBehaviorError(t *testing.T) {
 	behaviorErr := errors.New("error")
-	behavior := func(cw *runcontext.Wrapper, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+	behavior := func(ctx context.Context, results []FunctionToolResult) (ToolsToFinalOutputResult, error) {
 		return ToolsToFinalOutputResult{}, behaviorErr
 	}
 	agent := &Agent{
@@ -170,11 +153,7 @@ func TestCustomToolUseBehaviorError(t *testing.T) {
 		makeFunctionToolResult(agent, "ignored2", ""),
 		makeFunctionToolResult(agent, "ignored3", ""),
 	}
-	_, err := RunImpl().checkForFinalOutputFromTools(
-		agent,
-		toolResults,
-		runcontext.NewWrapper(nil),
-	)
+	_, err := RunImpl().checkForFinalOutputFromTools(t.Context(), agent, toolResults)
 	require.ErrorIs(t, err, behaviorErr)
 }
 
@@ -192,11 +171,7 @@ func TestToolNamesToStopAtBehavior(t *testing.T) {
 		makeFunctionToolResult(agent, "ignored2", "tool2"),
 		makeFunctionToolResult(agent, "ignored3", "tool3"),
 	}
-	result, err := RunImpl().checkForFinalOutputFromTools(
-		agent,
-		toolResults,
-		runcontext.NewWrapper(nil),
-	)
+	result, err := RunImpl().checkForFinalOutputFromTools(t.Context(), agent, toolResults)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
@@ -209,11 +184,7 @@ func TestToolNamesToStopAtBehavior(t *testing.T) {
 		makeFunctionToolResult(agent, "ignored2", "tool2"),
 		makeFunctionToolResult(agent, "ignored3", "tool3"),
 	}
-	result, err = RunImpl().checkForFinalOutputFromTools(
-		agent,
-		toolResults,
-		runcontext.NewWrapper(nil),
-	)
+	result, err = RunImpl().checkForFinalOutputFromTools(t.Context(), agent, toolResults)
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: true,

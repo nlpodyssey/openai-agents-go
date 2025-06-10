@@ -25,7 +25,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
@@ -348,7 +347,7 @@ func TestInputFilterError(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	onInvokeHandoff := func(context.Context, *runcontext.Wrapper, string) (*agents.Agent, error) {
+	onInvokeHandoff := func(context.Context, string) (*agents.Agent, error) {
 		return agent1, nil
 	}
 
@@ -393,7 +392,7 @@ func TestInputFilterError(t *testing.T) {
 func TestHandoffOnInput(t *testing.T) {
 	callOutput := ""
 
-	onInput := func(_ context.Context, _ *runcontext.Wrapper, jsonInput any) error {
+	onInput := func(_ context.Context, jsonInput any) error {
 		r := strings.NewReader(jsonInput.(string))
 		dec := json.NewDecoder(r)
 		dec.DisallowUnknownFields()
@@ -446,7 +445,7 @@ func TestHandoffOnInput(t *testing.T) {
 
 func TestHandoffOnInputError(t *testing.T) {
 	onInputError := errors.New("on input error")
-	onInput := func(context.Context, *runcontext.Wrapper, any) error {
+	onInput := func(context.Context, any) error {
 		return onInputError
 	}
 
@@ -491,25 +490,22 @@ func TestInvalidHandoffInputJSONCausesError(t *testing.T) {
 	h := agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 		Agent: agent,
 		OnHandoff: agents.OnHandoffWithInput(
-			func(context.Context, *runcontext.Wrapper, any) error { return nil },
+			func(context.Context, any) error { return nil },
 		),
 		InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
 	})
 
-	cw := runcontext.NewWrapper(nil)
 	var target agents.ModelBehaviorError
 
-	_, err := h.OnInvokeHandoff(t.Context(), cw, "")
+	_, err := h.OnInvokeHandoff(t.Context(), "")
 	assert.ErrorAs(t, err, &target)
 
-	_, err = h.OnInvokeHandoff(t.Context(), cw, `{"foo": "y"}`)
+	_, err = h.OnInvokeHandoff(t.Context(), `{"foo": "y"}`)
 	assert.ErrorAs(t, err, &target)
 }
 
 func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
-	guardrailFunction := func(
-		context.Context, *runcontext.Wrapper, *agents.Agent, agents.Input,
-	) (agents.GuardrailFunctionOutput, error) {
+	guardrailFunction := func(context.Context, *agents.Agent, agents.Input) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
 			TripwireTriggered: true,
@@ -540,9 +536,7 @@ func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 }
 
 func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
-	guardrailFunction := func(
-		context.Context, *runcontext.Wrapper, *agents.Agent, any,
-	) (agents.GuardrailFunctionOutput, error) {
+	guardrailFunction := func(context.Context, *agents.Agent, any) (agents.GuardrailFunctionOutput, error) {
 		return agents.GuardrailFunctionOutput{
 			OutputInfo:        nil,
 			TripwireTriggered: true,
@@ -582,7 +576,7 @@ var TestToolOne = tools.Function{
 		"additionalProperties": false,
 		"properties":           map[string]any{},
 	},
-	OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
+	OnInvokeTool: func(context.Context, string) (any, error) {
 		return AgentRunnerTestFoo{Bar: "tool_one_result"}, nil
 	},
 	StrictJSONSchema: param.NewOpt(true),
@@ -598,7 +592,7 @@ var TestToolTwo = tools.Function{
 		"additionalProperties": false,
 		"properties":           map[string]any{},
 	},
-	OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
+	OnInvokeTool: func(context.Context, string) (any, error) {
 		return AgentRunnerTestFoo{Bar: "tool_two_result"}, nil
 	},
 	StrictJSONSchema: param.NewOpt(true),
@@ -635,7 +629,7 @@ func TestToolUseBehaviorFirstOutput(t *testing.T) {
 	assert.Equal(t, AgentRunnerTestFoo{Bar: "tool_one_result"}, result.FinalOutput)
 }
 
-var CustomToolUseBehavior = func(_ *runcontext.Wrapper, results []agents.FunctionToolResult) (agents.ToolsToFinalOutputResult, error) {
+var CustomToolUseBehavior = func(_ context.Context, results []agents.FunctionToolResult) (agents.ToolsToFinalOutputResult, error) {
 	if slices.ContainsFunc(results, func(r agents.FunctionToolResult) bool { return r.Tool.ToolName() == "test_tool_one" }) {
 		return agents.ToolsToFinalOutputResult{
 			IsFinalOutput: true,

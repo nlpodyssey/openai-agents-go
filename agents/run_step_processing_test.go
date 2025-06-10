@@ -17,7 +17,6 @@ package agents
 import (
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/responses"
@@ -208,11 +207,7 @@ func TestHandoffsParsedCorrectly(t *testing.T) {
 	assert.Equal(t, DefaultHandoffToolDescription(agent1), handoff.Handoff.ToolDescription)
 	assert.Equal(t, "test_1", handoff.Handoff.AgentName)
 
-	handoffAgent, err := handoff.Handoff.OnInvokeHandoff(
-		t.Context(),
-		runcontext.NewWrapper(nil),
-		handoff.ToolCall.Arguments,
-	)
+	handoffAgent, err := handoff.Handoff.OnInvokeHandoff(t.Context(), handoff.ToolCall.Arguments)
 	require.NoError(t, err)
 	assert.Same(t, agent1, handoffAgent)
 }

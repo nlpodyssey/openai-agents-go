@@ -16,8 +16,6 @@ package agents
 
 import (
 	"context"
-
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 )
 
 // An InputGuardrail is a check that runs in parallel to the agent's execution.
@@ -37,15 +35,10 @@ type InputGuardrail struct {
 	Name string
 }
 
-type InputGuardrailFunction = func(context.Context, *runcontext.Wrapper, *Agent, Input) (GuardrailFunctionOutput, error)
+type InputGuardrailFunction = func(context.Context, *Agent, Input) (GuardrailFunctionOutput, error)
 
-func (ig InputGuardrail) Run(
-	ctx context.Context,
-	agent *Agent,
-	input Input,
-	contextWrapper *runcontext.Wrapper,
-) (InputGuardrailResult, error) {
-	output, err := ig.GuardrailFunction(ctx, contextWrapper, agent, input)
+func (ig InputGuardrail) Run(ctx context.Context, agent *Agent, input Input) (InputGuardrailResult, error) {
+	output, err := ig.GuardrailFunction(ctx, agent, input)
 	result := InputGuardrailResult{
 		Guardrail: ig,
 		Output:    output,
@@ -87,15 +80,10 @@ type OutputGuardrail struct {
 	Name string
 }
 
-type OutputGuardrailFunction = func(context.Context, *runcontext.Wrapper, *Agent, any) (GuardrailFunctionOutput, error)
+type OutputGuardrailFunction = func(context.Context, *Agent, any) (GuardrailFunctionOutput, error)
 
-func (og OutputGuardrail) Run(
-	ctx context.Context,
-	contextWrapper *runcontext.Wrapper,
-	agent *Agent,
-	agentOutput any,
-) (OutputGuardrailResult, error) {
-	output, err := og.GuardrailFunction(ctx, contextWrapper, agent, agentOutput)
+func (og OutputGuardrail) Run(ctx context.Context, agent *Agent, agentOutput any) (OutputGuardrailResult, error) {
+	output, err := og.GuardrailFunction(ctx, agent, agentOutput)
 	result := OutputGuardrailResult{
 		Guardrail:   og,
 		Agent:       agent,

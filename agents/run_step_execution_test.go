@@ -19,7 +19,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
@@ -379,8 +378,7 @@ type getExecuteResultParams struct {
 	originalInput  Input
 	generatedItems []RunItem
 	// optional
-	hooks          RunHooks
-	contextWrapper *runcontext.Wrapper
+	hooks RunHooks
 	// optional
 	runConfig RunConfig
 }
@@ -465,11 +463,6 @@ func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepRes
 		input = InputString("hello")
 	}
 
-	cw := params.contextWrapper
-	if cw == nil {
-		cw = runcontext.NewWrapper(nil)
-	}
-
 	result, err := RunImpl().ExecuteToolsAndSideEffects(
 		t.Context(),
 		params.agent,
@@ -479,7 +472,6 @@ func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepRes
 		*processedResponse,
 		outputSchema,
 		hooks,
-		cw,
 		params.runConfig,
 	)
 	require.NoError(t, err)

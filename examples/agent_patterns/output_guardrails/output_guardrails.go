@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -98,7 +97,6 @@ type SensitiveDataCheckInfo struct {
 
 func SensitiveDataCheckFunction(
 	_ context.Context,
-	_ *runcontext.Wrapper,
 	_ *agents.Agent,
 	anyOutput any,
 ) (agents.GuardrailFunctionOutput, error) {

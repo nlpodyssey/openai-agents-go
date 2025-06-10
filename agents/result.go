@@ -21,7 +21,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 )
 
 type RunResultBase struct {
@@ -44,9 +43,6 @@ type RunResultBase struct {
 
 	// Guardrail results for the final output of the agent.
 	OutputGuardrailResults []OutputGuardrailResult
-
-	// The context wrapper for the agent run.
-	ContextWrapper *runcontext.Wrapper
 }
 
 // ToInputList creates a new input list, merging the original input with all the new items generated.

@@ -20,7 +20,6 @@ import (
 	"math/rand"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -32,12 +31,14 @@ const (
 	StyleRobot  Style = "robot"
 )
 
+type customContextKey struct{}
+
 type CustomContext struct {
 	Style Style
 }
 
-func CustomInstructions(_ context.Context, cw *runcontext.Wrapper, _ *agents.Agent) (string, error) {
-	customContext := cw.Context.(CustomContext)
+func CustomInstructions(ctx context.Context, _ *agents.Agent) (string, error) {
+	customContext := ctx.Value(customContextKey{}).(CustomContext)
 	switch customContext.Style {
 	case StyleHaiku:
 		return "Only respond in haikus.", nil
@@ -64,10 +65,11 @@ func main() {
 	userMessage := "Tell me a joke."
 	fmt.Printf("User: %s\n", userMessage)
 
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
+	ctx := context.WithValue(context.Background(), customContextKey{}, customContext)
+
+	result, err := agents.Runner().Run(ctx, agents.RunParams{
 		StartingAgent: Agent,
 		Input:         agents.InputString(userMessage),
-		Context:       customContext,
 	})
 	if err != nil {
 		panic(err)

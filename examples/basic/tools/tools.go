@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -59,7 +58,7 @@ var GetWeatherTool = tools.Function{
 			},
 		},
 	},
-	OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
+	OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
 		var args GetWeatherArgs
 		err := json.Unmarshal([]byte(arguments), &args)
 		if err != nil {

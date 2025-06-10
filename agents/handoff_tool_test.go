@@ -21,7 +21,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -133,7 +132,7 @@ func (HandoffToolTestFooSchema) ValidateJSON(jsonStr string) (any, error) {
 }
 
 func TestHandoffInputType(t *testing.T) {
-	onHandoff := func(context.Context, *runcontext.Wrapper, any) error {
+	onHandoff := func(context.Context, any) error {
 		return nil
 	}
 
@@ -145,18 +144,16 @@ func TestHandoffInputType(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewWrapper(nil)
-
 	// Invalid JSON should raise an error
-	_, err = obj.OnInvokeHandoff(t.Context(), cw, "not json")
+	_, err = obj.OnInvokeHandoff(t.Context(), "not json")
 	require.Error(t, err)
 
 	// Empty JSON should raise an error
-	_, err = obj.OnInvokeHandoff(t.Context(), cw, "")
+	_, err = obj.OnInvokeHandoff(t.Context(), "")
 	require.Error(t, err)
 
 	// Valid JSON should call the OnHandoff function
-	invoked, err := obj.OnInvokeHandoff(t.Context(), cw, `{"bar": "baz"}`)
+	invoked, err := obj.OnInvokeHandoff(t.Context(), `{"bar": "baz"}`)
 	require.NoError(t, err)
 	assert.Same(t, agent, invoked)
 }
@@ -164,7 +161,7 @@ func TestHandoffInputType(t *testing.T) {
 func TestOnHandoffCalled(t *testing.T) {
 	wasCalled := false
 
-	onHandoff := func(context.Context, *runcontext.Wrapper, any) error {
+	onHandoff := func(context.Context, any) error {
 		wasCalled = true
 		return nil
 	}
@@ -177,10 +174,8 @@ func TestOnHandoffCalled(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewWrapper(nil)
-
 	// Valid JSON should call the OnHandoff function
-	invoked, err := obj.OnInvokeHandoff(t.Context(), cw, `{"bar": "baz"}`)
+	invoked, err := obj.OnInvokeHandoff(t.Context(), `{"bar": "baz"}`)
 	require.NoError(t, err)
 	assert.Same(t, agent, invoked)
 	assert.True(t, wasCalled)
@@ -189,7 +184,7 @@ func TestOnHandoffCalled(t *testing.T) {
 func TestOnHandoffError(t *testing.T) {
 	handoffErr := errors.New("error")
 
-	onHandoff := func(context.Context, *runcontext.Wrapper, any) error {
+	onHandoff := func(context.Context, any) error {
 		return handoffErr
 	}
 
@@ -201,17 +196,15 @@ func TestOnHandoffError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewWrapper(nil)
-
 	// Valid JSON should call the OnHandoff function
-	_, err = obj.OnInvokeHandoff(t.Context(), cw, `{"bar": "baz"}`)
+	_, err = obj.OnInvokeHandoff(t.Context(), `{"bar": "baz"}`)
 	assert.ErrorIs(t, err, handoffErr)
 }
 
 func TestOnHandoffWithoutInputCalled(t *testing.T) {
 	wasCalled := false
 
-	onHandoff := func(context.Context, *runcontext.Wrapper) error {
+	onHandoff := func(context.Context) error {
 		wasCalled = true
 		return nil
 	}
@@ -223,10 +216,8 @@ func TestOnHandoffWithoutInputCalled(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewWrapper(nil)
-
 	// Valid JSON should call the OnHandoff function
-	invoked, err := obj.OnInvokeHandoff(t.Context(), cw, "")
+	invoked, err := obj.OnInvokeHandoff(t.Context(), "")
 	require.NoError(t, err)
 	assert.Same(t, agent, invoked)
 	assert.True(t, wasCalled)
@@ -235,7 +226,7 @@ func TestOnHandoffWithoutInputCalled(t *testing.T) {
 func TestOnHandoffWithoutInputError(t *testing.T) {
 	handoffErr := errors.New("error")
 
-	onHandoff := func(context.Context, *runcontext.Wrapper) error {
+	onHandoff := func(context.Context) error {
 		return handoffErr
 	}
 
@@ -246,9 +237,7 @@ func TestOnHandoffWithoutInputError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cw := runcontext.NewWrapper(nil)
-
 	// Valid JSON should call the OnHandoff function
-	_, err = obj.OnInvokeHandoff(t.Context(), cw, `{"bar": "baz"}`)
+	_, err = obj.OnInvokeHandoff(t.Context(), `{"bar": "baz"}`)
 	assert.ErrorIs(t, err, handoffErr)
 }

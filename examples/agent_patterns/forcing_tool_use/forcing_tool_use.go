@@ -23,7 +23,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -80,7 +79,7 @@ var GetWeatherTool = tools.Function{
 			},
 		},
 	},
-	OnInvokeTool: func(_ context.Context, _ *runcontext.Wrapper, arguments string) (any, error) {
+	OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
 		var args GetWeatherArgs
 		err := json.Unmarshal([]byte(arguments), &args)
 		if err != nil {
@@ -95,10 +94,7 @@ var GetWeatherTool = tools.Function{
 	},
 }
 
-func CustomToolUseBehavior(
-	_ *runcontext.Wrapper,
-	results []agents.FunctionToolResult,
-) (agents.ToolsToFinalOutputResult, error) {
+func CustomToolUseBehavior(_ context.Context, results []agents.FunctionToolResult) (agents.ToolsToFinalOutputResult, error) {
 	var weather Weather
 	err := json.Unmarshal([]byte(results[0].Output.(string)), &weather)
 	if err != nil {

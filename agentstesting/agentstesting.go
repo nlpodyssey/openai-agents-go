@@ -18,7 +18,6 @@ import (
 	"context"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/runcontext"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -60,7 +59,7 @@ func GetFunctionTool(name string, returnValue string) tools.Function {
 			"additionalProperties": false,
 			"properties":           map[string]any{},
 		},
-		OnInvokeTool: func(context.Context, *runcontext.Wrapper, string) (any, error) {
+		OnInvokeTool: func(context.Context, string) (any, error) {
 			return returnValue, nil
 		},
 	}
