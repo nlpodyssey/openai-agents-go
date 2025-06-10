@@ -78,7 +78,7 @@ func TestCustomHandoffSetup(t *testing.T) {
 			agent1,
 		},
 		Handoffs: []Handoff{
-			UnsafeHandoffFromAgent(HandoffFromAgentParams{
+			HandoffFromAgent(HandoffFromAgentParams{
 				Agent:                   agent2,
 				ToolNameOverride:        "custom_tool_name",
 				ToolDescriptionOverride: "custom tool description",

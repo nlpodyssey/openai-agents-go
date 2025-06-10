@@ -196,7 +196,7 @@ If the customer asks a question that is not related to the routine, transfer bac
 You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents.`),
 		AgentHandoffs: []*agents.Agent{FAQAgent},
 		Handoffs: []agents.Handoff{
-			agents.UnsafeHandoffFromAgent(agents.HandoffFromAgentParams{
+			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:     SeatBookingAgent,
 				OnHandoff: agents.OnHandoffWithoutInput(OnSeatBookingHandoff),
 			}),

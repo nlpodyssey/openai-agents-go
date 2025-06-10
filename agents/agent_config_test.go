@@ -85,8 +85,8 @@ func TestHandoff(t *testing.T) {
 		agent3 := &Agent{
 			Name: "agent_3",
 			Handoffs: []Handoff{
-				UnsafeHandoffFromAgent(HandoffFromAgentParams{Agent: agent1}),
-				UnsafeHandoffFromAgent(HandoffFromAgentParams{
+				HandoffFromAgent(HandoffFromAgentParams{Agent: agent1}),
+				HandoffFromAgent(HandoffFromAgentParams{
 					Agent:                   agent2,
 					ToolNameOverride:        "transfer_to_2",
 					ToolDescriptionOverride: "description_2",
@@ -122,7 +122,7 @@ func TestHandoff(t *testing.T) {
 		agent3 := &Agent{
 			Name: "agent_3",
 			Handoffs: []Handoff{
-				UnsafeHandoffFromAgent(HandoffFromAgentParams{Agent: agent1}),
+				HandoffFromAgent(HandoffFromAgentParams{Agent: agent1}),
 			},
 			AgentHandoffs: []*Agent{
 				agent2,
