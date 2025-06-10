@@ -15,8 +15,15 @@
 package runcontext
 
 import (
+	"context"
+
 	"github.com/nlpodyssey/openai-agents-go/usage"
 )
+
+// contextKey is a private type to avoid collisions with other packages
+type contextKey struct{}
+
+var wrapperKey = contextKey{}
 
 // Wrapper wraps the context object that you passed to `Runner().Run()`.
 // It also contains information about the usage of the agent run so far.
@@ -37,4 +44,30 @@ func NewWrapper(ctx any) *Wrapper {
 		Context: ctx,
 		Usage:   usage.NewUsage(),
 	}
+}
+
+// WithWrapper returns a new context.Context with the Wrapper stored in it.
+func WithWrapper(ctx context.Context, wrapper *Wrapper) context.Context {
+	return context.WithValue(ctx, wrapperKey, wrapper)
+}
+
+// FromContext retrieves the Wrapper from the context.Context.
+// Returns nil if no Wrapper is found.
+func FromContext(ctx context.Context) *Wrapper {
+	wrapper, ok := ctx.Value(wrapperKey).(*Wrapper)
+	if !ok {
+		return nil
+	}
+	return wrapper
+}
+
+// MustFromContext retrieves the Wrapper from the context.Context.
+// Panics if no Wrapper is found. Use this when you're certain the
+// context should contain a Wrapper.
+func MustFromContext(ctx context.Context) *Wrapper {
+	wrapper := FromContext(ctx)
+	if wrapper == nil {
+		panic("runcontext: no Wrapper found in context")
+	}
+	return wrapper
 }
