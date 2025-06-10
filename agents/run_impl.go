@@ -16,6 +16,7 @@ package agents
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -541,15 +542,18 @@ func (runImpl) ExecuteFunctionToolCalls(
 	for i, result := range results {
 		toolRun := toolRuns[i]
 
-		// TODO: the original code does `str(result)`. What to do here? Should we try to marshal to JSON if it's not already a string?
 		var strResult string
 		switch v := result.(type) {
 		case string:
 			strResult = v
-		case fmt.Stringer:
-			strResult = v.String()
+		case []byte:
+			strResult = string(v)
 		default:
-			strResult = fmt.Sprintf("%v", v)
+			out, err := json.Marshal(v)
+			if err != nil {
+				return nil, err
+			}
+			strResult = string(out)
 		}
 
 		functionToolResults[i] = FunctionToolResult{
