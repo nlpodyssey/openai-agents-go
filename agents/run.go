@@ -980,7 +980,7 @@ func (runner) getHandoffs(agent *Agent) ([]Handoff, error) {
 		handoffs = append(handoffs, h)
 	}
 	for _, a := range agent.AgentHandoffs {
-		h, err := HandoffFromAgent(HandoffFromAgentParams{Agent: a})
+		h, err := SafeHandoffFromAgent(HandoffFromAgentParams{Agent: a})
 		if err != nil {
 			return nil, fmt.Errorf("failed to make Handoff from Agent %q: %w", a.Name, err)
 		}

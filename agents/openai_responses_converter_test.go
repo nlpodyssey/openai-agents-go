@@ -148,7 +148,7 @@ func TestConvertToolsIncludesHandoffs(t *testing.T) {
 		Name:               "support",
 		HandoffDescription: "Handles support",
 	}
-	handoff, err := agents.HandoffFromAgent(agents.HandoffFromAgentParams{Agent: agent})
+	handoff, err := agents.SafeHandoffFromAgent(agents.HandoffFromAgentParams{Agent: agent})
 	require.NoError(t, err)
 	require.NotNil(t, handoff)
 

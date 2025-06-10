@@ -137,15 +137,15 @@ type HandoffFromAgentParams struct {
 }
 
 func UnsafeHandoffFromAgent(params HandoffFromAgentParams) Handoff {
-	h, err := HandoffFromAgent(params)
+	h, err := SafeHandoffFromAgent(params)
 	if err != nil {
 		panic(err)
 	}
 	return *h
 }
 
-// HandoffFromAgent creates a Handoff from an Agent.
-func HandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
+// SafeHandoffFromAgent creates a Handoff from an Agent. It returns an error in case of problems.
+func SafeHandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 	var rawInputJSONSchema map[string]any
 
 	if len(params.InputJSONSchema) > 0 {

@@ -64,7 +64,7 @@ func TestConvertHandoffTool(t *testing.T) {
 		Name:               "test_1",
 		HandoffDescription: "test_2",
 	}
-	handoff, err := agents.HandoffFromAgent(agents.HandoffFromAgentParams{
+	handoff, err := agents.SafeHandoffFromAgent(agents.HandoffFromAgentParams{
 		Agent: agent,
 	})
 	require.NoError(t, err)

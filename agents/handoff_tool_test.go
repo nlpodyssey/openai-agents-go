@@ -138,7 +138,7 @@ func TestHandoffInputType(t *testing.T) {
 	}
 
 	agent := &Agent{Name: "test"}
-	obj, err := HandoffFromAgent(HandoffFromAgentParams{
+	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
 		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
@@ -170,7 +170,7 @@ func TestOnHandoffCalled(t *testing.T) {
 	}
 
 	agent := &Agent{Name: "test"}
-	obj, err := HandoffFromAgent(HandoffFromAgentParams{
+	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
 		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
@@ -194,7 +194,7 @@ func TestOnHandoffError(t *testing.T) {
 	}
 
 	agent := &Agent{Name: "test"}
-	obj, err := HandoffFromAgent(HandoffFromAgentParams{
+	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
 		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
@@ -217,7 +217,7 @@ func TestOnHandoffWithoutInputCalled(t *testing.T) {
 	}
 
 	agent := &Agent{Name: "test"}
-	obj, err := HandoffFromAgent(HandoffFromAgentParams{
+	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:     agent,
 		OnHandoff: OnHandoffWithoutInput(onHandoff),
 	})
@@ -240,7 +240,7 @@ func TestOnHandoffWithoutInputError(t *testing.T) {
 	}
 
 	agent := &Agent{Name: "test"}
-	obj, err := HandoffFromAgent(HandoffFromAgentParams{
+	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:     agent,
 		OnHandoff: OnHandoffWithoutInput(onHandoff),
 	})
