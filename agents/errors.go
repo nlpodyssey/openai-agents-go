@@ -20,37 +20,55 @@ import (
 )
 
 // MaxTurnsExceededError is returned when the maximum number of turns is exceeded.
-type MaxTurnsExceededError error
+type MaxTurnsExceededError struct {
+	err error
+}
 
 func NewMaxTurnsExceededError(message string) MaxTurnsExceededError {
-	return MaxTurnsExceededError(errors.New(message))
+	return MaxTurnsExceededError{err: errors.New(message)}
 }
 
 func MaxTurnsExceededErrorf(format string, a ...any) MaxTurnsExceededError {
-	return MaxTurnsExceededError(fmt.Errorf(format, a...))
+	return MaxTurnsExceededError{err: fmt.Errorf(format, a...)}
+}
+
+func (err MaxTurnsExceededError) Error() string {
+	return err.err.Error()
 }
 
 // ModelBehaviorError is returned when the model does something unexpected,
 // e.g. calling a tool that doesn't exist, or providing malformed JSON.
-type ModelBehaviorError error
+type ModelBehaviorError struct {
+	err error
+}
 
 func NewModelBehaviorError(message string) ModelBehaviorError {
-	return ModelBehaviorError(errors.New(message))
+	return ModelBehaviorError{err: errors.New(message)}
 }
 
 func ModelBehaviorErrorf(format string, a ...any) ModelBehaviorError {
-	return ModelBehaviorError(fmt.Errorf(format, a...))
+	return ModelBehaviorError{err: fmt.Errorf(format, a...)}
+}
+
+func (err ModelBehaviorError) Error() string {
+	return err.err.Error()
 }
 
 // UserError is returned when the user makes an error using the SDK.
-type UserError error
+type UserError struct {
+	err error
+}
 
 func NewUserError(message string) UserError {
-	return UserError(errors.New(message))
+	return UserError{err: errors.New(message)}
 }
 
 func UserErrorf(format string, a ...any) UserError {
-	return UserError(fmt.Errorf(format, a...))
+	return UserError{err: fmt.Errorf(format, a...)}
+}
+
+func (err UserError) Error() string {
+	return err.err.Error()
 }
 
 // InputGuardrailTripwireTriggeredError is returned when a guardrail tripwire is triggered.
@@ -88,12 +106,18 @@ func NewOutputGuardrailTripwireTriggeredError(guardrailName string, guardrailRes
 	}
 }
 
-type CanceledError error
+type CanceledError struct {
+	err error
+}
 
 func NewCanceledError(message string) CanceledError {
-	return CanceledError(errors.New(message))
+	return CanceledError{err: errors.New(message)}
 }
 
 func CanceledErrorf(format string, a ...any) CanceledError {
-	return CanceledError(fmt.Errorf(format, a...))
+	return CanceledError{err: fmt.Errorf(format, a...)}
+}
+
+func (err CanceledError) Error() string {
+	return err.err.Error()
 }
