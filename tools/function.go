@@ -94,7 +94,7 @@ func (f Function) ConvertToChatCompletions() (*openai.ChatCompletionToolParam, e
 //
 // Type parameters:
 //   - T: The input argument type (must be JSON-serializable)
-//   - R: The return value type (must be JSON-serializable)
+//   - R: The return value type
 //
 // Parameters:
 //   - name: The tool name as shown to the LLM
@@ -158,15 +158,7 @@ func NewFunctionTool[T, R any](name string, description string, handler func(ctx
 			if err := json.Unmarshal([]byte(arguments), &args); err != nil {
 				return nil, fmt.Errorf("failed to parse arguments: %w", err)
 			}
-			w, err := handler(runcontext.WithWrapper(ctx, runCtx), args)
-			if err != nil {
-				return nil, err
-			}
-			out, err := json.Marshal(w)
-			if err != nil {
-				return nil, err
-			}
-			return string(out), nil
+			return handler(runcontext.WithWrapper(ctx, runCtx), args)
 		},
 	}
 }
