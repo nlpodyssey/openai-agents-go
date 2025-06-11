@@ -76,9 +76,9 @@ func PrettyPrintRunResultStreaming(result RunResultStreaming) string {
 
 	sb.WriteString("RunResultStreaming:")
 	_, _ = fmt.Fprintf(&sb, "\n- Current agent: Agent(name=%q, ...)", result.LastAgent().Name)
-	_, _ = fmt.Fprintf(&sb, "\n- Current turn: %d", result.CurrentTurn)
+	_, _ = fmt.Fprintf(&sb, "\n- Current turn: %d", result.CurrentTurn.Load())
 	_, _ = fmt.Fprintf(&sb, "\n- Max turns: %d", result.MaxTurns)
-	_, _ = fmt.Fprintf(&sb, "\n- Is complete: %v", result.IsComplete)
+	_, _ = fmt.Fprintf(&sb, "\n- Is complete: %v", result.IsComplete.Load())
 
 	_, _ = fmt.Fprintf(&sb, "\n- Final output (%T):\n", result.FinalOutput)
 	sb.WriteString(indent(strings.TrimSuffix(finalOutputStr(result.RunResultBase), "\n"), 2))

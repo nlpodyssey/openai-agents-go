@@ -329,16 +329,19 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 			OutputGuardrailResults: nil,
 		},
 		CurrentAgent:             params.StartingAgent,
-		CurrentTurn:              0,
+		CurrentTurn:              new(atomic.Uint64),
 		MaxTurns:                 maxTurns,
 		currentAgentOutputSchema: outputSchema,
-		IsComplete:               false,
+		IsComplete:               new(atomic.Bool),
 		eventQueue:               asyncqueue.New[StreamEvent](),
 		inputGuardrailQueue:      asyncqueue.New[InputGuardrailResult](),
+		runImplTask:              new(atomic.Pointer[asynctask.Task[error]]),
+		inputGuardrailsTask:      new(atomic.Pointer[asynctask.Task[error]]),
+		outputGuardrailsTask:     new(atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]),
 	}
 
 	// Kick off the actual agent loop in the background and return the streamed result object.
-	streamedResult.runImplTask = asynctask.CreateTask(ctx, func(ctx context.Context) error {
+	streamedResult.runImplTask.Store(asynctask.CreateTask(ctx, func(ctx context.Context) error {
 		return r.runStreamedImpl(
 			ctx,
 			params.Input,
@@ -349,7 +352,7 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 			params.RunConfig,
 			params.PreviousResponseID,
 		)
-	})
+	}))
 
 	return streamedResult, nil
 }
@@ -409,7 +412,7 @@ func (r runner) runStreamedImpl(
 ) (err error) {
 	defer func() {
 		if err != nil {
-			streamedResult.IsComplete = true
+			streamedResult.IsComplete.Store(true)
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
 		}
 	}()
@@ -428,7 +431,7 @@ func (r runner) runStreamedImpl(
 	var allTools []tools.Tool
 
 	for {
-		if streamedResult.IsComplete {
+		if streamedResult.IsComplete.Load() {
 			break
 		}
 
@@ -438,7 +441,7 @@ func (r runner) runStreamedImpl(
 		}
 
 		currentTurn += 1
-		streamedResult.CurrentTurn = currentTurn
+		streamedResult.CurrentTurn.Store(currentTurn)
 
 		if currentTurn > maxTurns {
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
@@ -447,7 +450,7 @@ func (r runner) runStreamedImpl(
 
 		if currentTurn == 1 {
 			// Run the input guardrails in the background and put the results on the queue
-			streamedResult.inputGuardrailsTask = asynctask.CreateTask(ctx, func(ctx context.Context) error {
+			streamedResult.inputGuardrailsTask.Store(asynctask.CreateTask(ctx, func(ctx context.Context) error {
 				return r.runInputGuardrailsWithQueue(
 					ctx,
 					startingAgent,
@@ -455,7 +458,7 @@ func (r runner) runStreamedImpl(
 					InputItems(ItemHelpers().InputToNewInputList(startingInput)),
 					streamedResult,
 				)
-			})
+			}))
 		}
 
 		turnResult, err := r.runSingleTurnStreamed(
@@ -480,7 +483,7 @@ func (r runner) runStreamedImpl(
 
 		switch nextStep := turnResult.NextStep.(type) {
 		case NextStepFinalOutput:
-			streamedResult.outputGuardrailsTask = asynctask.CreateTask(ctx, func(ctx context.Context) outputGuardrailsTaskResult {
+			streamedResult.outputGuardrailsTask.Store(asynctask.CreateTask(ctx, func(ctx context.Context) outputGuardrailsTaskResult {
 				result, err := r.runOutputGuardrails(
 					ctx,
 					slices.Concat(currentAgent.OutputGuardrails, runConfig.OutputGuardrails),
@@ -488,9 +491,9 @@ func (r runner) runStreamedImpl(
 					nextStep.Output,
 				)
 				return outputGuardrailsTaskResult{Result: result, Err: err}
-			})
+			}))
 
-			taskResult := streamedResult.outputGuardrailsTask.Await()
+			taskResult := streamedResult.outputGuardrailsTask.Load().Await()
 
 			var outputGuardrailResults []OutputGuardrailResult
 			if taskResult.Canceled {
@@ -503,7 +506,7 @@ func (r runner) runStreamedImpl(
 
 			streamedResult.OutputGuardrailResults = outputGuardrailResults
 			streamedResult.FinalOutput = nextStep.Output
-			streamedResult.IsComplete = true
+			streamedResult.IsComplete.Store(true)
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
@@ -522,7 +525,7 @@ func (r runner) runStreamedImpl(
 		}
 	}
 
-	streamedResult.IsComplete = true
+	streamedResult.IsComplete.Store(true)
 	return nil
 }
 
