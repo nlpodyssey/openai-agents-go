@@ -51,6 +51,7 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 	params ModelGetResponseParams,
 ) (*ModelResponse, error) {
 	body, opts, err := m.prepareRequest(
+		ctx,
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
@@ -105,6 +106,7 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 	params ModelStreamResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
 	body, opts, err := m.prepareRequest(
+		ctx,
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
@@ -143,6 +145,7 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 }
 
 func (m OpenAIChatCompletionsModel) prepareRequest(
+	ctx context.Context,
 	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
@@ -182,7 +185,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 
 	var convertedTools []openai.ChatCompletionToolParam
 	for _, tool := range tools {
-		v, err := tool.ConvertToChatCompletions()
+		v, err := tool.ConvertToChatCompletions(ctx)
 		if err != nil {
 			return nil, nil, err
 		}
