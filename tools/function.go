@@ -58,7 +58,7 @@ func (f Function) ToolName() string {
 	return f.Name
 }
 
-func (f Function) ConvertToResponses() (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+func (f Function) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
 	return &responses.ToolUnionParam{
 		OfFunction: &responses.FunctionToolParam{
 			Name:        f.Name,
@@ -70,7 +70,7 @@ func (f Function) ConvertToResponses() (*responses.ToolUnionParam, *responses.Re
 	}, nil, nil
 }
 
-func (f Function) ConvertToChatCompletions() (*openai.ChatCompletionToolParam, error) {
+func (f Function) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
 	description := param.Null[string]()
 	if f.Description != "" {
 		description = param.NewOpt(f.Description)

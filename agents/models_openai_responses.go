@@ -49,6 +49,7 @@ func (m OpenAIResponsesModel) GetResponse(
 	params ModelGetResponseParams,
 ) (*ModelResponse, error) {
 	body, opts, err := m.prepareRequest(
+		ctx,
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
@@ -99,6 +100,7 @@ func (m OpenAIResponsesModel) StreamResponse(
 	params ModelStreamResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
 	body, opts, err := m.prepareRequest(
+		ctx,
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
@@ -134,6 +136,7 @@ func (m OpenAIResponsesModel) StreamResponse(
 }
 
 func (m OpenAIResponsesModel) prepareRequest(
+	ctx context.Context,
 	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
@@ -155,7 +158,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 	}
 
 	toolChoice := ResponsesConverter().ConvertToolChoice(modelSettings.ToolChoice)
-	convertedTools, err := ResponsesConverter().ConvertTools(tools, handoffs)
+	convertedTools, err := ResponsesConverter().ConvertTools(ctx, tools, handoffs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -261,12 +264,22 @@ func (responsesConverter) GetResponseFormat(
 	}
 }
 
-func (conv responsesConverter) ConvertTools(tools []tools.Tool, handoffs []Handoff) (*ConvertedTools, error) {
+func (conv responsesConverter) ConvertTools(ctx context.Context, ts []tools.Tool, handoffs []Handoff) (*ConvertedTools, error) {
 	var convertedTools []responses.ToolUnionParam
 	var includes []responses.ResponseIncludable
 
-	for _, tool := range tools {
-		convertedTool, include, err := tool.ConvertToResponses()
+	var computerTools []tools.ComputerTool
+	for _, tool := range ts {
+		if ct, ok := tool.(tools.ComputerTool); ok {
+			computerTools = append(computerTools, ct)
+		}
+	}
+	if len(computerTools) > 1 {
+		return nil, UserErrorf("you can only provide one computer tool, got %d", len(computerTools))
+	}
+
+	for _, tool := range ts {
+		convertedTool, include, err := tool.ConvertToResponses(ctx)
 		if err != nil {
 			return nil, err
 		}

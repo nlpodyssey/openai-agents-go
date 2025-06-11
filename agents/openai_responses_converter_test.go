@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/computer"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -92,13 +93,13 @@ func TestGetResponseFormatPlainTextAndJsonSchema(t *testing.T) {
 
 	// Default output (None) should be considered plain text.
 	v := agents.ResponsesConverter().GetResponseFormat(nil)
-	assert.Equal(t, responses.ResponseTextConfigParam{}, v)
+	assert.Zero(t, v)
 
-	// An explicit plain-text schema (str) should also yield zero-value.
+	// An explicit plain-text schema should also yield zero-value.
 	v = agents.ResponsesConverter().GetResponseFormat(PlainTextSchema{})
-	assert.Equal(t, responses.ResponseTextConfigParam{}, v)
+	assert.Zero(t, v)
 
-	// A model-based schema should produce a format dict.
+	// A model-based schema should produce a format object.
 	v = agents.ResponsesConverter().GetResponseFormat(FakeSchema{})
 	assert.Equal(t, responses.ResponseTextConfigParam{
 		Format: responses.ResponseFormatTextConfigUnionParam{
@@ -112,9 +113,46 @@ func TestGetResponseFormatPlainTextAndJsonSchema(t *testing.T) {
 	}, v)
 }
 
+// DummyComputer tool implements a computer.Computer with minimal methods.
+type DummyComputer struct{}
+
+func (DummyComputer) Environment(context.Context) (computer.Environment, error) {
+	return computer.EnvironmentLinux, nil
+}
+func (DummyComputer) Dimensions(context.Context) (computer.Dimensions, error) {
+	return computer.Dimensions{Width: 800, Height: 600}, nil
+}
+func (DummyComputer) Screenshot(context.Context) (string, error) {
+	return "", errors.New("not implemented")
+}
+func (DummyComputer) Click(context.Context, int64, int64, computer.Button) error {
+	return errors.New("not implemented")
+}
+func (DummyComputer) DoubleClick(context.Context, int64, int64) error {
+	return errors.New("not implemented")
+}
+func (DummyComputer) Scroll(context.Context, int64, int64, int64, int64) error {
+	return errors.New("not implemented")
+}
+func (DummyComputer) Type(context.Context, string) error {
+	return errors.New("not implemented")
+}
+func (DummyComputer) Wait(context.Context) error {
+	return errors.New("not implemented")
+}
+func (DummyComputer) Move(context.Context, int64, int64) error {
+	return errors.New("not implemented")
+}
+func (DummyComputer) Keypress(context.Context, []string) error {
+	return errors.New("not implemented")
+}
+func (DummyComputer) Drag(context.Context, []computer.Position) error {
+	return errors.New("not implemented")
+}
+
 func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	// Construct a variety of tool types and make sure `ConvertTools` returns
-	// a matching list of tool param dicts and the expected includes.
+	// a matching list of tool params and the expected includes.
 
 	// Simple function tool
 	toolFn := tools.Function{
@@ -126,7 +164,10 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 		},
 	}
 
-	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), []tools.Tool{toolFn}, nil)
+	// Wrap our concrete computer in a ComputerTool for conversion.
+	compTool := tools.ComputerTool{Computer: DummyComputer{}}
+	allTools := []tools.Tool{toolFn, compTool}
+	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), allTools, nil)
 	require.NoError(t, err)
 	assert.Equal(t, &agents.ConvertedTools{
 		Tools: []responses.ToolUnionParam{
@@ -139,9 +180,23 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 					Type:        constant.ValueOf[constant.Function](),
 				},
 			},
+			{
+				OfComputerUsePreview: &responses.ComputerToolParam{
+					DisplayHeight: 600,
+					DisplayWidth:  800,
+					Environment:   responses.ComputerToolEnvironmentLinux,
+					Type:          constant.ValueOf[constant.ComputerUsePreview](),
+				},
+			},
 		},
 		Includes: nil,
 	}, converted)
+
+	t.Run("only one computer tool should be allowed", func(t *testing.T) {
+		_, err = agents.ResponsesConverter().ConvertTools(t.Context(), []tools.Tool{compTool, compTool}, nil)
+		var target agents.UserError
+		assert.ErrorAs(t, err, &target)
+	})
 }
 
 func TestConvertToolsIncludesHandoffs(t *testing.T) {

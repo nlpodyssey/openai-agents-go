@@ -359,7 +359,7 @@ func assertItemIsFunctionToolCallOutput(t *testing.T, item RunItem, agent *Agent
 	t.Helper()
 	assert.Equal(t, ToolCallOutputItem{
 		Agent: agent,
-		RawItem: responses.ResponseInputItemFunctionCallOutputParam{
+		RawItem: ResponseInputItemFunctionCallOutputParam{
 			ID:     param.Opt[string]{},
 			CallID: "2",
 			Output: output,

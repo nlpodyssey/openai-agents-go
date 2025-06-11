@@ -74,7 +74,7 @@ func getMessageOutputRunItem(content string) agents.MessageOutputItem {
 func getToolOutputRunItem(content string) agents.ToolCallOutputItem {
 	return agents.ToolCallOutputItem{
 		Agent: newFakeAgent(),
-		RawItem: responses.ResponseInputItemFunctionCallOutputParam{
+		RawItem: agents.ResponseInputItemFunctionCallOutputParam{
 			CallID: "1",
 			Output: content,
 			Type:   constant.ValueOf[constant.FunctionCallOutput](),

@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
+	"github.com/nlpodyssey/openai-agents-go/computer"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
 	"github.com/nlpodyssey/openai-agents-go/tools"
@@ -91,18 +92,24 @@ type ToolRunFunction struct {
 	FunctionTool tools.Function
 }
 
+type ToolRunComputerAction struct {
+	ToolCall     responses.ResponseComputerToolCall
+	ComputerTool tools.ComputerTool
+}
+
 type ProcessedResponse struct {
-	NewItems  []RunItem
-	Handoffs  []ToolRunHandoff
-	Functions []ToolRunFunction
+	NewItems        []RunItem
+	Handoffs        []ToolRunHandoff
+	Functions       []ToolRunFunction
+	ComputerActions []ToolRunComputerAction
 	// Names of all tools used, including hosted tools
 	ToolsUsed []string
 }
 
 func (pr *ProcessedResponse) HasToolsToRun() bool {
-	// Handoffs, functions actions need local processing
+	// Handoffs, functions and computer actions need local processing.
 	// Hosted tools have already run, so there's nothing to do.
-	return len(pr.Handoffs) > 0 || len(pr.Functions) > 0
+	return len(pr.Handoffs) > 0 || len(pr.Functions) > 0 || len(pr.ComputerActions) > 0
 }
 
 type NextStep interface {
@@ -170,22 +177,45 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	var newStepItems []RunItem
 	newStepItems = append(newStepItems, processedResponse.NewItems...)
 
-	// First, let's run the tool calls - function tools
-	functionResults, err := ri.ExecuteFunctionToolCalls(
-		ctx,
-		agent,
-		processedResponse.Functions,
-		hooks,
+	// First, let's run the tool calls - function tools and computer actions
+	childCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	var (
+		functionResults []FunctionToolResult
+		computerResults []RunItem
+		toolErrors      [2]error
+		wg              sync.WaitGroup
 	)
-	if err != nil {
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		functionResults, toolErrors[0] = ri.ExecuteFunctionToolCalls(
+			childCtx,
+			agent,
+			processedResponse.Functions,
+			hooks,
+		)
+	}()
+	go func() {
+		defer wg.Done()
+		computerResults, toolErrors[1] = ri.ExecuteComputerActions(
+			childCtx,
+			agent,
+			processedResponse.ComputerActions,
+			hooks,
+		)
+	}()
+	wg.Wait()
+	if err := errors.Join(toolErrors[:]...); err != nil {
 		return nil, err
 	}
 
 	for _, result := range functionResults {
 		newStepItems = append(newStepItems, result.RunItem)
 	}
+	newStepItems = append(newStepItems, computerResults...)
 
-	// Second, check if there are any handoffs
+	// Next, check if there are any handoffs
 	if runHandoffs := processedResponse.Handoffs; len(runHandoffs) > 0 {
 		return ri.ExecuteHandoffs(
 			ctx,
@@ -200,14 +230,13 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 		)
 	}
 
-	// Third, we'll check if the tool use should result in a final output
+	// Next, we'll check if the tool use should result in a final output
 	checkToolUse, err := ri.checkForFinalOutputFromTools(ctx, agent, functionResults)
 	if err != nil {
 		return nil, err
 	}
 
 	if checkToolUse.IsFinalOutput {
-		// If the output type is str, then let's just stringify it
 		if !checkToolUse.FinalOutput.Valid() {
 			slog.Error("Model returned a final output of None. Not raising an error because we assume you know what you're doing.")
 		}
@@ -304,10 +333,12 @@ func (runImpl) ProcessModelResponse(
 	handoffs []Handoff,
 ) (*ProcessedResponse, error) {
 	var (
-		items       []RunItem
-		runHandoffs []ToolRunHandoff
-		functions   []ToolRunFunction
-		toolsUsed   []string
+		items           []RunItem
+		runHandoffs     []ToolRunHandoff
+		functions       []ToolRunFunction
+		computerActions []ToolRunComputerAction
+		computerTool    *tools.ComputerTool
+		toolsUsed       []string
 	)
 
 	handoffMap := make(map[string]Handoff, len(handoffs))
@@ -316,9 +347,13 @@ func (runImpl) ProcessModelResponse(
 	}
 
 	functionMap := make(map[string]tools.Function)
+
 	for _, tool := range allTools {
-		if functionTool, ok := tool.(tools.Function); ok {
-			functionMap[functionTool.Name] = functionTool
+		switch t := tool.(type) {
+		case tools.Function:
+			functionMap[t.Name] = t
+		case tools.ComputerTool:
+			computerTool = &t
 		}
 	}
 
@@ -339,15 +374,38 @@ func (runImpl) ProcessModelResponse(
 			})
 		case "reasoning":
 			output := responses.ResponseReasoningItem{
-				ID:      outputUnion.ID,
-				Summary: outputUnion.Summary,
-				Type:    constant.ValueOf[constant.Reasoning](),
-				Status:  responses.ResponseReasoningItemStatus(outputUnion.Status),
+				ID:               outputUnion.ID,
+				Summary:          outputUnion.Summary,
+				Type:             constant.ValueOf[constant.Reasoning](),
+				EncryptedContent: outputUnion.EncryptedContent,
+				Status:           responses.ResponseReasoningItemStatus(outputUnion.Status),
 			}
 			items = append(items, ReasoningItem{
 				Agent:   agent,
 				RawItem: output,
 				Type:    "reasoning_item",
+			})
+		case "computer_call":
+			output := responses.ResponseComputerToolCall{
+				ID:                  outputUnion.ID,
+				Action:              openaitypes.ResponseComputerToolCallActionUnionFromResponseOutputItemUnionAction(outputUnion.Action),
+				CallID:              outputUnion.CallID,
+				PendingSafetyChecks: outputUnion.PendingSafetyChecks,
+				Status:              responses.ResponseComputerToolCallStatus(outputUnion.Status),
+				Type:                responses.ResponseComputerToolCallTypeComputerCall,
+			}
+			items = append(items, ToolCallItem{
+				Agent:   agent,
+				RawItem: ResponseComputerToolCall(output),
+				Type:    "tool_call_item",
+			})
+			toolsUsed = append(toolsUsed, "computer_use")
+			if computerTool == nil {
+				return nil, NewModelBehaviorError("model produced computer action without a computer tool")
+			}
+			computerActions = append(computerActions, ToolRunComputerAction{
+				ToolCall:     output,
+				ComputerTool: *computerTool,
 			})
 		case "function_call":
 			output := responses.ResponseFunctionToolCall{
@@ -393,10 +451,11 @@ func (runImpl) ProcessModelResponse(
 	}
 
 	return &ProcessedResponse{
-		NewItems:  items,
-		Handoffs:  runHandoffs,
-		Functions: functions,
-		ToolsUsed: toolsUsed,
+		NewItems:        items,
+		Handoffs:        runHandoffs,
+		Functions:       functions,
+		ComputerActions: computerActions,
+		ToolsUsed:       toolsUsed,
 	}, nil
 }
 
@@ -548,15 +607,36 @@ func (runImpl) ExecuteFunctionToolCalls(
 			Tool:   toolRun.FunctionTool,
 			Output: result,
 			RunItem: ToolCallOutputItem{
-				Agent:   agent,
-				RawItem: ItemHelpers().ToolCallOutputItem(toolRun.ToolCall, strResult),
-				Output:  result,
-				Type:    "tool_call_output_item",
+				Agent: agent,
+				RawItem: ResponseInputItemFunctionCallOutputParam(
+					ItemHelpers().ToolCallOutputItem(toolRun.ToolCall, strResult)),
+				Output: result,
+				Type:   "tool_call_output_item",
 			},
 		}
 	}
 
 	return functionToolResults, nil
+}
+
+func (runImpl) ExecuteComputerActions(
+	ctx context.Context,
+	agent *Agent,
+	actions []ToolRunComputerAction,
+	hooks RunHooks,
+) ([]RunItem, error) {
+	results := make([]RunItem, len(actions))
+
+	// Need to run these serially, because each action can affect the computer state
+	for i, action := range actions {
+		result, err := ComputerAction().Execute(ctx, agent, action, hooks)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = result
+	}
+
+	return results, nil
 }
 
 func (runImpl) ExecuteHandoffs(
@@ -577,10 +657,11 @@ func (runImpl) ExecuteHandoffs(
 		const outputMessage = "Multiple handoffs detected, ignoring this one."
 		for _, handoff := range runHandoffs[1:] {
 			newStepItems = append(newStepItems, ToolCallOutputItem{
-				Agent:   agent,
-				RawItem: ItemHelpers().ToolCallOutputItem(handoff.ToolCall, outputMessage),
-				Output:  outputMessage,
-				Type:    "tool_call_output_item",
+				Agent: agent,
+				RawItem: ResponseInputItemFunctionCallOutputParam(
+					ItemHelpers().ToolCallOutputItem(handoff.ToolCall, outputMessage)),
+				Output: outputMessage,
+				Type:   "tool_call_output_item",
 			})
 		}
 	}
@@ -843,4 +924,150 @@ func (runImpl) checkForFinalOutputFromTools(
 		// This would be an unrecoverable implementation bug, so a panic is appropriate.
 		panic(fmt.Errorf("unexpected ToolUseBehavior type %T", v))
 	}
+}
+
+type computerAction struct{}
+
+func ComputerAction() computerAction { return computerAction{} }
+
+func (ca computerAction) Execute(
+	ctx context.Context,
+	agent *Agent,
+	action ToolRunComputerAction,
+	hooks RunHooks,
+) (RunItem, error) {
+	var (
+		hooksErrors [2]error
+		toolError   error
+		output      string
+	)
+
+	childCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := hooks.OnToolStart(childCtx, agent, action.ComputerTool)
+		if err != nil {
+			cancel()
+			hooksErrors[0] = fmt.Errorf("RunHooks.OnToolStart failed: %w", err)
+		}
+	}()
+
+	if agent.Hooks != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := agent.Hooks.OnToolStart(childCtx, agent, action.ComputerTool)
+			if err != nil {
+				cancel()
+				hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolStart failed: %w", err)
+			}
+		}()
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		output, toolError = ca.getScreenshot(ctx, action.ComputerTool.Computer, action.ToolCall)
+		if toolError != nil {
+			cancel()
+		}
+	}()
+
+	wg.Wait()
+
+	if err := errors.Join(hooksErrors[:]...); err != nil {
+		return nil, err
+	}
+	if toolError != nil {
+		return nil, fmt.Errorf("error running computer tool: %w", toolError)
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := hooks.OnToolEnd(childCtx, agent, action.ComputerTool, output)
+		if err != nil {
+			cancel()
+			hooksErrors[0] = fmt.Errorf("RunHooks.OnToolEnd failed: %w", err)
+		}
+	}()
+
+	if agent.Hooks != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := agent.Hooks.OnToolEnd(childCtx, agent, action.ComputerTool, output)
+			if err != nil {
+				cancel()
+				hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolEnd failed: %w", err)
+			}
+		}()
+	}
+
+	wg.Wait()
+	if err := errors.Join(hooksErrors[:]...); err != nil {
+		return nil, err
+	}
+
+	// TODO: don't send a screenshot every single time, use references
+	imageURL := "data:image/png;base64," + output
+	return ToolCallOutputItem{
+		Agent: agent,
+		RawItem: ResponseInputItemComputerCallOutputParam{
+			CallID: action.ToolCall.CallID,
+			Output: responses.ResponseComputerToolCallOutputScreenshotParam{
+				ImageURL: param.NewOpt(imageURL),
+				Type:     constant.ValueOf[constant.ComputerScreenshot](),
+			},
+			Type: constant.ValueOf[constant.ComputerCallOutput](),
+		},
+		Output: imageURL,
+		Type:   "tool_call_output_item",
+	}, nil
+}
+
+func (computerAction) getScreenshot(
+	ctx context.Context,
+	comp computer.Computer,
+	toolCall responses.ResponseComputerToolCall,
+) (string, error) {
+	action := toolCall.Action
+
+	var err error
+	switch action.Type {
+	case "click":
+		err = comp.Click(ctx, action.X, action.Y, computer.Button(action.Button))
+	case "double_click":
+		err = comp.DoubleClick(ctx, action.X, action.Y)
+	case "drag":
+		path := make([]computer.Position, len(action.Path))
+		for i, p := range action.Path {
+			path[i] = computer.Position{X: p.X, Y: p.Y}
+		}
+		err = comp.Drag(ctx, path)
+	case "keypress":
+		err = comp.Keypress(ctx, action.Keys)
+	case "move":
+		err = comp.Move(ctx, action.X, action.Y)
+	case "screenshot":
+		_, err = comp.Screenshot(ctx)
+	case "scroll":
+		err = comp.Scroll(ctx, action.X, action.Y, action.ScrollX, action.ScrollY)
+	case "type":
+		err = comp.Type(ctx, action.Text)
+	case "wait":
+		err = comp.Wait(ctx)
+	default:
+		err = fmt.Errorf("unexpected ResponseComputerToolCallActionUnion type %q", action.Type)
+	}
+	if err != nil {
+		return "", err
+	}
+
+	return comp.Screenshot(ctx)
 }

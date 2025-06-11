@@ -21,7 +21,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +55,7 @@ func makeFunctionToolResult(agent *Agent, output string, toolName string) Functi
 		Output: output,
 		RunItem: ToolCallOutputItem{
 			Agent: agent,
-			RawItem: responses.ResponseInputItemFunctionCallOutputParam{
+			RawItem: ResponseInputItemFunctionCallOutputParam{
 				CallID: "1",
 				Output: output,
 				Type:   constant.ValueOf[constant.FunctionCallOutput](),

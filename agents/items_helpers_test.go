@@ -112,7 +112,7 @@ func TestExtractLastTextReturnsTextOnly(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "part2", v)
 
-	// Whereas when last content is a refusal, ExtractLastText returns None.
+	// Whereas when last content is a refusal, ExtractLastText returns "" and false.
 	message = makeMessage(
 		firstText,
 		responses.ResponseOutputMessageContentUnion{ // responses.ResponseOutputRefusal
@@ -143,7 +143,7 @@ func TestInputToNewInputListFromString(t *testing.T) {
 	}, result)
 }
 
-func TestInputToNewInputListDeepCopiesLists(t *testing.T) {
+func TestInputToNewInputListCopiesLists(t *testing.T) {
 	// Given a list of message items, ensure the returned list is a copy.
 	original := []agents.TResponseInputItem{
 		{
@@ -245,7 +245,7 @@ func TestTextMessageOutputsAcrossListOfRunItems(t *testing.T) {
 	assert.Equal(t, "foobar", v)
 }
 
-func TestToolCallOutputItemConstructsFunctionCallOutputDict(t *testing.T) {
+func TestToolCallOutputItemConstructsFunctionCallOutput(t *testing.T) {
 	call := agents.ResponseFunctionToolCall{
 		ID:        "call-abc",
 		Arguments: `{"x": 1}`,
@@ -261,9 +261,8 @@ func TestToolCallOutputItemConstructsFunctionCallOutputDict(t *testing.T) {
 }
 
 /*
-The following tests ensure that every possible output item type defined by
-OpenAI's API can be converted back into an input item dict via
-ModelResponse.ToInputItems.
+The following tests ensure that every possible output item type defined by OpenAI's API
+can be converted back into an input item via ModelResponse.ToInputItems.
 */
 
 func TestToInputItemsForMessage(t *testing.T) {
@@ -337,6 +336,45 @@ func TestToInputItemsForFunctionCall(t *testing.T) {
 				Name:      "func",
 				Type:      constant.ValueOf[constant.FunctionCall](),
 				Status:    "",
+			},
+		},
+	}, inputItems)
+}
+
+func TestToInputItemsForComputerCall(t *testing.T) {
+	action := responses.ResponseOutputItemUnionAction{ // responses.ResponseComputerToolCallActionUnion
+		Type: "screenshot",
+	}
+	compCall := responses.ResponseOutputItemUnion{ // responses.ResponseComputerToolCall
+		ID:                  "comp1",
+		Action:              action,
+		Type:                "computer_call",
+		CallID:              "comp1",
+		PendingSafetyChecks: nil,
+		Status:              "completed",
+	}
+	resp := agents.ModelResponse{
+		Output:     []agents.TResponseOutputItem{compCall},
+		Usage:      usage.NewUsage(),
+		ResponseID: "",
+	}
+
+	inputItems := resp.ToInputItems()
+
+	// The value should contain exactly the primitive values of the message
+	assert.Equal(t, []agents.TResponseInputItem{
+		{
+			OfComputerCall: &responses.ResponseComputerToolCallParam{
+				ID:   "comp1",
+				Type: responses.ResponseComputerToolCallTypeComputerCall,
+				Action: responses.ResponseComputerToolCallActionUnionParam{
+					OfScreenshot: &responses.ResponseComputerToolCallActionScreenshotParam{
+						Type: constant.ValueOf[constant.Screenshot](),
+					},
+				},
+				CallID:              "comp1",
+				PendingSafetyChecks: nil,
+				Status:              "completed",
 			},
 		},
 	}, inputItems)

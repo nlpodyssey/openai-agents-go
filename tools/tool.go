@@ -15,6 +15,8 @@
 package tools
 
 import (
+	"context"
+
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/responses"
 )
@@ -30,12 +32,12 @@ type Tool interface {
 	//
 	// If you don't plan to use Responses API, this function can panic or
 	// always return an error (preferred).
-	ConvertToResponses() (*responses.ToolUnionParam, *responses.ResponseIncludable, error)
+	ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error)
 
 	// ConvertToChatCompletions converts a Tool to an OpenAI Chat Completions
 	// API object.
 	//
 	// If you don't plan to use Chat Completions API, this function can panic or
 	// always return an error (preferred).
-	ConvertToChatCompletions() (*openai.ChatCompletionToolParam, error)
+	ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error)
 }

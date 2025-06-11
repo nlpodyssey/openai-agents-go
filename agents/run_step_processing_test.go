@@ -15,8 +15,10 @@
 package agents
 
 import (
+	"context"
 	"testing"
 
+	"github.com/nlpodyssey/openai-agents-go/computer"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/responses"
@@ -308,6 +310,102 @@ func TestReasoningItemParsedCorrectly(t *testing.T) {
 		Type:   constant.ValueOf[constant.Reasoning](),
 		Status: "",
 	}, item.(ReasoningItem).RawItem)
+}
+
+// DummyComputer is a minimal computer.Computer implementation for testing.
+type DummyComputer struct{}
+
+func (DummyComputer) Environment(context.Context) (computer.Environment, error) {
+	return computer.EnvironmentLinux, nil
+}
+func (DummyComputer) Dimensions(context.Context) (computer.Dimensions, error) {
+	return computer.Dimensions{Width: 0, Height: 0}, nil
+}
+func (DummyComputer) Screenshot(context.Context) (string, error)                 { return "", nil }
+func (DummyComputer) Click(context.Context, int64, int64, computer.Button) error { return nil }
+func (DummyComputer) DoubleClick(context.Context, int64, int64) error            { return nil }
+func (DummyComputer) Scroll(context.Context, int64, int64, int64, int64) error   { return nil }
+func (DummyComputer) Type(context.Context, string) error                         { return nil }
+func (DummyComputer) Wait(context.Context) error                                 { return nil }
+func (DummyComputer) Move(context.Context, int64, int64) error                   { return nil }
+func (DummyComputer) Keypress(context.Context, []string) error                   { return nil }
+func (DummyComputer) Drag(context.Context, []computer.Position) error            { return nil }
+
+func TestComputerToolCallWithoutComputerToolRaisesError(t *testing.T) {
+	// If the agent has no ComputerTool in its tools, ProcessModelResponse should return a
+	// ModelBehaviorError when encountering a ResponseComputerToolCall.
+	agent := &Agent{Name: "test"}
+	computerCall := TResponseOutputItem{ // responses.ResponseComputerToolCall
+		ID:   "c1",
+		Type: "computer_call",
+		Action: responses.ResponseOutputItemUnionAction{
+			Type: "click", X: 1, Y: 2, Button: "left",
+		},
+		CallID:              "c1",
+		PendingSafetyChecks: nil,
+		Status:              "completed",
+	}
+	response := ModelResponse{
+		Output:     []TResponseOutputItem{computerCall},
+		Usage:      usage.NewUsage(),
+		ResponseID: "",
+	}
+	_, err := RunImpl().ProcessModelResponse(
+		agent,
+		agent.GetAllTools(),
+		response,
+		nil,
+	)
+	var target ModelBehaviorError
+	assert.ErrorAs(t, err, &target)
+}
+
+func TestComputerToolCallWithComputerToolParsedCorrectly(t *testing.T) {
+	// If the agent contains a ComputerTool, ensure that a ResponseComputerToolCall is parsed into a
+	// ToolCallItem and scheduled to run in computer_actions.
+	dummyComputer := DummyComputer{}
+	computerTool := tools.ComputerTool{Computer: dummyComputer}
+	agent := &Agent{
+		Name:  "test",
+		Tools: []tools.Tool{computerTool},
+	}
+	computerCall := TResponseOutputItem{ // responses.ResponseComputerToolCall
+		ID:   "c1",
+		Type: "computer_call",
+		Action: responses.ResponseOutputItemUnionAction{
+			Type: "click", X: 1, Y: 2, Button: "left",
+		},
+		CallID:              "c1",
+		PendingSafetyChecks: nil,
+		Status:              "completed",
+	}
+	response := ModelResponse{
+		Output:     []TResponseOutputItem{computerCall},
+		Usage:      usage.NewUsage(),
+		ResponseID: "",
+	}
+	result, err := RunImpl().ProcessModelResponse(
+		agent,
+		agent.GetAllTools(),
+		response,
+		nil,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []ToolRunComputerAction{
+		{
+			ToolCall: responses.ResponseComputerToolCall{
+				ID: "c1",
+				Action: responses.ResponseComputerToolCallActionUnion{
+					Type: "click", X: 1, Y: 2, Button: "left",
+				},
+				CallID:              "c1",
+				PendingSafetyChecks: nil,
+				Status:              responses.ResponseComputerToolCallStatusCompleted,
+				Type:                responses.ResponseComputerToolCallTypeComputerCall,
+			},
+			ComputerTool: computerTool,
+		},
+	}, result.ComputerActions)
 }
 
 func TestToolAndHandoffParsedCorrectly(t *testing.T) {

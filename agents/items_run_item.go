@@ -87,7 +87,7 @@ func (item HandoffOutputItem) ToInputItem() TResponseInputItem {
 	return item.RawItem
 }
 
-// ToolCallItem represents a tool call e.g. a function call.
+// ToolCallItem represents a tool call e.g. a function call or computer action call.
 type ToolCallItem struct {
 	// The agent whose run caused this item to be generated.
 	Agent *Agent
@@ -110,19 +110,20 @@ type ToolCallItemType interface {
 	isToolCallItemType()
 }
 
-// Other types that we don't need are omitted:
-// - ResponseComputerToolCall
-// - ResponseFileSearchToolCall
-// - ResponseFunctionWebSearch
-
 type ResponseFunctionToolCall responses.ResponseFunctionToolCall
 
 func (ResponseFunctionToolCall) isToolCallItemType() {}
+
+type ResponseComputerToolCall responses.ResponseComputerToolCall
+
+func (ResponseComputerToolCall) isToolCallItemType() {}
 
 func TResponseInputItemFromToolCallItemType(input ToolCallItemType) TResponseInputItem {
 	switch v := input.(type) {
 	case ResponseFunctionToolCall:
 		return TResponseInputItemFromResponseFunctionToolCall(v)
+	case ResponseComputerToolCall:
+		return TResponseInputItemFromResponseComputerToolCall(v)
 	default:
 		// This would be an unrecoverable implementation bug, so a panic is appropriate.
 		panic(fmt.Errorf("unexpected ToolCallItemType type %T", v))
@@ -133,15 +134,17 @@ func TResponseInputItemFromResponseFunctionToolCall(input ResponseFunctionToolCa
 	return openaitypes.ResponseInputItemUnionParamFromResponseFunctionToolCall(responses.ResponseFunctionToolCall(input))
 }
 
+func TResponseInputItemFromResponseComputerToolCall(input ResponseComputerToolCall) TResponseInputItem {
+	return openaitypes.ResponseInputItemUnionParamFromResponseComputerToolCall(responses.ResponseComputerToolCall(input))
+}
+
 // ToolCallOutputItem represents the output of a tool call.
 type ToolCallOutputItem struct {
 	// The agent whose run caused this item to be generated.
 	Agent *Agent
 
 	// The raw item from the model.
-	//
-	// The other possible type `ComputerCallOutput` is omitted since we don't need it
-	RawItem responses.ResponseInputItemFunctionCallOutputParam
+	RawItem ToolCallOutputRawItem
 
 	// The output of the tool call. This is whatever the tool call returned; the `raw_item`
 	// contains a string representation of the output.
@@ -151,10 +154,32 @@ type ToolCallOutputItem struct {
 	Type string
 }
 
+type ToolCallOutputRawItem interface {
+	isToolCallOutputRawItem()
+}
+
+type ResponseInputItemFunctionCallOutputParam responses.ResponseInputItemFunctionCallOutputParam
+
+func (ResponseInputItemFunctionCallOutputParam) isToolCallOutputRawItem() {}
+
+type ResponseInputItemComputerCallOutputParam responses.ResponseInputItemComputerCallOutputParam
+
+func (ResponseInputItemComputerCallOutputParam) isToolCallOutputRawItem() {}
+
 func (ToolCallOutputItem) isRunItem() {}
 
 func (item ToolCallOutputItem) ToInputItem() TResponseInputItem {
-	return openaitypes.ResponseInputItemUnionParamFromResponseInputItemFunctionCallOutputParam(item.RawItem)
+	switch rawItem := item.RawItem.(type) {
+	case ResponseInputItemFunctionCallOutputParam:
+		return openaitypes.ResponseInputItemUnionParamFromResponseInputItemFunctionCallOutputParam(
+			responses.ResponseInputItemFunctionCallOutputParam(rawItem))
+	case ResponseInputItemComputerCallOutputParam:
+		return openaitypes.ResponseInputItemUnionParamFromResponseInputItemComputerCallOutputParam(
+			responses.ResponseInputItemComputerCallOutputParam(rawItem))
+	default:
+		// This would be an unrecoverable implementation bug, so a panic is appropriate.
+		panic(fmt.Errorf("unexpected ToolCallOutputRawItem type %T", rawItem))
+	}
 }
 
 // ReasoningItem represents a reasoning item.

@@ -194,6 +194,14 @@ func ResponseInputItemUnionParamFromResponseInputItemFunctionCallOutputParam(
 	}
 }
 
+func ResponseInputItemUnionParamFromResponseInputItemComputerCallOutputParam(
+	input responses.ResponseInputItemComputerCallOutputParam,
+) responses.ResponseInputItemUnionParam {
+	return responses.ResponseInputItemUnionParam{
+		OfComputerCallOutput: &input,
+	}
+}
+
 func ResponseInputItemUnionParamFromResponseReasoningItem(
 	input responses.ResponseReasoningItem,
 ) responses.ResponseInputItemUnionParam {
