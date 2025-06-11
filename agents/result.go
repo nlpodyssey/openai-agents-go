@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"sync/atomic"
 
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
@@ -92,7 +93,7 @@ type RunResultStreaming struct {
 	CurrentAgent *Agent
 
 	// The current turn number.
-	CurrentTurn uint64
+	CurrentTurn *atomic.Uint64
 
 	// The maximum number of turns the agent can run for.
 	MaxTurns uint64
@@ -101,15 +102,15 @@ type RunResultStreaming struct {
 	currentAgentOutputSchema AgentOutputSchemaInterface
 
 	// Whether the agent has finished running.
-	IsComplete bool
+	IsComplete *atomic.Bool
 
 	// Queues that the background run-loop writes to.
 	eventQueue          *asyncqueue.Queue[StreamEvent]
 	inputGuardrailQueue *asyncqueue.Queue[InputGuardrailResult]
 
-	runImplTask          *asynctask.Task[error]
-	inputGuardrailsTask  *asynctask.Task[error]
-	outputGuardrailsTask *asynctask.Task[outputGuardrailsTaskResult]
+	runImplTask          *atomic.Pointer[asynctask.Task[error]]
+	inputGuardrailsTask  *atomic.Pointer[asynctask.Task[error]]
+	outputGuardrailsTask *atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]
 
 	storedException error
 }
@@ -128,8 +129,8 @@ func (r *RunResultStreaming) LastAgent() *Agent {
 
 // Cancel the streaming run, stopping all background tasks and marking the run as complete.
 func (r *RunResultStreaming) Cancel() {
-	r.cleanupTasks()    // Cancel all running tasks
-	r.IsComplete = true // Mark the run as complete to stop event streaming
+	r.cleanupTasks()         // Cancel all running tasks
+	r.IsComplete.Store(true) // Mark the run as complete to stop event streaming
 
 	// Optionally, clear the event queue to prevent processing stale events
 	for !r.eventQueue.IsEmpty() {
@@ -156,11 +157,11 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 
 		if r.storedException != nil {
 			slog.Debug("Breaking due to stored exception")
-			r.IsComplete = true
+			r.IsComplete.Store(true)
 			break
 		}
 
-		if r.IsComplete && r.eventQueue.IsEmpty() {
+		if r.IsComplete.Load() && r.eventQueue.IsEmpty() {
 			break
 		}
 
@@ -177,8 +178,8 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 			// the asynchronous execution of input guardrails might be slower than
 			// everything else. Let's wait for their completion, and check for errors
 			// once again, as a tripwire might have been triggered.
-			if r.inputGuardrailsTask != nil && !r.inputGuardrailsTask.IsDone() {
-				_ = r.inputGuardrailsTask.Await()
+			if t := r.inputGuardrailsTask.Load(); t != nil && !t.IsDone() {
+				_ = t.Await()
 				if err = r.checkErrors(); err != nil {
 					return err
 				}
@@ -198,7 +199,7 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 }
 
 func (r *RunResultStreaming) checkErrors() error {
-	if r.CurrentTurn > r.MaxTurns {
+	if r.CurrentTurn.Load() > r.MaxTurns {
 		r.storedException = MaxTurnsExceededErrorf("Max turns (%d) exceeded", r.MaxTurns)
 	}
 
@@ -211,8 +212,8 @@ func (r *RunResultStreaming) checkErrors() error {
 	}
 
 	// Check the tasks for any exceptions
-	if r.runImplTask != nil && r.runImplTask.IsDone() {
-		result := r.runImplTask.Await()
+	if t := r.runImplTask.Load(); t != nil && t.IsDone() {
+		result := t.Await()
 		if result.Canceled {
 			return NewCanceledError("run task has been canceled")
 		}
@@ -221,8 +222,8 @@ func (r *RunResultStreaming) checkErrors() error {
 		}
 	}
 
-	if r.inputGuardrailsTask != nil && r.inputGuardrailsTask.IsDone() {
-		result := r.inputGuardrailsTask.Await()
+	if t := r.inputGuardrailsTask.Load(); t != nil && t.IsDone() {
+		result := t.Await()
 		if result.Canceled {
 			return NewCanceledError("input guardrails task has been canceled")
 		}
@@ -231,8 +232,8 @@ func (r *RunResultStreaming) checkErrors() error {
 		}
 	}
 
-	if r.outputGuardrailsTask != nil && r.outputGuardrailsTask.IsDone() {
-		result := r.outputGuardrailsTask.Await()
+	if t := r.outputGuardrailsTask.Load(); t != nil && t.IsDone() {
+		result := t.Await()
 		if result.Canceled {
 			return NewCanceledError("output guardrails task has been canceled")
 		}
@@ -245,14 +246,14 @@ func (r *RunResultStreaming) checkErrors() error {
 }
 
 func (r *RunResultStreaming) cleanupTasks() {
-	if r.runImplTask != nil && !r.runImplTask.IsDone() {
-		r.runImplTask.Cancel()
+	if t := r.runImplTask.Load(); t != nil && !t.IsDone() {
+		t.Cancel()
 	}
-	if r.inputGuardrailsTask != nil && !r.inputGuardrailsTask.IsDone() {
-		r.inputGuardrailsTask.Cancel()
+	if t := r.inputGuardrailsTask.Load(); t != nil && !t.IsDone() {
+		t.Cancel()
 	}
-	if r.outputGuardrailsTask != nil && !r.outputGuardrailsTask.IsDone() {
-		r.outputGuardrailsTask.Cancel()
+	if t := r.outputGuardrailsTask.Load(); t != nil && !t.IsDone() {
+		t.Cancel()
 	}
 }
 

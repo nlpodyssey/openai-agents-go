@@ -22,8 +22,8 @@ import (
 )
 
 func TestSetDefaultOpenaiAPI(t *testing.T) {
-	v := useResponsesByDefault
-	t.Cleanup(func() { useResponsesByDefault = v })
+	v := useResponsesByDefault.Load()
+	t.Cleanup(func() { useResponsesByDefault.Store(v) })
 
 	model, err := NewOpenAIProvider(OpenAIProviderParams{}).GetModel("gpt-4")
 	require.NoError(t, err)

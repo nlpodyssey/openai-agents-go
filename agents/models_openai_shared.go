@@ -16,44 +16,53 @@ package agents
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/openai/openai-go/packages/param"
 )
 
 var (
-	defaultOpenaiKey      = param.Null[string]()
-	defaultOpenaiClient   *OpenaiClient
-	useResponsesByDefault = true
+	defaultOpenaiKey      atomic.Pointer[string]
+	defaultOpenaiClient   atomic.Pointer[OpenaiClient]
+	useResponsesByDefault atomic.Bool
 )
+
+func init() {
+	useResponsesByDefault.Store(true)
+}
 
 // SetDefaultOpenaiKey sets the default OpenAI API key to use for LLM requests.
 // This is only necessary if the OPENAI_API_KEY environment variable is not already set.
 //
 // If provided, this key will be used instead of the OPENAI_API_KEY environment variable.
 func SetDefaultOpenaiKey(key string) {
-	defaultOpenaiKey = param.NewOpt(key)
+	defaultOpenaiKey.Store(&key)
 }
 
 func GetDefaultOpenaiKey() param.Opt[string] {
-	return defaultOpenaiKey
+	v := defaultOpenaiKey.Load()
+	if v == nil {
+		return param.Opt[string]{}
+	}
+	return param.NewOpt(*v)
 }
 
 // SetDefaultOpenaiClient sets the default OpenAI client to use for LLM requests.
 // If provided, this client will be used instead of the default OpenAI client.
 func SetDefaultOpenaiClient(client OpenaiClient) {
-	defaultOpenaiClient = &client
+	defaultOpenaiClient.Store(&client)
 }
 
 func GetDefaultOpenaiClient() *OpenaiClient {
-	return defaultOpenaiClient
+	return defaultOpenaiClient.Load()
 }
 
 func SetUseResponsesByDefault(useResponses bool) {
-	useResponsesByDefault = useResponses
+	useResponsesByDefault.Store(useResponses)
 }
 
 func GetUseResponsesByDefault() bool {
-	return useResponsesByDefault
+	return useResponsesByDefault.Load()
 }
 
 // SetDefaultOpenaiAPI set the default API to use for OpenAI LLM requests.
