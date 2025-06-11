@@ -33,32 +33,37 @@ func TestConvertToolChoiceStandardValues(t *testing.T) {
 	// to "auto"/"required"/"none" as appropriate, and that special string
 	// values map to the appropriate items.
 
-	v := agents.ResponsesConverter().ConvertToolChoice("")
-	assert.Equal(t, responses.ResponseNewParamsToolChoiceUnion{}, v)
+	type R = responses.ResponseNewParamsToolChoiceUnion
 
-	v = agents.ResponsesConverter().ConvertToolChoice("auto")
-	assert.Equal(t, responses.ResponseNewParamsToolChoiceUnion{
-		OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsAuto),
-	}, v)
+	testCases := []struct {
+		toolChoice string
+		want       R
+	}{
+		{"", R{}},
+		{"auto", R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsAuto)}},
+		{"required", R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsRequired)}},
+		{"none", R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsNone)}},
+		{"file_search", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeFileSearch}}},
+		{"web_search_preview", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeWebSearchPreview}}},
+		{"web_search_preview_2025_03_11", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeWebSearchPreview2025_03_11}}},
+		{"computer_use_preview", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeComputerUsePreview}}},
+		{"image_generation", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeImageGeneration}}},
+		{"code_interpreter", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeCodeInterpreter}}},
+		{"mcp", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeMcp}}},
+		{"my_function", R{ // Arbitrary string should be interpreted as a function name.
+			OfFunctionTool: &responses.ToolChoiceFunctionParam{
+				Name: "my_function",
+				Type: constant.ValueOf[constant.Function](),
+			},
+		}},
+	}
 
-	v = agents.ResponsesConverter().ConvertToolChoice("required")
-	assert.Equal(t, responses.ResponseNewParamsToolChoiceUnion{
-		OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsRequired),
-	}, v)
-
-	v = agents.ResponsesConverter().ConvertToolChoice("none")
-	assert.Equal(t, responses.ResponseNewParamsToolChoiceUnion{
-		OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsNone),
-	}, v)
-
-	// Arbitrary string should be interpreted as a function name.
-	v = agents.ResponsesConverter().ConvertToolChoice("my_function")
-	assert.Equal(t, responses.ResponseNewParamsToolChoiceUnion{
-		OfFunctionTool: &responses.ToolChoiceFunctionParam{
-			Name: "my_function",
-			Type: constant.ValueOf[constant.Function](),
-		},
-	}, v)
+	for _, tc := range testCases {
+		t.Run("toolChoice = "+tc.toolChoice, func(t *testing.T) {
+			v := agents.ResponsesConverter().ConvertToolChoice(tc.toolChoice)
+			assert.Equal(t, tc.want, v)
+		})
+	}
 }
 
 type PlainTextSchema struct{}
@@ -121,7 +126,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 		},
 	}
 
-	converted, err := agents.ResponsesConverter().ConvertTools([]tools.Tool{toolFn}, nil)
+	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), []tools.Tool{toolFn}, nil)
 	require.NoError(t, err)
 	assert.Equal(t, &agents.ConvertedTools{
 		Tools: []responses.ToolUnionParam{
@@ -151,7 +156,7 @@ func TestConvertToolsIncludesHandoffs(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, handoff)
 
-	converted, err := agents.ResponsesConverter().ConvertTools(nil, []agents.Handoff{*handoff})
+	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), nil, []agents.Handoff{*handoff})
 	require.NoError(t, err)
 	assert.Equal(t, &agents.ConvertedTools{
 		Tools: []responses.ToolUnionParam{

@@ -222,17 +222,16 @@ func (responsesConverter) ConvertToolChoice(toolChoice string) responses.Respons
 	switch toolChoice {
 	case "":
 		return responses.ResponseNewParamsToolChoiceUnion{}
-	case "required":
+	case "none", "auto", "required":
 		return responses.ResponseNewParamsToolChoiceUnion{
-			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsRequired),
+			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptions(toolChoice)),
 		}
-	case "auto":
+	case "file_search", "web_search_preview", "web_search_preview_2025_03_11",
+		"computer_use_preview", "image_generation", "code_interpreter", "mcp":
 		return responses.ResponseNewParamsToolChoiceUnion{
-			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsAuto),
-		}
-	case "none":
-		return responses.ResponseNewParamsToolChoiceUnion{
-			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsNone),
+			OfHostedTool: &responses.ToolChoiceTypesParam{
+				Type: responses.ToolChoiceTypesType(toolChoice),
+			},
 		}
 	default:
 		return responses.ResponseNewParamsToolChoiceUnion{
