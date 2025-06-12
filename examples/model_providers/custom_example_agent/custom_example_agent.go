@@ -57,10 +57,9 @@ An alternate approach that would also work:
 provider := agents.NewOpenAIProvider(agents.OpenAIProviderParams{
 	OpenaiClient: &Client,
 })
-agent := &agents.Agent{
-	// ...
-	Model: param.NewOpt(agents.NewAgentModelName("some-custom-model")),
-}
+agent := agents.NewAgent().
+        // ...
+        WithModel("some-custom-model")
 result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 	// ...
 	RunConfig: agents.RunConfig{
@@ -105,12 +104,11 @@ var GetWeatherTool = tools.Function{
 
 func main() {
 	// This agent will use the custom LLM provider
-	agent := &agents.Agent{
-		Name:         "Assistant",
-		Instructions: agents.InstructionsStr("You only respond in haikus."),
-		Model:        param.NewOpt(agents.NewAgentModel(agents.NewOpenAIChatCompletionsModel(ModelName, Client))),
-		Tools:        []tools.Tool{GetWeatherTool},
-	}
+	agent := agents.NewAgent().
+		WithName("Assistant").
+		WithInstructions("You only respond in haikus.").
+		WithModelOpt(param.NewOpt(agents.NewAgentModel(agents.NewOpenAIChatCompletionsModel(ModelName, Client)))).
+		WithTools(GetWeatherTool)
 
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: agent,

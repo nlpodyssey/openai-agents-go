@@ -34,16 +34,14 @@ in parallel, and pick the best result.
 
 var (
 	Model        = agents.NewAgentModelName("gpt-4.1-nano")
-	SpanishAgent = &agents.Agent{
-		Name:         "spanish_agent",
-		Instructions: agents.InstructionsStr("You translate the user's message to Spanish"),
-		Model:        param.NewOpt(Model),
-	}
-	TranslationPicker = &agents.Agent{
-		Name:         "translation_picker",
-		Instructions: agents.InstructionsStr("You pick the best Spanish translation from the given options."),
-		Model:        param.NewOpt(Model),
-	}
+	SpanishAgent = agents.NewAgent().
+			WithName("spanish_agent").
+			WithInstructions("You translate the user's message to Spanish").
+			WithModelOpt(param.NewOpt(Model))
+	TranslationPicker = agents.NewAgent().
+				WithName("translation_picker").
+				WithInstructions("You pick the best Spanish translation from the given options.").
+				WithModelOpt(param.NewOpt(Model))
 )
 
 func main() {

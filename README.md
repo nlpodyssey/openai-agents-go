@@ -41,15 +41,13 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 func main() {
-	agent := &agents.Agent{
-		Name:         "Assistant",
-		Instructions: agents.InstructionsStr("You are a helpful assistant"),
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
-	}
+	agent := agents.NewAgent().
+        WithName("Assistant").
+        WithInstructions("You are a helpful assistant").
+        WithModel("gpt-4o")
 
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: agent,
@@ -78,32 +76,24 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 func main() {
-	model := param.NewOpt(agents.NewAgentModelName("gpt-4o"))
+    spanishAgent := agents.NewAgent().
+        WithName("Spanish agent").
+        WithInstructions("You only speak Spanish.").
+        WithModel("gpt-4o")
 
-	spanishAgent := &agents.Agent{
-		Name:         "Spanish agent",
-		Instructions: agents.InstructionsStr("You only speak Spanish."),
-		Model:        model,
-	}
+	englishAgent := agents.NewAgent().
+        WithName("English agent").
+        WithInstructions("You only speak English.").
+        WithModel("gpt-4o")
 
-	englishAgent := &agents.Agent{
-		Name:         "English agent",
-		Instructions: agents.InstructionsStr("You only speak English."),
-		Model:        model,
-	}
-
-	triageAgent := &agents.Agent{
-		Name: "Triage agent",
-		Instructions: agents.InstructionsStr(
-			"Handoff to the appropriate agent based on the language of the request.",
-		),
-		AgentHandoffs: []*agents.Agent{spanishAgent, englishAgent},
-		Model:    model,
-	}
+    triageAgent := agents.NewAgent().
+        WithName("Triage agent").
+        WithInstructions("Handoff to the appropriate agent based on the language of the request.").
+        WithAgentHandoffs(spanishAgent, englishAgent).
+        WithModel("gpt-4o")
 
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: triageAgent,
@@ -130,7 +120,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/tools"
-	"github.com/openai/openai-go/packages/param"
 )
 
 type getWeatherParams struct {
@@ -164,12 +153,11 @@ var (
 			return getWeather(params), nil
 		},
 	}
-	agent = &agents.Agent{
-		Name:         "Hello world",
-		Instructions: agents.InstructionsStr("You are a helpful agent."),
-		Tools:        []tools.Tool{getWeatherTool},
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
-	}
+	agent = agents.NewAgent().
+        WithName("Hello world").
+        WithInstructions("You are a helpful agent.").
+        WithTools(getWeatherTool).
+        WithModel("gpt-4o")
 )
 
 func main() {

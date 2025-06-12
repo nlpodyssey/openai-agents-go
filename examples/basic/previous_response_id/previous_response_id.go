@@ -20,7 +20,6 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -45,11 +44,10 @@ func main() {
 		panic(err)
 	}
 
-	agent := &agents.Agent{
-		Name:         "Assistant",
-		Instructions: agents.InstructionsStr("You are a helpful assistant. Be VERY concise."),
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-	}
+	agent := agents.NewAgent().
+		WithName("Assistant").
+		WithInstructions("You are a helpful assistant. Be VERY concise.").
+		WithModel("gpt-4.1-nano")
 
 	if isStream == "y" {
 		fmt.Println("-- streaming mode enabled --")

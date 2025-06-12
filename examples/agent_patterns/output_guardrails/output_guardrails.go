@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -118,13 +117,12 @@ var SensitiveDataCheck = agents.OutputGuardrail{
 	Name:              "sensitive_data_check",
 }
 
-var Agent = &agents.Agent{
-	Name:             "Assistant",
-	Instructions:     agents.InstructionsStr("You are a helpful assistant."),
-	OutputSchema:     MessageOutputSchema{},
-	OutputGuardrails: []agents.OutputGuardrail{SensitiveDataCheck},
-	Model:            param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-}
+var Agent = agents.NewAgent().
+	WithName("Assistant").
+	WithInstructions("You are a helpful assistant.").
+	WithOutputSchema(MessageOutputSchema{}).
+	WithOutputGuardrails([]agents.OutputGuardrail{SensitiveDataCheck}).
+	WithModel("gpt-4.1-nano")
 
 func main() {
 	// This should be ok

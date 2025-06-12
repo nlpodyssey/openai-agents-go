@@ -20,15 +20,13 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 func main() {
-	agent := &agents.Agent{
-		Name:         "Joker",
-		Instructions: agents.InstructionsStr("You are a helpful assistant."),
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-	}
+	agent := agents.NewAgent().
+		WithName("Joker").
+		WithInstructions("You are a helpful assistant.").
+		WithModel("gpt-4.1-nano")
 
 	ctx := context.Background()
 

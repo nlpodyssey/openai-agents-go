@@ -20,7 +20,6 @@ import (
 	"math/rand"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 type Style string
@@ -51,11 +50,10 @@ func CustomInstructions(ctx context.Context, _ *agents.Agent) (string, error) {
 	}
 }
 
-var Agent = &agents.Agent{
-	Name:         "Chat agent",
-	Instructions: agents.InstructionsFunc(CustomInstructions),
-	Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-}
+var Agent = agents.NewAgent().
+	WithName("Chat agent").
+	WithInstructionsFunc(CustomInstructions).
+	WithModel("gpt-4.1-nano")
 
 func main() {
 	choice := []Style{StyleHaiku, StylePirate, StyleRobot}[rand.Intn(3)]

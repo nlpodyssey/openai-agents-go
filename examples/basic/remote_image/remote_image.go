@@ -26,11 +26,10 @@ import (
 const URL = "https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg"
 
 func main() {
-	agent := &agents.Agent{
-		Name:         "Assistant",
-		Instructions: agents.InstructionsStr("You are a helpful assistant."),
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-	}
+	agent := agents.NewAgent().
+		WithName("Assistant").
+		WithInstructions("You are a helpful assistant.").
+		WithModel("gpt-4.1-nano")
 
 	ctx := context.Background()
 

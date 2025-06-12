@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -123,11 +122,10 @@ func (CustomOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 func main() {
 	ctx := context.Background()
 
-	agent := &agents.Agent{
-		Name:         "Assistant",
-		Instructions: agents.InstructionsStr("You are a helpful assistant."),
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o")),
-	}
+	agent := agents.NewAgent().
+		WithName("Assistant").
+		WithInstructions("You are a helpful assistant.").
+		WithModel("gpt-4o")
 
 	input := "Tell me 3 short jokes."
 

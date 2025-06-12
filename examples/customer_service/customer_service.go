@@ -158,52 +158,46 @@ func OnSeatBookingHandoff(ctx context.Context) error {
 var (
 	Model = agents.NewAgentModelName("gpt-4o")
 
-	FAQAgent = &agents.Agent{
-		Name:               "FAQ Agent",
-		HandoffDescription: "A helpful agent that can answer questions about the airline.",
-		Instructions: agents.InstructionsStr(
-			handoff_prompt.RecommendedPromptPrefix + `
+	FAQAgent = agents.NewAgent().
+			WithName("FAQ Agent").
+			WithHandoffDescription("A helpful agent that can answer questions about the airline.").
+			WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
 You are an FAQ agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
 Use the following routine to support the customer.
 # Routine
 1. Identify the last question asked by the customer.
 2. Use the faq lookup tool to answer the question. Do not rely on your own knowledge.
-3. If you cannot answer the question, transfer back to the triage agent.`),
-		Tools: []tools.Tool{FAQLookupTool},
-		Model: param.NewOpt(Model),
-	}
+3. If you cannot answer the question, transfer back to the triage agent.`).
+		WithTools(FAQLookupTool).
+		WithModelOpt(param.NewOpt(Model))
 
-	SeatBookingAgent = &agents.Agent{
-		Name:               "Seat Booking Agent",
-		HandoffDescription: "A helpful agent that can update a seat on a flight.",
-		Instructions: agents.InstructionsStr(
-			handoff_prompt.RecommendedPromptPrefix + `
+	SeatBookingAgent = agents.NewAgent().
+				WithName("Seat Booking Agent").
+				WithHandoffDescription("A helpful agent that can update a seat on a flight.").
+				WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
 You are a seat booking agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
 Use the following routine to support the customer.
 # Routine
 1. Ask for their confirmation number.
 2. Ask the customer what their desired seat number is.
 3. Use the update seat tool to update the seat on the flight.
-If the customer asks a question that is not related to the routine, transfer back to the triage agent.`),
-		Tools: []tools.Tool{UpdateSeatTool},
-		Model: param.NewOpt(Model),
-	}
+If the customer asks a question that is not related to the routine, transfer back to the triage agent.`).
+		WithTools(UpdateSeatTool).
+		WithModelOpt(param.NewOpt(Model))
 
-	TriageAgent = &agents.Agent{
-		Name:               "Triage Agent",
-		HandoffDescription: "A triage agent that can delegate a customer's request to the appropriate agent.",
-		Instructions: agents.InstructionsStr(
-			handoff_prompt.RecommendedPromptPrefix + `
-You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents.`),
-		AgentHandoffs: []*agents.Agent{FAQAgent},
-		Handoffs: []agents.Handoff{
+	TriageAgent = agents.NewAgent().
+			WithName("Triage Agent").
+			WithHandoffDescription("A triage agent that can delegate a customer's request to the appropriate agent.").
+			WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
+You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents.`).
+		WithAgentHandoffs(FAQAgent).
+		WithHandoffs(
 			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:     SeatBookingAgent,
 				OnHandoff: agents.OnHandoffWithoutInput(OnSeatBookingHandoff),
 			}),
-		},
-		Model: param.NewOpt(Model),
-	}
+		).
+		WithModelOpt(param.NewOpt(Model))
 )
 
 func init() {
