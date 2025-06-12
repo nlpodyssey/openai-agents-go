@@ -84,7 +84,7 @@ func main() {
         WithInstructions("You only speak Spanish.").
         WithModel("gpt-4o")
 
-	englishAgent := agents.NewAgent().
+    englishAgent := agents.NewAgent().
         WithName("English agent").
         WithInstructions("You only speak English.").
         WithModel("gpt-4o")
@@ -121,24 +121,28 @@ import (
         "github.com/nlpodyssey/openai-agents-go/tools"
 )
 
+// Tool params type
 type GetWeatherParams struct {
         City string `json:"city"`
 }
 
+// Tool implementation
 func getWeather(_ context.Context, params GetWeatherParams) (string, error) {
         return fmt.Sprintf("The weather in %s is sunny.", params.City), nil
 }
 
-var (
-        getWeatherTool = tools.NewFunctionTool("GetWeather", "", GetWeather)
-        agent = agents.NewAgent().
-            WithName("Hello world").
-            WithInstructions("You are a helpful agent.").
-            WithTools(getWeatherTool).
-            WithModel("gpt-4o")
-)
+// Tool registration (using SDK's NewFunctionTool)
+var getWeatherTool = tools.NewFunctionTool("GetWeather", "", getWeather)
 
 func main() {
+
+	agent := agents.NewAgent().
+		WithName("Hello world").
+		WithInstructions("You are a helpful agent.").
+		WithModel("gpt-4o").
+		WithTools(getWeatherTool)
+
+	
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: agent,
 		Input:         agents.InputString("What's the weather in Tokyo?"),
