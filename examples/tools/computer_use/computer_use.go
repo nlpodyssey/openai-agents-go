@@ -32,16 +32,14 @@ import (
 
 func main() {
 	err := WithLocalPlaywrightComputer(func(comp *LocalPlaywrightComputer) error {
-		agent := &agents.Agent{
-			Name:         "Browser user",
-			Instructions: agents.InstructionsStr("You are a helpful agent."),
-			Tools:        []tools.Tool{tools.Computer{Computer: comp}},
-			//  Use the computer using model, and set truncation to auto because its required
-			Model: param.NewOpt(agents.NewAgentModelName("computer-use-preview")),
-			ModelSettings: modelsettings.ModelSettings{
+		agent := agents.New("Browser user").
+			WithInstructions("You are a helpful agent.").
+			WithTools(tools.Computer{Computer: comp}).
+			// Use the computer using model, and set truncation to auto because its required
+			WithModel("computer-use-preview").
+			WithModelSettings(modelsettings.ModelSettings{
 				Truncation: param.NewOpt(modelsettings.TruncationAuto),
-			},
-		}
+			})
 
 		result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 			StartingAgent: agent,
