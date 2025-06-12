@@ -164,8 +164,8 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 		},
 	}
 
-	// Wrap our concrete computer in a ComputerTool for conversion.
-	compTool := tools.ComputerTool{Computer: DummyComputer{}}
+	// Wrap our concrete computer in a tools.Computer for conversion.
+	compTool := tools.Computer{Computer: DummyComputer{}}
 	allTools := []tools.Tool{toolFn, compTool}
 	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), allTools, nil)
 	require.NoError(t, err)

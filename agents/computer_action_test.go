@@ -210,7 +210,7 @@ func TestExecuteInvokesHooksAndReturnsToolCallOutput(t *testing.T) {
 	// ComputerAction().Execute() should invoke lifecycle hooks and return a proper ToolCallOutputItem.
 
 	comp := NewLoggingComputer("xyz")
-	compTool := tools.ComputerTool{Computer: comp}
+	compTool := tools.Computer{Computer: comp}
 
 	// Create a dummy click action to trigger a click and screenshot.
 	action := responses.ResponseComputerToolCallActionUnion{

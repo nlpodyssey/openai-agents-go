@@ -332,7 +332,7 @@ func (DummyComputer) Keypress(context.Context, []string) error                  
 func (DummyComputer) Drag(context.Context, []computer.Position) error            { return nil }
 
 func TestComputerToolCallWithoutComputerToolRaisesError(t *testing.T) {
-	// If the agent has no ComputerTool in its tools, ProcessModelResponse should return a
+	// If the agent has no tools.Computer in its tools, ProcessModelResponse should return a
 	// ModelBehaviorError when encountering a ResponseComputerToolCall.
 	agent := &Agent{Name: "test"}
 	computerCall := TResponseOutputItem{ // responses.ResponseComputerToolCall
@@ -361,10 +361,10 @@ func TestComputerToolCallWithoutComputerToolRaisesError(t *testing.T) {
 }
 
 func TestComputerToolCallWithComputerToolParsedCorrectly(t *testing.T) {
-	// If the agent contains a ComputerTool, ensure that a ResponseComputerToolCall is parsed into a
+	// If the agent contains a tools.Computer, ensure that a ResponseComputerToolCall is parsed into a
 	// ToolCallItem and scheduled to run in computer_actions.
 	dummyComputer := DummyComputer{}
-	computerTool := tools.ComputerTool{Computer: dummyComputer}
+	computerTool := tools.Computer{Computer: dummyComputer}
 	agent := &Agent{
 		Name:  "test",
 		Tools: []tools.Tool{computerTool},
