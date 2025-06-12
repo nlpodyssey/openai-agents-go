@@ -27,8 +27,7 @@ func TestAgentBuilder_Chaining(t *testing.T) {
 	instr := "hello"
 	tool := tools.Function{Name: "t"}
 
-	agent := NewAgent().
-		WithName("agent").
+	agent := New("agent").
 		WithInstructions(instr).
 		WithHandoffDescription("desc").
 		WithTools(tool).
@@ -44,13 +43,13 @@ func TestAgentBuilder_Chaining(t *testing.T) {
 }
 
 func TestAgentBuilder_ReturnsSamePointer(t *testing.T) {
-	agent := NewAgent()
-	returned := agent.WithName("foo").WithHandoffDescription("bar")
+	agent := New("foo")
+	returned := agent.WithHandoffDescription("bar")
 	assert.Same(t, agent, returned)
 }
 
 func TestAgentBuilder_WithInstructionsFunc(t *testing.T) {
-	agent := NewAgent().WithInstructionsFunc(func(ctx context.Context, a *Agent) (string, error) {
+	agent := New("").WithInstructionsFunc(func(ctx context.Context, a *Agent) (string, error) {
 		return "dynamic", nil
 	})
 	v, err := agent.Instructions.GetInstructions(context.Background(), agent)

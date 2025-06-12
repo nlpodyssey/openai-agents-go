@@ -33,20 +33,16 @@ streamed to the user.
 
 var (
 	Model       = agents.NewAgentModelName("gpt-4o-mini")
-	FrenchAgent = agents.NewAgent().
-			WithName("french_agent").
+	FrenchAgent = agents.New("french_agent").
 			WithInstructions("You only speak French").
 			WithModelOpt(param.NewOpt(Model))
-	SpanishAgent = agents.NewAgent().
-			WithName("spanish_agent").
+	SpanishAgent = agents.New("spanish_agent").
 			WithInstructions("You only speak Spanish").
 			WithModelOpt(param.NewOpt(Model))
-	EnglishAgent = agents.NewAgent().
-			WithName("english_agent").
+	EnglishAgent = agents.New("english_agent").
 			WithInstructions("You only speak English").
 			WithModelOpt(param.NewOpt(Model))
-	TriageAgent = agents.NewAgent().
-			WithName("triage_agent").
+	TriageAgent = agents.New("triage_agent").
 			WithInstructions("Handoff to the appropriate agent based on the language of the request.").
 			WithAgentHandoffs(FrenchAgent, SpanishAgent, EnglishAgent).
 			WithModelOpt(param.NewOpt(Model))

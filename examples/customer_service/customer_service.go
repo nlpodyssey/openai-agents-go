@@ -105,8 +105,7 @@ func OnSeatBookingHandoff(ctx context.Context) error {
 var (
 	Model = agents.NewAgentModelName("gpt-4o")
 
-	FAQAgent = agents.NewAgent().
-			WithName("FAQ Agent").
+	FAQAgent = agents.New("FAQ Agent").
 			WithHandoffDescription("A helpful agent that can answer questions about the airline.").
 			WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
 You are an FAQ agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
@@ -118,8 +117,7 @@ Use the following routine to support the customer.
 		WithTools(FAQLookupTool).
 		WithModelOpt(param.NewOpt(Model))
 
-	SeatBookingAgent = agents.NewAgent().
-				WithName("Seat Booking Agent").
+	SeatBookingAgent = agents.New("Seat Booking Agent").
 				WithHandoffDescription("A helpful agent that can update a seat on a flight.").
 				WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
 You are a seat booking agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
@@ -132,8 +130,7 @@ If the customer asks a question that is not related to the routine, transfer bac
 		WithTools(UpdateSeatTool).
 		WithModelOpt(param.NewOpt(Model))
 
-	TriageAgent = agents.NewAgent().
-			WithName("Triage Agent").
+	TriageAgent = agents.New("Triage Agent").
 			WithHandoffDescription("A triage agent that can delegate a customer's request to the appropriate agent.").
 			WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
 You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents.`).

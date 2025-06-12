@@ -67,8 +67,7 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (string, error) {
 var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
 
 func main() {
-	agent := agents.NewAgent().
-		WithName("Assistant").
+	agent := agents.New("Assistant").
 		WithInstructions("You only respond in haikus.").
 		WithModel(ModelName).
 		WithTools(GetWeatherTool)

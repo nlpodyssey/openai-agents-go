@@ -22,8 +22,7 @@ import (
 )
 
 func main() {
-	agent := agents.NewAgent().
-		WithName("Assistant").
+	agent := agents.New("Assistant").
 		WithInstructions("You only respond in haikus.").
 		WithModel("gpt-4.1-nano")
 

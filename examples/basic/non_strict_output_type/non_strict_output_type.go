@@ -122,8 +122,7 @@ func (CustomOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 func main() {
 	ctx := context.Background()
 
-	agent := agents.NewAgent().
-		WithName("Assistant").
+	agent := agents.New("Assistant").
 		WithInstructions("You are a helpful assistant.").
 		WithModel("gpt-4o")
 
