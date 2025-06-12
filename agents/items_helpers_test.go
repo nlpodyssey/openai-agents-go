@@ -341,6 +341,36 @@ func TestToInputItemsForFunctionCall(t *testing.T) {
 	}, inputItems)
 }
 
+func TestToInputItemsForFileSearchCall(t *testing.T) {
+	// A file search tool call output should produce the same value as a file search input.
+
+	fsCall := responses.ResponseOutputItemUnion{ // responses.ResponseFileSearchToolCall
+		ID:      "fs1",
+		Queries: []string{"query"},
+		Status:  "completed",
+		Type:    "file_search_call",
+	}
+	resp := agents.ModelResponse{
+		Output:     []agents.TResponseOutputItem{fsCall},
+		Usage:      usage.NewUsage(),
+		ResponseID: "",
+	}
+
+	inputItems := resp.ToInputItems()
+
+	// The value should contain exactly the primitive values of the message
+	assert.Equal(t, []agents.TResponseInputItem{
+		{
+			OfFileSearchCall: &responses.ResponseFileSearchToolCallParam{
+				ID:      "fs1",
+				Queries: []string{"query"},
+				Status:  responses.ResponseFileSearchToolCallStatusCompleted,
+				Type:    constant.ValueOf[constant.FileSearchCall](),
+			},
+		},
+	}, inputItems)
+}
+
 func TestToInputItemsForComputerCall(t *testing.T) {
 	action := responses.ResponseOutputItemUnionAction{ // responses.ResponseComputerToolCallActionUnion
 		Type: "screenshot",

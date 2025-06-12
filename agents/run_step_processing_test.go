@@ -269,6 +269,49 @@ func TestMultipleHandoffsDoesntError(t *testing.T) {
 	assert.Len(t, result.Handoffs, 2)
 }
 
+func TestFileSearchToolCallParsedCorrectly(t *testing.T) {
+	// Ensure that a ResponseFileSearchToolCall output is parsed into a ToolCallItem and that no tool
+	// runs are scheduled.
+
+	agent := &Agent{Name: "test"}
+	fileSearchCall := TResponseOutputItem{
+		ID:      "fs1",
+		Queries: []string{"query"},
+		Status:  "completed",
+		Type:    "file_search_call",
+	}
+	response := ModelResponse{
+		Output: []TResponseOutputItem{
+			getTextMessage("hello"),
+			fileSearchCall,
+		},
+		Usage:      usage.NewUsage(),
+		ResponseID: "",
+	}
+	result, err := RunImpl().ProcessModelResponse(
+		agent,
+		agent.GetAllTools(),
+		response,
+		nil,
+	)
+	require.NoError(t, err)
+	require.Len(t, result.NewItems, 2)
+
+	// The final item should be a ToolCallItem for the file search call
+	item := result.NewItems[1]
+	require.IsType(t, ToolCallItem{}, item)
+	assert.Equal(t, ResponseFileSearchToolCall{
+		ID:      "fs1",
+		Queries: []string{"query"},
+		Status:  responses.ResponseFileSearchToolCallStatusCompleted,
+		Type:    constant.ValueOf[constant.FileSearchCall](),
+		Results: nil,
+	}, item.(ToolCallItem).RawItem)
+
+	assert.Empty(t, result.Functions)
+	assert.Empty(t, result.Handoffs)
+}
+
 func TestReasoningItemParsedCorrectly(t *testing.T) {
 	// Verify that a Reasoning output item is converted into a ReasoningItem.
 	agent := &Agent{Name: "test"}

@@ -15,6 +15,7 @@
 package agents
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -421,7 +422,35 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 			}
 
 			currentAssistantMsg = newAsst
-		} else if funcCall := item.OfFunctionCall; !param.IsOmitted(funcCall) { // 4) function calls => attach to assistant
+		} else if fileSearch := item.OfFileSearchCall; !param.IsOmitted(fileSearch) { // 4) function/file-search calls => attach to assistant
+			asst := ensureAssistantMessage()
+			toolCalls := slices.Clone(asst.ToolCalls)
+
+			queries := fileSearch.Queries
+			if queries == nil {
+				queries = make([]string, 0)
+			}
+
+			jsonArguments, err := json.Marshal(map[string]any{
+				"queries": queries,
+				"status":  fileSearch.Status,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to JSON-marshal file search call arguments: %w", err)
+			}
+
+			newToolCall := openai.ChatCompletionMessageToolCallParam{
+				ID: fileSearch.ID,
+				Function: openai.ChatCompletionMessageToolCallFunctionParam{
+					Name:      "file_search_call",
+					Arguments: string(jsonArguments),
+				},
+				Type: constant.ValueOf[constant.Function](),
+			}
+			toolCalls = append(toolCalls, newToolCall)
+			asst.ToolCalls = toolCalls
+
+		} else if funcCall := item.OfFunctionCall; !param.IsOmitted(funcCall) {
 			asst := ensureAssistantMessage()
 			toolCalls := slices.Clone(asst.ToolCalls)
 

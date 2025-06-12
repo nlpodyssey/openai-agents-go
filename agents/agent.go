@@ -101,7 +101,8 @@ type Agent struct {
 	//   tool results. It must return a `ToolsToFinalOutputResult`, which determines whether the tool
 	//   calls result in a final output.
 	//
-	// NOTE: This configuration is specific to FunctionTools. Hosted tools are always processed by the LLM.
+	// NOTE: This configuration is specific to function tools. Hosted tools, such as file search,
+	// web search, etc. are always processed by the LLM.
 	ToolUseBehavior ToolUseBehavior
 
 	// Whether to reset the tool choice to the default value after a tool has been called. Defaults
