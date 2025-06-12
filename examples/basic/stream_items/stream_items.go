@@ -21,28 +21,13 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/tools"
-	"github.com/openai/openai-go/packages/param"
 )
 
-func HowManyJokes() int64 {
-	return rand.Int63n(10) + 1
+func HowManyJokes(_ context.Context, _ struct{}) (int64, error) {
+	return rand.Int63n(10) + 1, nil
 }
 
-var HowManyJokesTool = tools.Function{
-	Name:        "how_many_jokes",
-	Description: "",
-	ParamsJSONSchema: map[string]any{
-		"title":                "how_many_jokes_args",
-		"type":                 "object",
-		"required":             []string{},
-		"additionalProperties": false,
-		"properties":           map[string]any{},
-	},
-	OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
-		return HowManyJokes(), nil
-	},
-	StrictJSONSchema: param.NewOpt(true),
-}
+var HowManyJokesTool = tools.NewFunctionTool[struct{}, int64]("how_many_jokes", "", HowManyJokes)
 
 func main() {
 	agent := agents.NewAgent().

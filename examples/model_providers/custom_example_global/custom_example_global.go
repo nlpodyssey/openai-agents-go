@@ -16,7 +16,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -60,35 +59,12 @@ type GetWeatherArgs struct {
 	City string `json:"city"`
 }
 
-func GetWeather(args GetWeatherArgs) string {
+func GetWeather(_ context.Context, args GetWeatherArgs) (string, error) {
 	fmt.Printf("[debug] getting weather for %s\n", args.City)
-	return fmt.Sprintf("The weather in %s is sunny.", args.City)
+	return fmt.Sprintf("The weather in %s is sunny.", args.City), nil
 }
 
-var GetWeatherTool = tools.Function{
-	Name:        "get_weather",
-	Description: "",
-	ParamsJSONSchema: map[string]any{
-		"title":                "get_weather_args",
-		"type":                 "object",
-		"required":             []string{"city"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"city": map[string]any{
-				"title": "City",
-				"type":  "string",
-			},
-		},
-	},
-	OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
-		var args GetWeatherArgs
-		err := json.Unmarshal([]byte(arguments), &args)
-		if err != nil {
-			return nil, err
-		}
-		return GetWeather(args), nil
-	},
-}
+var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
 
 func main() {
 	agent := agents.NewAgent().

@@ -16,12 +16,10 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/tools"
-	"github.com/openai/openai-go/packages/param"
 )
 
 type Weather struct {
@@ -34,45 +32,16 @@ type GetWeatherArgs struct {
 	City string `json:"city"`
 }
 
-func GetWeather(args GetWeatherArgs) Weather {
+func GetWeather(_ context.Context, args GetWeatherArgs) (Weather, error) {
 	fmt.Println("[debug] GetWeather called")
 	return Weather{
 		City:             args.City,
 		TemperatureRange: "14-20C",
 		Conditions:       "Sunny with wind.",
-	}
+	}, nil
 }
 
-var GetWeatherTool = tools.Function{
-	Name:        "get_weather",
-	Description: "",
-	ParamsJSONSchema: map[string]any{
-		"title":                "get_weather_args",
-		"type":                 "object",
-		"required":             []string{"city"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"city": map[string]any{
-				"title": "City",
-				"type":  "string",
-			},
-		},
-	},
-	OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
-		var args GetWeatherArgs
-		err := json.Unmarshal([]byte(arguments), &args)
-		if err != nil {
-			return nil, err
-		}
-		w := GetWeather(args)
-		out, err := json.Marshal(w)
-		if err != nil {
-			return nil, err
-		}
-		return string(out), nil
-	},
-	StrictJSONSchema: param.NewOpt(true),
-}
+var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
 
 func main() {
 	agent := agents.NewAgent().
