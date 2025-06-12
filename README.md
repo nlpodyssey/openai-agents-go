@@ -114,50 +114,28 @@ func main() {
 package main
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
+        "context"
+        "fmt"
 
-	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
+        "github.com/nlpodyssey/openai-agents-go/agents"
+        "github.com/nlpodyssey/openai-agents-go/tools"
 )
 
-type getWeatherParams struct {
-	City string `json:"city"`
+type GetWeatherParams struct {
+        City string `json:"city"`
 }
 
-func getWeather(params getWeatherParams) string {
-	return fmt.Sprintf("The weather in %s is sunny.", params.City)
+func getWeather(_ context.Context, params GetWeatherParams) (string, error) {
+        return fmt.Sprintf("The weather in %s is sunny.", params.City), nil
 }
 
 var (
-	getWeatherParamsJSONSchema = map[string]any{
-		"type":                 "object",
-		"required":             []string{"city"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"city": map[string]any{
-				"type": "string",
-			},
-		},
-	}
-	getWeatherTool = tools.Function{
-		Name:             "GetWeather",
-		ParamsJSONSchema: getWeatherParamsJSONSchema,
-		OnInvokeTool: func(_ context.Context, args string) (any, error) {
-			var params getWeatherParams
-			err := json.Unmarshal([]byte(args), &params)
-			if err != nil {
-				return nil, err
-			}
-			return getWeather(params), nil
-		},
-	}
-	agent = agents.NewAgent().
-        WithName("Hello world").
-        WithInstructions("You are a helpful agent.").
-        WithTools(getWeatherTool).
-        WithModel("gpt-4o")
+        getWeatherTool = tools.NewFunctionTool("GetWeather", "", GetWeather)
+        agent = agents.NewAgent().
+            WithName("Hello world").
+            WithInstructions("You are a helpful agent.").
+            WithTools(getWeatherTool).
+            WithModel("gpt-4o")
 )
 
 func main() {

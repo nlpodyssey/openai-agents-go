@@ -17,7 +17,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -48,52 +47,29 @@ type FAQLookupArgs struct {
 	Question string `json:"question"`
 }
 
-func FAQLookup(args FAQLookupArgs) string {
+func FAQLookup(_ context.Context, args FAQLookupArgs) (string, error) {
 	q := args.Question
 	switch {
 	case strings.Contains(q, "bag") || strings.Contains(q, "baggage"):
 		return "You are allowed to bring one bag on the plane. " +
-			"It must be under 50 pounds and 22 inches x 14 inches x 9 inches."
+			"It must be under 50 pounds and 22 inches x 14 inches x 9 inches.", nil
 	case strings.Contains(q, "seats") || strings.Contains(q, "plane"):
 		return "There are 120 seats on the plane. " +
 			"There are 22 business class seats and 98 economy seats. " +
 			"Exit rows are rows 4 and 16. " +
-			"Rows 5-8 are Economy Plus, with extra legroom. "
+			"Rows 5-8 are Economy Plus, with extra legroom. ", nil
 	case strings.Contains(q, "wifi"):
-		return "We have free wifi on the plane, join Airline-Wifi"
+		return "We have free wifi on the plane, join Airline-Wifi", nil
 	default:
-		return "I'm sorry, I don't know the answer to that question."
+		return "I'm sorry, I don't know the answer to that question.", nil
 	}
 }
 
-var FAQLookupTool = tools.Function{
-	Name:        "faq_lookup_tool",
-	Description: "Lookup frequently asked questions.",
-	ParamsJSONSchema: map[string]any{
-		"title":                "faq_lookup_tool_args",
-		"type":                 "object",
-		"required":             []string{"question"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"question": map[string]any{
-				"title": "Question",
-				"type":  "string",
-			},
-		},
-	},
-	OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
-		var args FAQLookupArgs
-		err := json.Unmarshal([]byte(arguments), &args)
-		if err != nil {
-			return nil, err
-		}
-		return FAQLookup(args), nil
-	},
-}
+var FAQLookupTool = tools.NewFunctionTool("faq_lookup_tool", "Lookup frequently asked questions.", FAQLookup)
 
 type UpdateSeatArgs struct {
-	ConfirmationNumber string `json:"confirmation_number"`
-	NewSeat            string `json:"new_seat"`
+	ConfirmationNumber string `json:"confirmation_number" jsonschema_description:"The confirmation number for the flight."`
+	NewSeat            string `json:"new_seat" jsonschema_description:"The new seat to update to."`
 }
 
 func UpdateSeat(ctx context.Context, args UpdateSeatArgs) (string, error) {
@@ -113,36 +89,7 @@ func UpdateSeat(ctx context.Context, args UpdateSeatArgs) (string, error) {
 	), nil
 }
 
-var UpdateSeatTool = tools.Function{
-	Name:        "update_seat",
-	Description: "Update the seat for a given confirmation number.",
-	ParamsJSONSchema: map[string]any{
-		"title":                "update_seat_args",
-		"type":                 "object",
-		"required":             []string{"confirmation_number", "new_seat"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"confirmation_number": map[string]any{
-				"title":       "Confirmation number",
-				"description": "The confirmation number for the flight.",
-				"type":        "string",
-			},
-			"new_seat": map[string]any{
-				"title":       "New seat",
-				"description": "The new seat to update to.",
-				"type":        "string",
-			},
-		},
-	},
-	OnInvokeTool: func(ctx context.Context, arguments string) (any, error) {
-		var args UpdateSeatArgs
-		err := json.Unmarshal([]byte(arguments), &args)
-		if err != nil {
-			return nil, err
-		}
-		return UpdateSeat(ctx, args)
-	},
-}
+var UpdateSeatTool = tools.NewFunctionTool("update_seat", "Update the seat for a given confirmation number.", UpdateSeat)
 
 ////// HOOKS
 

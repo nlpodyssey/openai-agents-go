@@ -93,8 +93,8 @@ type RandomNumberArgs struct {
 }
 
 // RandomNumber generates a random number up to the provided max.
-func RandomNumber(args RandomNumberArgs) int64 {
-	return rand.Int63n(args.Max + 1)
+func RandomNumber(_ context.Context, args RandomNumberArgs) (int64, error) {
+	return rand.Int63n(args.Max + 1), nil
 }
 
 type MultiplyByTwoArgs struct {
@@ -102,8 +102,8 @@ type MultiplyByTwoArgs struct {
 }
 
 // MultiplyByTwo return x times two.
-func MultiplyByTwo(args MultiplyByTwoArgs) int64 {
-	return args.X * 2
+func MultiplyByTwo(_ context.Context, args MultiplyByTwoArgs) (int64, error) {
+	return args.X * 2, nil
 }
 
 type FinalResult struct {
@@ -142,55 +142,9 @@ func (f FinalResultOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 var (
 	Hooks = &ExampleHooks{}
 
-	RandomNumberTool = tools.Function{
-		Name:        "random_number",
-		Description: "Generate a random number up to the provided max.",
-		ParamsJSONSchema: map[string]any{
-			"title":                "random_number_args",
-			"type":                 "object",
-			"required":             []string{"max"},
-			"additionalProperties": false,
-			"properties": map[string]any{
-				"max": map[string]any{
-					"title": "Max",
-					"type":  "integer",
-				},
-			},
-		},
-		OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
-			var args RandomNumberArgs
-			err := json.Unmarshal([]byte(arguments), &args)
-			if err != nil {
-				return nil, err
-			}
-			return RandomNumber(args), nil
-		},
-	}
+	RandomNumberTool = tools.NewFunctionTool("random_number", "Generate a random number up to the provided max.", RandomNumber)
 
-	MultiplyByTwoTool = tools.Function{
-		Name:        "multiply_by_two",
-		Description: "Return x times two.",
-		ParamsJSONSchema: map[string]any{
-			"title":                "multiply_by_two_args",
-			"type":                 "object",
-			"required":             []string{"x"},
-			"additionalProperties": false,
-			"properties": map[string]any{
-				"x": map[string]any{
-					"title": "X",
-					"type":  "integer",
-				},
-			},
-		},
-		OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
-			var args MultiplyByTwoArgs
-			err := json.Unmarshal([]byte(arguments), &args)
-			if err != nil {
-				return nil, err
-			}
-			return MultiplyByTwo(args), nil
-		},
-	}
+	MultiplyByTwoTool = tools.NewFunctionTool("multiply_by_two", "Return x times two.", MultiplyByTwo)
 
 	MultiplyAgent = agents.NewAgent().
 			WithName("Multiply Agent").

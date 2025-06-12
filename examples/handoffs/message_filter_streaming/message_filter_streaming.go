@@ -34,34 +34,11 @@ type RandomNumberArgs struct {
 }
 
 // RandomNumber returns a random integer between 0 and the given maximum.
-func RandomNumber(args RandomNumberArgs) int64 {
-	return rand.Int63n(args.Max + 1)
+func RandomNumber(_ context.Context, args RandomNumberArgs) (int64, error) {
+	return rand.Int63n(args.Max + 1), nil
 }
 
-var RandomNumberTool = tools.Function{
-	Name:        "random_number",
-	Description: "Return a random integer between 0 and the given maximum.",
-	ParamsJSONSchema: map[string]any{
-		"title":                "random_number_args",
-		"type":                 "object",
-		"required":             []string{"max"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"max": map[string]any{
-				"title": "Max",
-				"type":  "integer",
-			},
-		},
-	},
-	OnInvokeTool: func(_ context.Context, arguments string) (any, error) {
-		var args RandomNumberArgs
-		err := json.Unmarshal([]byte(arguments), &args)
-		if err != nil {
-			return nil, err
-		}
-		return RandomNumber(args), nil
-	},
-}
+var RandomNumberTool = tools.NewFunctionTool("random_number", "Return a random integer between 0 and the given maximum.", RandomNumber)
 
 func SpanishHandoffMessageFilter(_ context.Context, handoffMessageData agents.HandoffInputData) (agents.HandoffInputData, error) {
 	// First, we'll remove any tool-related messages from the message history
