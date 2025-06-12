@@ -202,6 +202,14 @@ func ResponseInputItemUnionParamFromResponseInputItemComputerCallOutputParam(
 	}
 }
 
+func ResponseInputItemUnionParamFromResponseInputItemLocalShellCallOutputParam(
+	input responses.ResponseInputItemLocalShellCallOutputParam,
+) responses.ResponseInputItemUnionParam {
+	return responses.ResponseInputItemUnionParam{
+		OfLocalShellCallOutput: &input,
+	}
+}
+
 func ResponseInputItemUnionParamFromResponseReasoningItem(
 	input responses.ResponseReasoningItem,
 ) responses.ResponseInputItemUnionParam {
@@ -409,6 +417,33 @@ func ResponseInputItemUnionParamFromResponseComputerToolCall(
 	}
 }
 
+func ResponseInputItemUnionParamFromResponseOutputItemLocalShellCall(
+	input responses.ResponseOutputItemLocalShellCall,
+) responses.ResponseInputItemUnionParam {
+	return responses.ResponseInputItemUnionParam{
+		OfLocalShellCall: &responses.ResponseInputItemLocalShellCallParam{
+			ID:     input.ID,
+			Action: ResponseInputItemLocalShellCallActionParamFromResponseOutputItemLocalShellCallAction(input.Action),
+			CallID: input.CallID,
+			Status: input.Status,
+			Type:   input.Type,
+		},
+	}
+}
+
+func ResponseInputItemLocalShellCallActionParamFromResponseOutputItemLocalShellCallAction(
+	input responses.ResponseOutputItemLocalShellCallAction,
+) responses.ResponseInputItemLocalShellCallActionParam {
+	return responses.ResponseInputItemLocalShellCallActionParam{
+		Command:          input.Command,
+		Env:              input.Env,
+		TimeoutMs:        param.NewOpt(input.TimeoutMs),
+		User:             param.NewOpt(input.User),
+		WorkingDirectory: param.NewOpt(input.WorkingDirectory),
+		Type:             input.Type,
+	}
+}
+
 func ResponseComputerToolCallActionUnionFromResponseOutputItemUnionAction(
 	input responses.ResponseOutputItemUnionAction,
 ) responses.ResponseComputerToolCallActionUnion {
@@ -422,6 +457,19 @@ func ResponseComputerToolCallActionUnionFromResponseOutputItemUnionAction(
 		ScrollX: input.ScrollX,
 		ScrollY: input.ScrollY,
 		Text:    input.Text,
+	}
+}
+
+func ResponseOutputItemLocalShellCallActionFromResponseOutputItemUnionAction(
+	input responses.ResponseOutputItemUnionAction,
+) responses.ResponseOutputItemLocalShellCallAction {
+	return responses.ResponseOutputItemLocalShellCallAction{
+		Command:          input.Command,
+		Env:              input.Env,
+		Type:             constant.ValueOf[constant.Exec](),
+		TimeoutMs:        input.TimeoutMs,
+		User:             input.User,
+		WorkingDirectory: input.WorkingDirectory,
 	}
 }
 

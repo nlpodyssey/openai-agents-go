@@ -118,12 +118,18 @@ type ResponseComputerToolCall responses.ResponseComputerToolCall
 
 func (ResponseComputerToolCall) isToolCallItemType() {}
 
+type ResponseOutputItemLocalShellCall responses.ResponseOutputItemLocalShellCall
+
+func (ResponseOutputItemLocalShellCall) isToolCallItemType() {}
+
 func TResponseInputItemFromToolCallItemType(input ToolCallItemType) TResponseInputItem {
 	switch v := input.(type) {
 	case ResponseFunctionToolCall:
 		return TResponseInputItemFromResponseFunctionToolCall(v)
 	case ResponseComputerToolCall:
 		return TResponseInputItemFromResponseComputerToolCall(v)
+	case ResponseOutputItemLocalShellCall:
+		return TResponseInputItemFromResponseOutputItemLocalShellCall(v)
 	default:
 		// This would be an unrecoverable implementation bug, so a panic is appropriate.
 		panic(fmt.Errorf("unexpected ToolCallItemType type %T", v))
@@ -136,6 +142,10 @@ func TResponseInputItemFromResponseFunctionToolCall(input ResponseFunctionToolCa
 
 func TResponseInputItemFromResponseComputerToolCall(input ResponseComputerToolCall) TResponseInputItem {
 	return openaitypes.ResponseInputItemUnionParamFromResponseComputerToolCall(responses.ResponseComputerToolCall(input))
+}
+
+func TResponseInputItemFromResponseOutputItemLocalShellCall(input ResponseOutputItemLocalShellCall) TResponseInputItem {
+	return openaitypes.ResponseInputItemUnionParamFromResponseOutputItemLocalShellCall(responses.ResponseOutputItemLocalShellCall(input))
 }
 
 // ToolCallOutputItem represents the output of a tool call.
@@ -166,6 +176,10 @@ type ResponseInputItemComputerCallOutputParam responses.ResponseInputItemCompute
 
 func (ResponseInputItemComputerCallOutputParam) isToolCallOutputRawItem() {}
 
+type ResponseInputItemLocalShellCallOutputParam responses.ResponseInputItemLocalShellCallOutputParam
+
+func (ResponseInputItemLocalShellCallOutputParam) isToolCallOutputRawItem() {}
+
 func (ToolCallOutputItem) isRunItem() {}
 
 func (item ToolCallOutputItem) ToInputItem() TResponseInputItem {
@@ -176,6 +190,9 @@ func (item ToolCallOutputItem) ToInputItem() TResponseInputItem {
 	case ResponseInputItemComputerCallOutputParam:
 		return openaitypes.ResponseInputItemUnionParamFromResponseInputItemComputerCallOutputParam(
 			responses.ResponseInputItemComputerCallOutputParam(rawItem))
+	case ResponseInputItemLocalShellCallOutputParam:
+		return openaitypes.ResponseInputItemUnionParamFromResponseInputItemLocalShellCallOutputParam(
+			responses.ResponseInputItemLocalShellCallOutputParam(rawItem))
 	default:
 		// This would be an unrecoverable implementation bug, so a panic is appropriate.
 		panic(fmt.Errorf("unexpected ToolCallOutputRawItem type %T", rawItem))

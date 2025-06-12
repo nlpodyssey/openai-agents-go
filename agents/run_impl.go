@@ -97,11 +97,17 @@ type ToolRunComputerAction struct {
 	ComputerTool tools.ComputerTool
 }
 
+type ToolRunLocalShellCall struct {
+	ToolCall       responses.ResponseOutputItemLocalShellCall
+	LocalShellTool tools.LocalShellTool
+}
+
 type ProcessedResponse struct {
 	NewItems        []RunItem
 	Handoffs        []ToolRunHandoff
 	Functions       []ToolRunFunction
 	ComputerActions []ToolRunComputerAction
+	LocalShellCalls []ToolRunLocalShellCall
 	// Names of all tools used, including hosted tools
 	ToolsUsed []string
 }
@@ -109,7 +115,8 @@ type ProcessedResponse struct {
 func (pr *ProcessedResponse) HasToolsToRun() bool {
 	// Handoffs, functions and computer actions need local processing.
 	// Hosted tools have already run, so there's nothing to do.
-	return len(pr.Handoffs) > 0 || len(pr.Functions) > 0 || len(pr.ComputerActions) > 0
+	return len(pr.Handoffs) > 0 || len(pr.Functions) > 0 ||
+		len(pr.ComputerActions) > 0 || len(pr.LocalShellCalls) > 0
 }
 
 type NextStep interface {
@@ -337,7 +344,9 @@ func (runImpl) ProcessModelResponse(
 		runHandoffs     []ToolRunHandoff
 		functions       []ToolRunFunction
 		computerActions []ToolRunComputerAction
+		localShellCalls []ToolRunLocalShellCall
 		computerTool    *tools.ComputerTool
+		localShellTool  *tools.LocalShellTool
 		toolsUsed       []string
 	)
 
@@ -354,6 +363,8 @@ func (runImpl) ProcessModelResponse(
 			functionMap[t.Name] = t
 		case tools.ComputerTool:
 			computerTool = &t
+		case tools.LocalShellTool:
+			localShellTool = &t
 		}
 	}
 
@@ -407,6 +418,27 @@ func (runImpl) ProcessModelResponse(
 				ToolCall:     output,
 				ComputerTool: *computerTool,
 			})
+		case "local_shell_call":
+			output := responses.ResponseOutputItemLocalShellCall{
+				ID:     outputUnion.ID,
+				Action: openaitypes.ResponseOutputItemLocalShellCallActionFromResponseOutputItemUnionAction(outputUnion.Action),
+				CallID: outputUnion.CallID,
+				Status: outputUnion.Status,
+				Type:   constant.ValueOf[constant.LocalShellCall](),
+			}
+			items = append(items, ToolCallItem{
+				Agent:   agent,
+				RawItem: ResponseOutputItemLocalShellCall(output),
+				Type:    "tool_call_item",
+			})
+			toolsUsed = append(toolsUsed, "local_shell")
+			if localShellTool == nil {
+				return nil, NewModelBehaviorError("model produced local shell call without a local shell tool")
+			}
+			localShellCalls = append(localShellCalls, ToolRunLocalShellCall{
+				ToolCall:       output,
+				LocalShellTool: *localShellTool,
+			})
 		case "function_call":
 			output := responses.ResponseFunctionToolCall{
 				Arguments: outputUnion.Arguments,
@@ -455,6 +487,7 @@ func (runImpl) ProcessModelResponse(
 		Handoffs:        runHandoffs,
 		Functions:       functions,
 		ComputerActions: computerActions,
+		LocalShellCalls: localShellCalls,
 		ToolsUsed:       toolsUsed,
 	}, nil
 }
@@ -617,6 +650,26 @@ func (runImpl) ExecuteFunctionToolCalls(
 	}
 
 	return functionToolResults, nil
+}
+
+func (runImpl) ExecuteLocalShellCalls(
+	ctx context.Context,
+	agent *Agent,
+	calls []ToolRunLocalShellCall,
+	hooks RunHooks,
+) ([]RunItem, error) {
+	results := make([]RunItem, len(calls))
+
+	// Need to run these serially, because each call can affect the local shell state
+	for i, call := range calls {
+		result, err := LocalShellAction().Execute(ctx, agent, call, hooks)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = result
+	}
+
+	return results, nil
 }
 
 func (runImpl) ExecuteComputerActions(
@@ -1070,4 +1123,95 @@ func (computerAction) getScreenshot(
 	}
 
 	return comp.Screenshot(ctx)
+}
+
+type localShellAction struct{}
+
+func LocalShellAction() localShellAction { return localShellAction{} }
+
+func (localShellAction) Execute(
+	ctx context.Context,
+	agent *Agent,
+	call ToolRunLocalShellCall,
+	hooks RunHooks,
+) (RunItem, error) {
+	var hooksErrors [2]error
+
+	childCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := hooks.OnToolStart(childCtx, agent, call.LocalShellTool)
+		if err != nil {
+			cancel()
+			hooksErrors[0] = fmt.Errorf("RunHooks.OnToolStart failed: %w", err)
+		}
+	}()
+
+	if agent.Hooks != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := agent.Hooks.OnToolStart(childCtx, agent, call.LocalShellTool)
+			if err != nil {
+				cancel()
+				hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolStart failed: %w", err)
+			}
+		}()
+	}
+
+	wg.Wait()
+	if err := errors.Join(hooksErrors[:]...); err != nil {
+		return nil, err
+	}
+
+	// TODO: why this does not run concurrently with the hooks, as for other tools?
+	request := tools.LocalShellCommandRequest{Data: call.ToolCall}
+	result, err := call.LocalShellTool.Executor(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := hooks.OnToolEnd(childCtx, agent, call.LocalShellTool, result)
+		if err != nil {
+			cancel()
+			hooksErrors[0] = fmt.Errorf("RunHooks.OnToolEnd failed: %w", err)
+		}
+	}()
+
+	if agent.Hooks != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := agent.Hooks.OnToolEnd(childCtx, agent, call.LocalShellTool, result)
+			if err != nil {
+				cancel()
+				hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolEnd failed: %w", err)
+			}
+		}()
+	}
+
+	wg.Wait()
+	if err = errors.Join(hooksErrors[:]...); err != nil {
+		return nil, err
+	}
+
+	return ToolCallOutputItem{
+		Agent: agent,
+		RawItem: ResponseInputItemLocalShellCallOutputParam{
+			ID:     call.ToolCall.CallID,
+			Output: result,
+			Status: "",
+			Type:   constant.ValueOf[constant.LocalShellCallOutput](),
+		},
+		Output: result,
+		Type:   "tool_call_output_item",
+	}, nil
 }
