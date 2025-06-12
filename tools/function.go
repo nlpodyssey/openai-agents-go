@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go"
@@ -137,7 +138,21 @@ func NewFunctionTool[T, R any](name string, description string, handler func(ctx
 	}
 
 	var zero T
-	schema := reflector.Reflect(&zero)
+	var schema *jsonschema.Schema
+	t := reflect.TypeOf(zero)
+	if t.Kind() == reflect.Struct && t.Name() == "" && t.NumField() == 0 {
+		// Avoid panic in jsonschema when reflecting an anonymous empty struct
+		schema = &jsonschema.Schema{
+			Version:    jsonschema.Version,
+			Type:       "object",
+			Properties: jsonschema.NewProperties(),
+		}
+		if !reflector.AllowAdditionalProperties {
+			schema.AdditionalProperties = jsonschema.FalseSchema
+		}
+	} else {
+		schema = reflector.Reflect(&zero)
+	}
 
 	schemaBytes, _ := json.Marshal(schema)
 	var schemaMap map[string]any
