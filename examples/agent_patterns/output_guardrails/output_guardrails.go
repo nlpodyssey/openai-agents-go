@@ -117,8 +117,7 @@ var SensitiveDataCheck = agents.OutputGuardrail{
 	Name:              "sensitive_data_check",
 }
 
-var Agent = agents.NewAgent().
-	WithName("Assistant").
+var Agent = agents.New("Assistant").
 	WithInstructions("You are a helpful assistant.").
 	WithOutputSchema(MessageOutputSchema{}).
 	WithOutputGuardrails([]agents.OutputGuardrail{SensitiveDataCheck}).

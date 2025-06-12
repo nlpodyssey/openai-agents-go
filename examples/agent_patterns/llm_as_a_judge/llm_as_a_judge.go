@@ -33,8 +33,7 @@ The second agent judges the outline and provides feedback. We loop until the jud
 with the outline.
 */
 
-var StoryOutlineGenerator = agents.NewAgent().
-	WithName("story_outline_generator").
+var StoryOutlineGenerator = agents.New("story_outline_generator").
 	WithInstructions("You generate a very short story outline based on the user's input. If there is any feedback provided, use it to improve the outline.").
 	WithModel("gpt-4.1-nano")
 
@@ -85,8 +84,7 @@ func (EvaluationFeedbackSchema) ValidateJSON(jsonStr string) (any, error) {
 	return v, err
 }
 
-var Evaluator = agents.NewAgent().
-	WithName("evaluator").
+var Evaluator = agents.New("evaluator").
 	WithInstructions("You evaluate a story outline and decide if it's good enough. If it's not good enough, you provide feedback on what needs to be improved. Never give it a pass on the first try.").
 	WithOutputSchema(EvaluationFeedbackSchema{}).
 	WithModel("gpt-4.1-nano")

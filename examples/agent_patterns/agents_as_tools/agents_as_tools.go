@@ -33,26 +33,22 @@ agents.
 var (
 	Model = agents.NewAgentModelName("gpt-4o-mini")
 
-	SpanishAgent = agents.NewAgent().
-			WithName("spanish_agent").
+	SpanishAgent = agents.New("spanish_agent").
 			WithInstructions("You translate the user's message to Spanish").
 			WithHandoffDescription("An English to Spanish translator").
 			WithModelOpt(param.NewOpt(Model))
 
-	FrenchAgent = agents.NewAgent().
-			WithName("french_agent").
+	FrenchAgent = agents.New("french_agent").
 			WithInstructions("You translate the user's message to French").
 			WithHandoffDescription("An English to French translator").
 			WithModelOpt(param.NewOpt(Model))
 
-	ItalianAgent = agents.NewAgent().
-			WithName("italian_agent").
+	ItalianAgent = agents.New("italian_agent").
 			WithInstructions("You translate the user's message to Italian").
 			WithHandoffDescription("An English to Italian translator").
 			WithModelOpt(param.NewOpt(Model))
 
-	OrchestratorAgent = agents.NewAgent().
-				WithName("orchestrator_agent").
+	OrchestratorAgent = agents.New("orchestrator_agent").
 				WithInstructions(
 			"You are a translation agent. You use the tools given to you to translate. "+
 				"If asked for multiple translations, you call the relevant tools in order. "+
@@ -74,8 +70,7 @@ var (
 		).
 		WithModelOpt(param.NewOpt(Model))
 
-	SynthesizerAgent = agents.NewAgent().
-				WithName("synthesizer_agent").
+	SynthesizerAgent = agents.New("synthesizer_agent").
 				WithInstructions("You inspect translations, correct them if needed, and produce a final concatenated response.").
 				WithModelOpt(param.NewOpt(Model))
 )

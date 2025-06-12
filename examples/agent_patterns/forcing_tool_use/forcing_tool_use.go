@@ -110,8 +110,7 @@ func main() {
 		syscall.Exit(1)
 	}
 
-	agent := agents.NewAgent().
-		WithName("Weather agent").
+	agent := agents.New("Weather agent").
 		WithInstructions("You are a helpful agent.").
 		WithTools(GetWeatherTool).
 		WithToolUseBehavior(behavior).

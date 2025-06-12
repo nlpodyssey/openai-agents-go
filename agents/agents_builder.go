@@ -20,16 +20,11 @@ import (
 	"github.com/openai/openai-go/packages/param"
 )
 
-// NewAgent returns an empty Agent that can be configured using the builder
-// methods.
-func NewAgent() *Agent {
-	return &Agent{}
-}
-
-// WithName sets the Agent name.
-func (a *Agent) WithName(name string) *Agent {
-	a.Name = name
-	return a
+// New creates a new Agent with the given name.
+//
+// The returned Agent can be further configured using the builder methods.
+func New(name string) *Agent {
+	return &Agent{Name: name}
 }
 
 // WithInstructions sets the Agent instructions.

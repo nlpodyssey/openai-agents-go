@@ -50,8 +50,7 @@ func CustomInstructions(ctx context.Context, _ *agents.Agent) (string, error) {
 	}
 }
 
-var Agent = agents.NewAgent().
-	WithName("Chat agent").
+var Agent = agents.New("Chat agent").
 	WithInstructionsFunc(CustomInstructions).
 	WithModel("gpt-4.1-nano")
 

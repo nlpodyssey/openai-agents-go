@@ -30,8 +30,7 @@ func HowManyJokes(_ context.Context, _ struct{}) (int64, error) {
 var HowManyJokesTool = tools.NewFunctionTool[struct{}, int64]("how_many_jokes", "", HowManyJokes)
 
 func main() {
-	agent := agents.NewAgent().
-		WithName("Joker").
+	agent := agents.New("Joker").
 		WithInstructions("First call the `how_many_jokes` tool, then tell that many jokes.").
 		WithModel("gpt-4.1-nano").
 		WithTools(HowManyJokesTool)

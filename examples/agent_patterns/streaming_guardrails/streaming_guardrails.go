@@ -38,8 +38,7 @@ and stop the streaming.
 
 var Model = agents.NewAgentModelName("gpt-4.1-nano")
 
-var Agent = agents.NewAgent().
-	WithName("Assistant").
+var Agent = agents.New("Assistant").
 	WithInstructions("You are a helpful assistant. You ALWAYS write long responses, making sure to be verbose and detailed.").
 	WithModelOpt(param.NewOpt(Model))
 
@@ -86,8 +85,7 @@ func (s GuardrailOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 	return v, err
 }
 
-var GuardrailAgent = agents.NewAgent().
-	WithName("Checker").
+var GuardrailAgent = agents.New("Checker").
 	WithInstructions("You will be given a question and a response. Your goal is to judge whether the response is simple enough to be understood by a ten year old.").
 	WithOutputSchema(GuardrailOutputSchema{}).
 	WithModelOpt(param.NewOpt(Model))

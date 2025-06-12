@@ -44,8 +44,7 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (Weather, error) {
 var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
 
 func main() {
-	agent := agents.NewAgent().
-		WithName("Hello world").
+	agent := agents.New("Hello world").
 		WithInstructions("You are a helpful agent.").
 		WithModel("gpt-4.1-nano").
 		WithTools(GetWeatherTool)

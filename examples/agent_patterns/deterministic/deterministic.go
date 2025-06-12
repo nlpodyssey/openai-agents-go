@@ -38,8 +38,7 @@ This example demonstrates a deterministic flow, where each step is performed by 
 
 var Model = agents.NewAgentModelName("gpt-4o-mini")
 
-var StoryOutlineAgent = agents.NewAgent().
-	WithName("story_outline_agent").
+var StoryOutlineAgent = agents.New("story_outline_agent").
 	WithInstructions("Generate a very short story outline based on the user's input.").
 	WithModelOpt(param.NewOpt(Model))
 
@@ -80,14 +79,12 @@ func (s OutlineCheckerOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 	return v, err
 }
 
-var OutlineCheckerAgent = agents.NewAgent().
-	WithName("outline_checker_agent").
+var OutlineCheckerAgent = agents.New("outline_checker_agent").
 	WithInstructions("Read the given story outline, and judge the quality. Also, determine if it is a scifi story.").
 	WithOutputSchema(OutlineCheckerOutputSchema{}).
 	WithModelOpt(param.NewOpt(Model))
 
-var StoryAgent = agents.NewAgent().
-	WithName("story_agent").
+var StoryAgent = agents.New("story_agent").
 	WithInstructions("Write a short story based on the given outline.").
 	WithModelOpt(param.NewOpt(Model))
 

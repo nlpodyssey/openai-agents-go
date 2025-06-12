@@ -23,8 +23,7 @@ import (
 )
 
 func main() {
-	agent := agents.NewAgent().
-		WithName("Joker").
+	agent := agents.New("Joker").
 		WithInstructions("You are a helpful assistant.").
 		WithModel("gpt-4.1-nano")
 

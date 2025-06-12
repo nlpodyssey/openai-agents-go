@@ -44,8 +44,7 @@ func main() {
 		panic(err)
 	}
 
-	agent := agents.NewAgent().
-		WithName("Assistant").
+	agent := agents.New("Assistant").
 		WithInstructions("You are a helpful assistant. Be VERY concise.").
 		WithModel("gpt-4.1-nano")
 

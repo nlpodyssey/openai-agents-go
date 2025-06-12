@@ -136,16 +136,14 @@ var (
 
 	MultiplyByTwoTool = tools.NewFunctionTool("multiply_by_two", "Simple multiplication by two.", MultiplyByTwo)
 
-	MultiplyAgent = agents.NewAgent().
-			WithName("Multiply Agent").
+	MultiplyAgent = agents.New("Multiply Agent").
 			WithInstructions("Multiply the number by 2 and then return the final result.").
 			WithTools(MultiplyByTwoTool).
 			WithOutputSchema(FinalResultOutputSchema{}).
 			WithHooks(NewCustomAgentHooks("Multiply Agent")).
 			WithModel("gpt-4o-mini")
 
-	StartAgent = agents.NewAgent().
-			WithName("Start Agent").
+	StartAgent = agents.New("Start Agent").
 			WithInstructions("Generate a random number. If it's even, stop. If it's odd, hand off to the multiply agent.").
 			WithTools(RandomNumberTool).
 			WithOutputSchema(FinalResultOutputSchema{}).
