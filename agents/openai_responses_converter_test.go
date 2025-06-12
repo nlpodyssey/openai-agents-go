@@ -164,9 +164,16 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 		},
 	}
 
+	// File search tool with IncludeSearchResults set
+	fileTool := tools.FileSearch{
+		MaxNumResults:        param.NewOpt[int64](3),
+		VectorStoreIDs:       []string{"vs1"},
+		IncludeSearchResults: true,
+	}
+
 	// Wrap our concrete computer in a tools.Computer for conversion.
 	compTool := tools.Computer{Computer: DummyComputer{}}
-	allTools := []tools.Tool{toolFn, compTool}
+	allTools := []tools.Tool{toolFn, fileTool, compTool}
 	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), allTools, nil)
 	require.NoError(t, err)
 	assert.Equal(t, &agents.ConvertedTools{
@@ -181,6 +188,13 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 				},
 			},
 			{
+				OfFileSearch: &responses.FileSearchToolParam{
+					VectorStoreIDs: []string{"vs1"},
+					MaxNumResults:  param.NewOpt[int64](3),
+					Type:           constant.ValueOf[constant.FileSearch](),
+				},
+			},
+			{
 				OfComputerUsePreview: &responses.ComputerToolParam{
 					DisplayHeight: 600,
 					DisplayWidth:  800,
@@ -189,7 +203,11 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 				},
 			},
 		},
-		Includes: nil,
+		// The Includes list should have exactly the include for file search
+		// when IncludeSearchResults is true.
+		Includes: []responses.ResponseIncludable{
+			responses.ResponseIncludableFileSearchCallResults,
+		},
 	}, converted)
 
 	t.Run("only one computer tool should be allowed", func(t *testing.T) {

@@ -122,6 +122,10 @@ type ResponseOutputItemLocalShellCall responses.ResponseOutputItemLocalShellCall
 
 func (ResponseOutputItemLocalShellCall) isToolCallItemType() {}
 
+type ResponseFileSearchToolCall responses.ResponseFileSearchToolCall
+
+func (ResponseFileSearchToolCall) isToolCallItemType() {}
+
 func TResponseInputItemFromToolCallItemType(input ToolCallItemType) TResponseInputItem {
 	switch v := input.(type) {
 	case ResponseFunctionToolCall:
