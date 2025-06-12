@@ -96,15 +96,15 @@ func main() {
         WithModel("gpt-4o")
 	
     result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: triageAgent,
-		Input:         agents.InputString("Hola, ¿cómo estás?"),
-	})
-	if err != nil {
-		panic(err)
-	}
+        StartingAgent: triageAgent,
+        Input:         agents.InputString("Hola, ¿cómo estás?"),
+    })
+    if err != nil {
+        panic(err)
+    }
 
-	fmt.Println(result.FinalOutput)
-	// ¡Hola! Estoy bien, gracias. ¿Y tú cómo estás?
+    fmt.Println(result.FinalOutput)
+    // ¡Hola! Estoy bien, gracias. ¿Y tú cómo estás?
 }
 ```
 
