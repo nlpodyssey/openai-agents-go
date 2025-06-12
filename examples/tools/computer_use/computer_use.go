@@ -35,7 +35,7 @@ func main() {
 		agent := &agents.Agent{
 			Name:         "Browser user",
 			Instructions: agents.InstructionsStr("You are a helpful agent."),
-			Tools:        []tools.Tool{tools.ComputerTool{Computer: comp}},
+			Tools:        []tools.Tool{tools.Computer{Computer: comp}},
 			//  Use the computer using model, and set truncation to auto because its required
 			Model: param.NewOpt(agents.NewAgentModelName("computer-use-preview")),
 			ModelSettings: modelsettings.ModelSettings{
