@@ -16,7 +16,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"syscall"
@@ -68,12 +67,7 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (Weather, error) {
 var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
 
 func CustomToolUseBehavior(_ context.Context, results []agents.FunctionToolResult) (agents.ToolsToFinalOutputResult, error) {
-	var weather Weather
-	err := json.Unmarshal([]byte(results[0].Output.(string)), &weather)
-	if err != nil {
-		return agents.ToolsToFinalOutputResult{}, err
-	}
-
+	weather := results[0].Output.(Weather)
 	return agents.ToolsToFinalOutputResult{
 		IsFinalOutput: true,
 		FinalOutput: param.NewOpt[any](
