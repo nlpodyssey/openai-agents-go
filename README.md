@@ -45,9 +45,9 @@ import (
 
 func main() {
 	agent := agents.NewAgent().
-        WithName("Assistant").
-        WithInstructions("You are a helpful assistant").
-        WithModel("gpt-4o")
+		WithName("Assistant").
+		WithInstructions("You are a helpful assistant").
+		WithModel("gpt-4o")
 
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: agent,
@@ -94,8 +94,8 @@ func main() {
         WithInstructions("Handoff to the appropriate agent based on the language of the request.").
         WithAgentHandoffs(spanishAgent, englishAgent).
         WithModel("gpt-4o")
-
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
+	
+    result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: triageAgent,
 		Input:         agents.InputString("Hola, ¿cómo estás?"),
 	})
@@ -135,13 +135,11 @@ func getWeather(_ context.Context, params GetWeatherParams) (string, error) {
 var getWeatherTool = tools.NewFunctionTool("GetWeather", "", getWeather)
 
 func main() {
-
 	agent := agents.NewAgent().
 		WithName("Hello world").
 		WithInstructions("You are a helpful agent.").
 		WithModel("gpt-4o").
 		WithTools(getWeatherTool)
-
 	
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: agent,
