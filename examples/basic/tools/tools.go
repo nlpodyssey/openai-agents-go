@@ -75,14 +75,11 @@ var GetWeatherTool = tools.Function{
 }
 
 func main() {
-	agent := &agents.Agent{
-		Name:         "Hello world",
-		Instructions: agents.InstructionsStr("You are a helpful agent."),
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-		Tools: []tools.Tool{
-			GetWeatherTool,
-		},
-	}
+	agent := agents.NewAgent().
+		WithName("Hello world").
+		WithInstructions("You are a helpful agent.").
+		WithModel("gpt-4.1-nano").
+		WithTools(GetWeatherTool)
 
 	ctx := context.Background()
 

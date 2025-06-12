@@ -137,16 +137,15 @@ func main() {
 		syscall.Exit(1)
 	}
 
-	agent := &agents.Agent{
-		Name:            "Weather agent",
-		Instructions:    agents.InstructionsStr("You are a helpful agent."),
-		Tools:           []tools.Tool{GetWeatherTool},
-		ToolUseBehavior: behavior,
-		ModelSettings: modelsettings.ModelSettings{
+	agent := agents.NewAgent().
+		WithName("Weather agent").
+		WithInstructions("You are a helpful agent.").
+		WithTools(GetWeatherTool).
+		WithToolUseBehavior(behavior).
+		WithModelSettings(modelsettings.ModelSettings{
 			ToolChoice: toolChoice,
-		},
-		Model: param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-	}
+		}).
+		WithModel("gpt-4.1-nano")
 
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
 		StartingAgent: agent,

@@ -33,29 +33,23 @@ streamed to the user.
 
 var (
 	Model       = agents.NewAgentModelName("gpt-4o-mini")
-	FrenchAgent = &agents.Agent{
-		Name:         "french_agent",
-		Instructions: agents.InstructionsStr("You only speak French"),
-		Model:        param.NewOpt(Model),
-	}
-	SpanishAgent = &agents.Agent{
-		Name:         "spanish_agent",
-		Instructions: agents.InstructionsStr("You only speak Spanish"),
-		Model:        param.NewOpt(Model),
-	}
-	EnglishAgent = &agents.Agent{
-		Name:         "english_agent",
-		Instructions: agents.InstructionsStr("You only speak English"),
-		Model:        param.NewOpt(Model),
-	}
-	TriageAgent = &agents.Agent{
-		Name: "triage_agent",
-		Instructions: agents.InstructionsStr(
-			"Handoff to the appropriate agent based on the language of the request.",
-		),
-		AgentHandoffs: []*agents.Agent{FrenchAgent, SpanishAgent, EnglishAgent},
-		Model:         param.NewOpt(Model),
-	}
+	FrenchAgent = agents.NewAgent().
+			WithName("french_agent").
+			WithInstructions("You only speak French").
+			WithModelOpt(param.NewOpt(Model))
+	SpanishAgent = agents.NewAgent().
+			WithName("spanish_agent").
+			WithInstructions("You only speak Spanish").
+			WithModelOpt(param.NewOpt(Model))
+	EnglishAgent = agents.NewAgent().
+			WithName("english_agent").
+			WithInstructions("You only speak English").
+			WithModelOpt(param.NewOpt(Model))
+	TriageAgent = agents.NewAgent().
+			WithName("triage_agent").
+			WithInstructions("Handoff to the appropriate agent based on the language of the request.").
+			WithAgentHandoffs(FrenchAgent, SpanishAgent, EnglishAgent).
+			WithModelOpt(param.NewOpt(Model))
 )
 
 func main() {

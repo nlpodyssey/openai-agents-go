@@ -99,11 +99,10 @@ var GetWeatherTool = tools.Function{
 
 func main() {
 
-	agent := &agents.Agent{
-		Name:         "Assistant",
-		Instructions: agents.InstructionsStr("You only respond in haikus."),
-		Tools:        []tools.Tool{GetWeatherTool},
-	}
+	agent := agents.NewAgent().
+		WithName("Assistant").
+		WithInstructions("You only respond in haikus.").
+		WithTools(GetWeatherTool)
 
 	// This will use the custom model provider
 	result, err := agents.Runner().Run(context.Background(), agents.RunParams{

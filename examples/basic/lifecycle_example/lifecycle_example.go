@@ -25,7 +25,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
-	"github.com/openai/openai-go/packages/param"
 )
 
 type ExampleHooks struct {
@@ -193,26 +192,20 @@ var (
 		},
 	}
 
-	MultiplyAgent = &agents.Agent{
-		Name: "Multiply Agent",
-		Instructions: agents.InstructionsStr(
-			"Multiply the number by 2 and then return the final result.",
-		),
-		Tools:        []tools.Tool{MultiplyByTwoTool},
-		OutputSchema: FinalResultOutputSchema{},
-		Model:        param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
-	}
+	MultiplyAgent = agents.NewAgent().
+			WithName("Multiply Agent").
+			WithInstructions("Multiply the number by 2 and then return the final result.").
+			WithTools(MultiplyByTwoTool).
+			WithOutputSchema(FinalResultOutputSchema{}).
+			WithModel("gpt-4o-mini")
 
-	StartAgent = &agents.Agent{
-		Name: "Start Agent",
-		Instructions: agents.InstructionsStr(
-			"Generate a random number. If it's even, stop. If it's odd, hand off to the multiplier agent.",
-		),
-		Tools:         []tools.Tool{RandomNumberTool},
-		OutputSchema:  FinalResultOutputSchema{},
-		AgentHandoffs: []*agents.Agent{MultiplyAgent},
-		Model:         param.NewOpt(agents.NewAgentModelName("gpt-4o-mini")),
-	}
+	StartAgent = agents.NewAgent().
+			WithName("Start Agent").
+			WithInstructions("Generate a random number. If it's even, stop. If it's odd, hand off to the multiplier agent.").
+			WithTools(RandomNumberTool).
+			WithOutputSchema(FinalResultOutputSchema{}).
+			WithAgentHandoffs(MultiplyAgent).
+			WithModel("gpt-4o-mini")
 )
 
 func main() {

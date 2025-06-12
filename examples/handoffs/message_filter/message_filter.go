@@ -83,33 +83,28 @@ func SpanishHandoffMessageFilter(_ context.Context, handoffMessageData agents.Ha
 var (
 	Model = agents.NewAgentModelName("gpt-4o-mini")
 
-	FirstAgent = &agents.Agent{
-		Name:         "Assistant",
-		Instructions: agents.InstructionsStr("Be extremely concise."),
-		Tools:        []tools.Tool{RandomNumberTool},
-		Model:        param.NewOpt(Model),
-	}
+	FirstAgent = agents.NewAgent().
+			WithName("Assistant").
+			WithInstructions("Be extremely concise.").
+			WithTools(RandomNumberTool).
+			WithModelOpt(param.NewOpt(Model))
 
-	SpanishAgent = &agents.Agent{
-		Name:               "Spanish Assistant",
-		Instructions:       agents.InstructionsStr("You only speak Spanish and are extremely concise."),
-		HandoffDescription: "A Spanish-speaking assistant.",
-		Model:              param.NewOpt(Model),
-	}
+	SpanishAgent = agents.NewAgent().
+			WithName("Spanish Assistant").
+			WithInstructions("You only speak Spanish and are extremely concise.").
+			WithHandoffDescription("A Spanish-speaking assistant.").
+			WithModelOpt(param.NewOpt(Model))
 
-	SecondAgent = &agents.Agent{
-		Name: "Assistant",
-		Instructions: agents.InstructionsStr(
-			"Be a helpful assistant. If the user speaks Spanish, handoff to the Spanish assistant.",
-		),
-		Handoffs: []agents.Handoff{
+	SecondAgent = agents.NewAgent().
+			WithName("Assistant").
+			WithInstructions("Be a helpful assistant. If the user speaks Spanish, handoff to the Spanish assistant.").
+			WithHandoffs(
 			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:       SpanishAgent,
 				InputFilter: SpanishHandoffMessageFilter,
 			}),
-		},
-		Model: param.NewOpt(Model),
-	}
+		).
+		WithModelOpt(param.NewOpt(Model))
 )
 
 func main() {

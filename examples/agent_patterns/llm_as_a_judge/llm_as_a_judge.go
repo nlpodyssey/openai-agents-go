@@ -33,14 +33,10 @@ The second agent judges the outline and provides feedback. We loop until the jud
 with the outline.
 */
 
-var StoryOutlineGenerator = &agents.Agent{
-	Name: "story_outline_generator",
-	Instructions: agents.InstructionsStr(
-		"You generate a very short story outline based on the user's input. " +
-			"If there is any feedback provided, use it to improve the outline.",
-	),
-	Model: param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-}
+var StoryOutlineGenerator = agents.NewAgent().
+	WithName("story_outline_generator").
+	WithInstructions("You generate a very short story outline based on the user's input. If there is any feedback provided, use it to improve the outline.").
+	WithModel("gpt-4.1-nano")
 
 type EvaluationFeedback struct {
 	Feedback string        `json:"feedback"`
@@ -89,16 +85,11 @@ func (EvaluationFeedbackSchema) ValidateJSON(jsonStr string) (any, error) {
 	return v, err
 }
 
-var Evaluator = &agents.Agent{
-	Name: "evaluator",
-	Instructions: agents.InstructionsStr(
-		"You evaluate a story outline and decide if it's good enough. " +
-			"If it's not good enough, you provide feedback on what needs to be improved. " +
-			"Never give it a pass on the first try.",
-	),
-	OutputSchema: EvaluationFeedbackSchema{},
-	Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-}
+var Evaluator = agents.NewAgent().
+	WithName("evaluator").
+	WithInstructions("You evaluate a story outline and decide if it's good enough. If it's not good enough, you provide feedback on what needs to be improved. Never give it a pass on the first try.").
+	WithOutputSchema(EvaluationFeedbackSchema{}).
+	WithModel("gpt-4.1-nano")
 
 func main() {
 	fmt.Print("What kind of story would you like to hear? ")

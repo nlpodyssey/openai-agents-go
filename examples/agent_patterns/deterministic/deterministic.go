@@ -38,13 +38,10 @@ This example demonstrates a deterministic flow, where each step is performed by 
 
 var Model = agents.NewAgentModelName("gpt-4o-mini")
 
-var StoryOutlineAgent = &agents.Agent{
-	Name: "story_outline_agent",
-	Instructions: agents.InstructionsStr(
-		"Generate a very short story outline based on the user's input.",
-	),
-	Model: param.NewOpt(Model),
-}
+var StoryOutlineAgent = agents.NewAgent().
+	WithName("story_outline_agent").
+	WithInstructions("Generate a very short story outline based on the user's input.").
+	WithModelOpt(param.NewOpt(Model))
 
 type OutlineCheckerOutput struct {
 	GoodQuality bool `json:"good_quality"`
@@ -83,22 +80,16 @@ func (s OutlineCheckerOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 	return v, err
 }
 
-var OutlineCheckerAgent = &agents.Agent{
-	Name: "outline_checker_agent",
-	Instructions: agents.InstructionsStr(
-		"Read the given story outline, and judge the quality. Also, determine if it is a scifi story.",
-	),
-	OutputSchema: OutlineCheckerOutputSchema{},
-	Model:        param.NewOpt(Model),
-}
+var OutlineCheckerAgent = agents.NewAgent().
+	WithName("outline_checker_agent").
+	WithInstructions("Read the given story outline, and judge the quality. Also, determine if it is a scifi story.").
+	WithOutputSchema(OutlineCheckerOutputSchema{}).
+	WithModelOpt(param.NewOpt(Model))
 
-var StoryAgent = &agents.Agent{
-	Name: "story_agent",
-	Instructions: agents.InstructionsStr(
-		"Write a short story based on the given outline.",
-	),
-	Model: param.NewOpt(Model),
-}
+var StoryAgent = agents.NewAgent().
+	WithName("story_agent").
+	WithInstructions("Write a short story based on the given outline.").
+	WithModelOpt(param.NewOpt(Model))
 
 func main() {
 	fmt.Print("What kind of story do you want? ")

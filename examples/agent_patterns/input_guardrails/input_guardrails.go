@@ -82,12 +82,11 @@ func (MathHomeworkOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 	return v, err
 }
 
-var GuardrailAgent = &agents.Agent{
-	Name:         "Guardrail check",
-	Instructions: agents.InstructionsStr("Check if the user is asking you to do their math homework."),
-	OutputSchema: MathHomeworkOutputSchema{},
-	Model:        param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-}
+var GuardrailAgent = agents.NewAgent().
+	WithName("Guardrail check").
+	WithInstructions("Check if the user is asking you to do their math homework.").
+	WithOutputSchema(MathHomeworkOutputSchema{}).
+	WithModel("gpt-4.1-nano")
 
 // MathGuardrailFunction is an input guardrail function, which happens to call
 // an agent to check if the input is a math homework question.
@@ -119,14 +118,11 @@ var MathGuardrail = agents.InputGuardrail{
 // 2. The run loop
 
 func main() {
-	agent := &agents.Agent{
-		Name: "Customer support agent",
-		Instructions: agents.InstructionsStr(
-			"You are a customer support agent. You help customers with their questions.",
-		),
-		InputGuardrails: []agents.InputGuardrail{MathGuardrail},
-		Model:           param.NewOpt(agents.NewAgentModelName("gpt-4.1-nano")),
-	}
+	agent := agents.NewAgent().
+		WithName("Customer support agent").
+		WithInstructions("You are a customer support agent. You help customers with their questions.").
+		WithInputGuardrails([]agents.InputGuardrail{MathGuardrail}).
+		WithModel("gpt-4.1-nano")
 
 	var inputData []agents.TResponseInputItem
 

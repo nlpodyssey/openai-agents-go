@@ -21,7 +21,6 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -34,35 +33,32 @@ agents.
 var (
 	Model = agents.NewAgentModelName("gpt-4o-mini")
 
-	SpanishAgent = &agents.Agent{
-		Name:               "spanish_agent",
-		Instructions:       agents.InstructionsStr("You translate the user's message to Spanish"),
-		HandoffDescription: "An English to Spanish translator",
-		Model:              param.NewOpt(Model),
-	}
+	SpanishAgent = agents.NewAgent().
+			WithName("spanish_agent").
+			WithInstructions("You translate the user's message to Spanish").
+			WithHandoffDescription("An English to Spanish translator").
+			WithModelOpt(param.NewOpt(Model))
 
-	FrenchAgent = &agents.Agent{
-		Name:               "french_agent",
-		Instructions:       agents.InstructionsStr("You translate the user's message to French"),
-		HandoffDescription: "An English to French translator",
-		Model:              param.NewOpt(Model),
-	}
+	FrenchAgent = agents.NewAgent().
+			WithName("french_agent").
+			WithInstructions("You translate the user's message to French").
+			WithHandoffDescription("An English to French translator").
+			WithModelOpt(param.NewOpt(Model))
 
-	ItalianAgent = &agents.Agent{
-		Name:               "italian_agent",
-		Instructions:       agents.InstructionsStr("You translate the user's message to Italian"),
-		HandoffDescription: "An English to Italian translator",
-		Model:              param.NewOpt(Model),
-	}
+	ItalianAgent = agents.NewAgent().
+			WithName("italian_agent").
+			WithInstructions("You translate the user's message to Italian").
+			WithHandoffDescription("An English to Italian translator").
+			WithModelOpt(param.NewOpt(Model))
 
-	OrchestratorAgent = &agents.Agent{
-		Name: "orchestrator_agent",
-		Instructions: agents.InstructionsStr(
-			"You are a translation agent. You use the tools given to you to translate. " +
-				"If asked for multiple translations, you call the relevant tools in order. " +
+	OrchestratorAgent = agents.NewAgent().
+				WithName("orchestrator_agent").
+				WithInstructions(
+			"You are a translation agent. You use the tools given to you to translate. "+
+				"If asked for multiple translations, you call the relevant tools in order. "+
 				"You never translate on your own, you always use the provided tools.",
-		),
-		Tools: []tools.Tool{
+		).
+		WithTools(
 			SpanishAgent.AsTool(agents.AgentAsToolParams{
 				ToolName:        "translate_to_spanish",
 				ToolDescription: "Translate the user's message to Spanish",
@@ -75,17 +71,13 @@ var (
 				ToolName:        "translate_to_italian",
 				ToolDescription: "Translate the user's message to Italian",
 			}),
-		},
-		Model: param.NewOpt(Model),
-	}
+		).
+		WithModelOpt(param.NewOpt(Model))
 
-	SynthesizerAgent = &agents.Agent{
-		Name: "synthesizer_agent",
-		Instructions: agents.InstructionsStr(
-			"You inspect translations, correct them if needed, and produce a final concatenated response.",
-		),
-		Model: param.NewOpt(Model),
-	}
+	SynthesizerAgent = agents.NewAgent().
+				WithName("synthesizer_agent").
+				WithInstructions("You inspect translations, correct them if needed, and produce a final concatenated response.").
+				WithModelOpt(param.NewOpt(Model))
 )
 
 func main() {
