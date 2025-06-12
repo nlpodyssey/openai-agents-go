@@ -48,18 +48,18 @@ func main() {
             WithInstructions("You are a helpful assistant").
             WithModel("gpt-4o")
 
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("Write a haiku about recursion in programming."),
-	})
-	if err != nil {
-		panic(err)
-	}
+    result, err := agents.Runner().Run(context.Background(), agents.RunParams{
+        StartingAgent: agent,
+        Input:         agents.InputString("Write a haiku about recursion in programming."),
+    })
+    if err != nil {
+        panic(err)
+    }
 
-	fmt.Println(result.FinalOutput)
-	// Function calls itself,
-	// Deep within the endless loop,
-	// Code mirrors its form.
+    fmt.Println(result.FinalOutput)
+    // Function calls itself,
+    // Deep within the endless loop,
+    // Code mirrors its form.
 }
 ```
 
