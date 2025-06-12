@@ -221,3 +221,29 @@ func TestFunction_ErrorHandling(t *testing.T) {
 		assert.Equal(t, "", weather.City)
 	})
 }
+
+func TestNewFunctionTool_EmptyStructArgs(t *testing.T) {
+	type emptyStruct struct{}
+	handler := func(ctx context.Context, args emptyStruct) (string, error) {
+		return "ok", nil
+	}
+
+	tool := NewFunctionTool("empty_tool", "", handler)
+
+	t.Run("Schema", func(t *testing.T) {
+		schema := tool.ParamsJSONSchema
+		assert.Equal(t, "object", schema["type"])
+		assert.Equal(t, false, schema["additionalProperties"])
+		properties, ok := schema["properties"].(map[string]any)
+		require.True(t, ok)
+		assert.Len(t, properties, 0)
+		_, hasRequired := schema["required"]
+		assert.False(t, hasRequired)
+	})
+
+	t.Run("Invocation", func(t *testing.T) {
+		result, err := tool.OnInvokeTool(t.Context(), `{}`)
+		require.NoError(t, err)
+		assert.Equal(t, "ok", result.(string))
+	})
+}
