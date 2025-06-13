@@ -60,7 +60,7 @@ func main() {
 func mainNoStream(agent *agents.Agent) {
 	ctx := context.Background()
 
-	result, err := agents.Runner{}.Run(ctx, agent, agents.InputString("What is the largest country in South America?"))
+	result, err := agents.Run(ctx, agent, agents.InputString("What is the largest country in South America?"))
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +78,7 @@ func mainNoStream(agent *agents.Agent) {
 func mainStream(agent *agents.Agent) {
 	ctx := context.Background()
 
-	result, err := agents.Runner{}.RunStreamed(
+	result, err := agents.RunStreamed(
 		ctx, agent, agents.InputString("What is the largest country in South America?"),
 	)
 	if err != nil {

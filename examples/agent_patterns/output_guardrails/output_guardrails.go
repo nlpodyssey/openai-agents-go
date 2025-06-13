@@ -125,14 +125,14 @@ var Agent = agents.New("Assistant").
 
 func main() {
 	// This should be ok
-	_, err := agents.Runner{}.Run(context.Background(), Agent, agents.InputString("What's the capital of California?"))
+	_, err := agents.Run(context.Background(), Agent, agents.InputString("What's the capital of California?"))
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("First message passed")
 
 	// This should trip the guardrail
-	result, err := agents.Runner{}.Run(
+	result, err := agents.Run(
 		context.Background(), Agent,
 		agents.InputString(
 			"My phone number is 650-123-4567. Where do you think I live?",

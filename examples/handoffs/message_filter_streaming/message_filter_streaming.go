@@ -83,7 +83,7 @@ var (
 
 func main() {
 	// 1. Send a regular message to the first agent
-	result, err := agents.Runner{}.Run(context.Background(), FirstAgent, agents.InputString("Hi, my name is Sora."))
+	result, err := agents.Run(context.Background(), FirstAgent, agents.InputString("Hi, my name is Sora."))
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +91,7 @@ func main() {
 	fmt.Println("Step 1 done")
 
 	// 2. Ask it to generate a number
-	result, err = agents.Runner{}.Run(
+	result, err = agents.Run(
 		context.Background(), FirstAgent,
 		agents.InputItems(append(
 			result.ToInputList(),
@@ -113,7 +113,7 @@ func main() {
 	fmt.Println("Step 2 done")
 
 	// 3. Call the second agent
-	result, err = agents.Runner{}.Run(
+	result, err = agents.Run(
 		context.Background(), SecondAgent,
 		agents.InputItems(append(
 			result.ToInputList(),
@@ -135,7 +135,7 @@ func main() {
 	fmt.Println("Step 3 done")
 
 	// 4. Cause a handoff to occur
-	streamResult, err := agents.Runner{}.RunStreamed(
+	streamResult, err := agents.RunStreamed(
 		context.Background(), SecondAgent,
 		agents.InputItems(append(
 			result.ToInputList(),

@@ -113,7 +113,7 @@ func main() {
 		}).
 		WithModel("gpt-4.1-nano")
 
-	result, err := agents.Runner{}.Run(context.Background(), agent, agents.InputString("What's the weather in Tokyo?"))
+	result, err := agents.Run(context.Background(), agent, agents.InputString("What's the weather in Tokyo?"))
 	if err != nil {
 		panic(err)
 	}
