@@ -126,6 +126,10 @@ type ResponseFileSearchToolCall responses.ResponseFileSearchToolCall
 
 func (ResponseFileSearchToolCall) isToolCallItemType() {}
 
+type ResponseFunctionWebSearch responses.ResponseFunctionWebSearch
+
+func (ResponseFunctionWebSearch) isToolCallItemType() {}
+
 func TResponseInputItemFromToolCallItemType(input ToolCallItemType) TResponseInputItem {
 	switch v := input.(type) {
 	case ResponseFunctionToolCall:
