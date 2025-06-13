@@ -37,7 +37,7 @@ func main() {
 
 	ctx := context.Background()
 
-	result, err := agents.RunStreamed(ctx, agent, agents.InputString("Hello"))
+	result, err := agents.RunStreamed(ctx, agent, "Hello")
 	if err != nil {
 		panic(err)
 	}

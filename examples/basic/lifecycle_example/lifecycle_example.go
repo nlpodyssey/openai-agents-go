@@ -174,9 +174,7 @@ func main() {
 
 	_, err = (agents.Runner{Config: agents.RunConfig{Hooks: Hooks}}).Run(
 		ctx, StartAgent,
-		agents.InputString(
-			fmt.Sprintf("Generate a random number between 0 and %s.", userInput),
-		),
+		fmt.Sprintf("Generate a random number between 0 and %s.", userInput),
 	)
 	if err != nil {
 		panic(err)

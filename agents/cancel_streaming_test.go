@@ -34,7 +34,7 @@ func TestSimpleStreamingWithCancel(t *testing.T) {
 	}
 
 	result, err := agents.Runner{}.RunStreamed(
-		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
+		t.Context(), agent, "Please tell me 5 jokes.")
 	require.NoError(t, err)
 
 	numEvents := 0
@@ -77,7 +77,7 @@ func TestMultipleEventsStreamingWithCancel(t *testing.T) {
 	})
 
 	result, err := agents.Runner{}.RunStreamed(
-		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
+		t.Context(), agent, "Please tell me 5 jokes.")
 	require.NoError(t, err)
 
 	numEvents := 0
@@ -105,7 +105,7 @@ func TestCancelPreventsFurtherEvents(t *testing.T) {
 	}
 
 	result, err := agents.Runner{}.RunStreamed(
-		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
+		t.Context(), agent, "Please tell me 5 jokes.")
 	require.NoError(t, err)
 
 	stopErr := errors.New("stop")
@@ -142,7 +142,7 @@ func TestCancelIsIdempotent(t *testing.T) {
 	}
 
 	result, err := agents.Runner{}.RunStreamed(
-		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
+		t.Context(), agent, "Please tell me 5 jokes.")
 	require.NoError(t, err)
 
 	stopErr := errors.New("stop")
@@ -168,7 +168,7 @@ func TestCancelBeforeStreaming(t *testing.T) {
 	}
 
 	result, err := agents.Runner{}.RunStreamed(
-		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
+		t.Context(), agent, "Please tell me 5 jokes.")
 	require.NoError(t, err)
 
 	result.Cancel() // Cancel before streaming

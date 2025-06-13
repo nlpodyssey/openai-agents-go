@@ -175,7 +175,7 @@ func main() {
 			},
 		})
 
-		result, err := agents.Run(ctx, currentAgent, agents.InputItems(inputItems))
+		result, err := agents.RunResponseInputs(ctx, currentAgent, inputItems)
 		if err != nil {
 			panic(err)
 		}

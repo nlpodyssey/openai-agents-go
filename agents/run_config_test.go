@@ -66,7 +66,7 @@ func TestModelProviderOnRunConfigIsUsedForAgentModelName(t *testing.T) {
 		ModelProvider: provider,
 	}
 	result, err := (agents.Runner{Config: runConfig}).Run(
-		t.Context(), agent, agents.InputString("any"))
+		t.Context(), agent, "any")
 	require.NoError(t, err)
 	// We picked up the model from our dummy provider
 	require.NotNil(t, provider.LastRequested)
@@ -92,7 +92,7 @@ func TestRunConfigModelNameOverrideTakesPrecedence(t *testing.T) {
 		ModelProvider: provider,
 	}
 	result, err := (agents.Runner{Config: runConfig}).Run(
-		t.Context(), agent, agents.InputString("any"))
+		t.Context(), agent, "any")
 	require.NoError(t, err)
 	// We should have requested the override name, not the agent.model
 	require.NotNil(t, provider.LastRequested)
@@ -116,7 +116,7 @@ func TestRunConfigModelOverrideObjectTakesPrecedence(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(fakeModel)),
 	}
 	result, err := (agents.Runner{Config: runConfig}).Run(
-		t.Context(), agent, agents.InputString("any"))
+		t.Context(), agent, "any")
 	require.NoError(t, err)
 	// Our FakeModel on the RunConfig should have been used.
 	assert.Equal(t, "override-object", result.FinalOutput)
@@ -140,7 +140,7 @@ func TestAgentModelObjectIsUsedWhenPresent(t *testing.T) {
 		ModelProvider: provider,
 	}
 	result, err := (agents.Runner{Config: runConfig}).Run(
-		t.Context(), agent, agents.InputString("any"))
+		t.Context(), agent, "any")
 	require.NoError(t, err)
 	// The dummy provider should never have been called, and the output should come from
 	// the FakeModel on the agent.

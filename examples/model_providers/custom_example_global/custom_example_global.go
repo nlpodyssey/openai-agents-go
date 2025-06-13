@@ -72,7 +72,7 @@ func main() {
 		WithModel(ModelName).
 		WithTools(GetWeatherTool)
 
-	result, err := agents.Run(context.Background(), agent, agents.InputString("What's the weather in Tokyo?"))
+	result, err := agents.Run(context.Background(), agent, "What's the weather in Tokyo?")
 	if err != nil {
 		panic(err)
 	}

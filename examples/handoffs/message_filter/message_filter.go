@@ -83,7 +83,7 @@ var (
 
 func main() {
 	// 1. Send a regular message to the first agent
-	result, err := agents.Run(context.Background(), FirstAgent, agents.InputString("Hi, my name is Sora."))
+	result, err := agents.Run(context.Background(), FirstAgent, "Hi, my name is Sora.")
 	if err != nil {
 		panic(err)
 	}
@@ -91,9 +91,9 @@ func main() {
 	fmt.Println("Step 1 done")
 
 	// 2. Ask it to generate a number
-	result, err = agents.Run(
+	result, err = agents.RunResponseInputs(
 		context.Background(), FirstAgent,
-		agents.InputItems(append(
+		append(
 			result.ToInputList(),
 			agents.TResponseInputItem{
 				OfMessage: &responses.EasyInputMessageParam{
@@ -104,7 +104,7 @@ func main() {
 					Type: responses.EasyInputMessageTypeMessage,
 				},
 			},
-		)),
+		),
 	)
 	if err != nil {
 		panic(err)
@@ -113,9 +113,9 @@ func main() {
 	fmt.Println("Step 2 done")
 
 	// 3. Call the second agent
-	result, err = agents.Run(
+	result, err = agents.RunResponseInputs(
 		context.Background(), SecondAgent,
-		agents.InputItems(append(
+		append(
 			result.ToInputList(),
 			agents.TResponseInputItem{
 				OfMessage: &responses.EasyInputMessageParam{
@@ -126,7 +126,7 @@ func main() {
 					Type: responses.EasyInputMessageTypeMessage,
 				},
 			},
-		)),
+		),
 	)
 	if err != nil {
 		panic(err)
@@ -135,9 +135,9 @@ func main() {
 	fmt.Println("Step 3 done")
 
 	// 4. Cause a handoff to occur
-	result, err = agents.Run(
+	result, err = agents.RunResponseInputs(
 		context.Background(), SecondAgent,
-		agents.InputItems(append(
+		append(
 			result.ToInputList(),
 			agents.TResponseInputItem{
 				OfMessage: &responses.EasyInputMessageParam{
@@ -148,7 +148,7 @@ func main() {
 					Type: responses.EasyInputMessageTypeMessage,
 				},
 			},
-		)),
+		),
 	)
 	if err != nil {
 		panic(err)

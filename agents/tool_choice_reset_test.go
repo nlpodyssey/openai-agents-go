@@ -114,13 +114,13 @@ func TestRequiredToolChoiceWithMultipleRuns(t *testing.T) {
 	}
 
 	// First run should work correctly and preserve ToolChoice
-	result1, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("first run"))
+	result1, err := agents.Runner{}.Run(t.Context(), agent, "first run")
 	require.NoError(t, err)
 	assert.Equal(t, "First run response", result1.FinalOutput)
 	assert.Equal(t, "required", fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
 
 	// Second run should also work correctly with ToolChoice still required
-	result2, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("second run"))
+	result2, err := agents.Runner{}.Run(t.Context(), agent, "second run")
 	require.NoError(t, err)
 	assert.Equal(t, "Second run response", result2.FinalOutput)
 	assert.Equal(t, "required", fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
@@ -150,7 +150,7 @@ func TestRequiredWithStopAtToolName(t *testing.T) {
 	}
 
 	// Run should stop after using second_tool
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("run test"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "run test")
 	require.NoError(t, err)
 	assert.Equal(t, "second tool result", result.FinalOutput)
 }
@@ -179,7 +179,7 @@ func TestSpecificToolChoice(t *testing.T) {
 	}
 
 	// Run should complete without infinite loops
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("run test"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "run test")
 	require.NoError(t, err)
 	assert.Equal(t, "Test message", result.FinalOutput)
 }
@@ -211,7 +211,7 @@ func TestRequiredWithSingleTool(t *testing.T) {
 	}
 
 	// Run should complete without infinite loops
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("run test"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "run test")
 	require.NoError(t, err)
 	assert.Equal(t, "Final response", result.FinalOutput)
 }
@@ -242,7 +242,7 @@ func TestDontResetToolChoiceIfNotRequired(t *testing.T) {
 		ResetToolChoice: param.NewOpt(false),
 	}
 
-	_, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("run test"))
+	_, err := agents.Runner{}.Run(t.Context(), agent, "run test")
 	require.NoError(t, err)
 	assert.Equal(t, "required", fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
 }

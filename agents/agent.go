@@ -141,7 +141,7 @@ func (a *Agent) AsTool(params AgentAsToolParams) tools.Tool {
 		ParamsJSONSchema: a.agentAsToolParamsJSONSchema(name + "_args"),
 		StrictJSONSchema: param.NewOpt(true),
 		OnInvokeTool: func(ctx context.Context, input string) (any, error) {
-			output, err := Runner{}.Run(ctx, a, InputString(input))
+			output, err := DefaultRunner.Run(ctx, a, input)
 			if err != nil {
 				return nil, fmt.Errorf("failed to run agent %s as tool: %w", a.Name, err)
 			}

@@ -51,7 +51,7 @@ func main() {
 
 	ctx := context.Background()
 
-	result, err := agents.Run(ctx, agent, agents.InputString("What's the weather in Tokyo?"))
+	result, err := agents.Run(ctx, agent, "What's the weather in Tokyo?")
 
 	if err != nil {
 		panic(err)

@@ -70,8 +70,8 @@ func main() {
 	}}
 
 	for {
-		result, err := agents.RunStreamed(
-			context.Background(), agent, agents.InputItems(inputs),
+		result, err := agents.RunResponseInputsStreamed(
+			context.Background(), agent, inputs,
 		)
 		if err != nil {
 			panic(err)

@@ -60,7 +60,7 @@ func main() {
 func mainNoStream(agent *agents.Agent) {
 	ctx := context.Background()
 
-	result, err := agents.Run(ctx, agent, agents.InputString("What is the largest country in South America?"))
+	result, err := agents.Run(ctx, agent, "What is the largest country in South America?")
 	if err != nil {
 		panic(err)
 	}
@@ -68,7 +68,7 @@ func mainNoStream(agent *agents.Agent) {
 	fmt.Println(result.FinalOutput)
 
 	result, err = (agents.Runner{Config: agents.RunConfig{PreviousResponseID: result.LastResponseID()}}).
-		Run(ctx, agent, agents.InputString("What is the capital of that country?"))
+		Run(ctx, agent, "What is the capital of that country?")
 	if err != nil {
 		panic(err)
 	}
@@ -79,7 +79,7 @@ func mainStream(agent *agents.Agent) {
 	ctx := context.Background()
 
 	result, err := agents.RunStreamed(
-		ctx, agent, agents.InputString("What is the largest country in South America?"),
+		ctx, agent, "What is the largest country in South America?",
 	)
 	if err != nil {
 		panic(err)
@@ -98,7 +98,7 @@ func mainStream(agent *agents.Agent) {
 	fmt.Println()
 
 	result, err = (agents.Runner{Config: agents.RunConfig{PreviousResponseID: result.LastResponseID()}}).
-		RunStreamed(ctx, agent, agents.InputString("What is the capital of that country?"))
+		RunStreamed(ctx, agent, "What is the capital of that country?")
 	if err != nil {
 		panic(err)
 	}
