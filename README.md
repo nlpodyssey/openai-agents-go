@@ -48,10 +48,7 @@ func main() {
             WithInstructions("You are a helpful assistant").
             WithModel("gpt-4o")
 
-    result, err := agents.Run(
-        context.Background(), agent,
-        agents.InputString("Write a haiku about recursion in programming."),
-    )
+    result, err := agents.Run(context.Background(), agent, "Write a haiku about recursion in programming.")
     if err != nil {
         panic(err)
     }
@@ -91,10 +88,7 @@ func main() {
         WithAgentHandoffs(spanishAgent, englishAgent).
         WithModel("gpt-4o")
 	
-    result, err := agents.Run(
-        context.Background(), triageAgent,
-        agents.InputString("Hola, ¿cómo estás?"),
-    )
+    result, err := agents.Run(context.Background(), triageAgent, "Hola, ¿cómo estás?")
     if err != nil {
         panic(err)
     }
@@ -136,10 +130,7 @@ func main() {
                 WithModel("gpt-4o").
                 WithTools(getWeatherTool)
 	
-        result, err := agents.Run(
-                context.Background(), agent,
-                agents.InputString("What's the weather in Tokyo?"),
-        )
+        result, err := agents.Run(context.Background(), agent, "What's the weather in Tokyo?")
 	if err != nil {
 		panic(err)
 	}
