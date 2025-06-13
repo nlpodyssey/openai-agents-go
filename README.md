@@ -48,10 +48,10 @@ func main() {
             WithInstructions("You are a helpful assistant").
             WithModel("gpt-4o")
 
-    result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-        StartingAgent: agent,
-        Input:         agents.InputString("Write a haiku about recursion in programming."),
-    })
+    result, err := agents.Runner{}.Run(
+        context.Background(), agent,
+        agents.InputString("Write a haiku about recursion in programming."),
+    )
     if err != nil {
         panic(err)
     }
@@ -91,10 +91,10 @@ func main() {
         WithAgentHandoffs(spanishAgent, englishAgent).
         WithModel("gpt-4o")
 	
-    result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-        StartingAgent: triageAgent,
-        Input:         agents.InputString("Hola, ¿cómo estás?"),
-    })
+    result, err := agents.Runner{}.Run(
+        context.Background(), triageAgent,
+        agents.InputString("Hola, ¿cómo estás?"),
+    )
     if err != nil {
         panic(err)
     }
@@ -136,10 +136,10 @@ func main() {
                 WithModel("gpt-4o").
                 WithTools(getWeatherTool)
 	
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("What's the weather in Tokyo?"),
-	})
+        result, err := agents.Runner{}.Run(
+                context.Background(), agent,
+                agents.InputString("What's the weather in Tokyo?"),
+        )
 	if err != nil {
 		panic(err)
 	}
@@ -150,7 +150,7 @@ func main() {
 
 ## The agent loop
 
-When you call `agents.Runner().Run()`, we run a loop until we get a final output.
+When you call `agents.Runner{}.Run()`, we run a loop until we get a final output.
 
 1. We call the LLM, using the model and settings on the agent, and the message history.
 2. The LLM returns a response, which may include tool calls.

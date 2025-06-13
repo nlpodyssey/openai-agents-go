@@ -33,10 +33,7 @@ func main() {
 		}).
 		WithModel("gpt-4o-mini")
 
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("Be concise, and tell me 1 sentence about Arrakis I might not know."),
-	})
+	result, err := agents.Runner{}.Run(context.Background(), agent, agents.InputString("Be concise, and tell me 1 sentence about Arrakis I might not know."))
 	if err != nil {
 		panic(err)
 	}

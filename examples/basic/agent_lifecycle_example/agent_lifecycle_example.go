@@ -164,12 +164,12 @@ func main() {
 
 	ctx := context.Background()
 
-	_, err = agents.Runner().Run(ctx, agents.RunParams{
-		StartingAgent: StartAgent,
-		Input: agents.InputString(
+	_, err = agents.Runner{}.Run(
+		ctx, StartAgent,
+		agents.InputString(
 			fmt.Sprintf("Generate a random number between 0 and %s.", userInput),
 		),
-	})
+	)
 	if err != nil {
 		panic(err)
 	}

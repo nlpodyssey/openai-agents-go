@@ -47,11 +47,8 @@ func TestNonStreamedMaxTurns(t *testing.T) {
 		})
 	}
 
-	_, err := agents.Runner().Run(t.Context(), agents.RunParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-		MaxTurns:      3,
-	})
+	_, err := agents.Runner{Config: agents.RunConfig{MaxTurns: 3}}.Run(
+		t.Context(), agent, agents.InputString("user_message"))
 
 	var target agents.MaxTurnsExceededError
 	assert.ErrorAs(t, err, &target)
@@ -76,11 +73,8 @@ func TestStreamedMaxTurns(t *testing.T) {
 		})
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-		MaxTurns:      3,
-	})
+	result, err := agents.Runner{Config: agents.RunConfig{MaxTurns: 3}}.
+		RunStreamed(t.Context(), agent, agents.InputString("user_message"))
 	require.NoError(t, err)
 
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -139,11 +133,8 @@ func TestStructuredOutputNonStreamedMaxTurns(t *testing.T) {
 		})
 	}
 
-	_, err := agents.Runner().Run(t.Context(), agents.RunParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-		MaxTurns:      3,
-	})
+	_, err := agents.Runner{Config: agents.RunConfig{MaxTurns: 3}}.Run(
+		t.Context(), agent, agents.InputString("user_message"))
 
 	var target agents.MaxTurnsExceededError
 	assert.ErrorAs(t, err, &target)
@@ -168,11 +159,8 @@ func TestStructuredOutputStreamedMaxTurns(t *testing.T) {
 		})
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-		MaxTurns:      3,
-	})
+	result, err := agents.Runner{Config: agents.RunConfig{MaxTurns: 3}}.
+		RunStreamed(t.Context(), agent, agents.InputString("user_message"))
 	require.NoError(t, err)
 
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })

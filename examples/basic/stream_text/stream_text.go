@@ -29,10 +29,7 @@ func main() {
 
 	ctx := context.Background()
 
-	result, err := agents.Runner().RunStreamed(ctx, agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("Please tell me 5 jokes."),
-	})
+	result, err := agents.Runner{}.RunStreamed(ctx, agent, agents.InputString("Please tell me 5 jokes."))
 	if err != nil {
 		panic(err)
 	}

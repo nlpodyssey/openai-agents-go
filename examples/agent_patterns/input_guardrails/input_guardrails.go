@@ -94,10 +94,7 @@ func MathGuardrailFunction(
 	_ *agents.Agent,
 	input agents.Input,
 ) (agents.GuardrailFunctionOutput, error) {
-	result, err := agents.Runner().Run(ctx, agents.RunParams{
-		StartingAgent: GuardrailAgent,
-		Input:         input,
-	})
+	result, err := agents.Runner{}.Run(ctx, GuardrailAgent, input)
 	if err != nil {
 		return agents.GuardrailFunctionOutput{}, err
 	}
@@ -142,10 +139,7 @@ func main() {
 			},
 		})
 
-		result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-			StartingAgent: agent,
-			Input:         agents.InputItems(inputData),
-		})
+		result, err := agents.Runner{}.Run(context.Background(), agent, agents.InputItems(inputData))
 		if err != nil {
 			var tripwireError agents.InputGuardrailTripwireTriggeredError
 			if errors.As(err, &tripwireError) {

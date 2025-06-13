@@ -32,9 +32,12 @@ import (
 	"github.com/openai/openai-go/packages/param"
 )
 
-type runner struct{}
-
-func Runner() runner { return runner{} }
+// Runner executes agents using the configured RunConfig.
+//
+// The zero value is valid.
+type Runner struct {
+	Config RunConfig
+}
 
 const DefaultMaxTurns = 10
 
@@ -61,15 +64,6 @@ type RunConfig struct {
 
 	// A list of output guardrails to run on the final output of the run.
 	OutputGuardrails []OutputGuardrail
-}
-
-type RunParams struct {
-	// The starting agent to run.
-	StartingAgent *Agent
-
-	// The initial input to the agent.
-	// You can pass a single string for a user message, or a list of input items.
-	Input Input
 
 	// Optional maximum number of turns to run the agent for.
 	// A turn is defined as one AI invocation (including any tool calls that might occur).
@@ -78,9 +72,6 @@ type RunParams struct {
 
 	// Optional object that receives callbacks on various lifecycle events.
 	Hooks RunHooks
-
-	// Optional global settings for the entire agent run.
-	RunConfig RunConfig
 
 	// Optional ID of the previous response, if using OpenAI models via the Responses API,
 	// this allows you to skip passing in input from the previous turn.
@@ -104,17 +95,17 @@ type RunParams struct {
 //
 // It returns a run result containing all the inputs, guardrail results and the output of the last
 // agent. Agents may perform handoffs, so we don't know the specific type of the output.
-func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
-	hooks := params.Hooks
+func (r Runner) Run(ctx context.Context, startingAgent *Agent, input Input) (*RunResult, error) {
+	hooks := r.Config.Hooks
 	if hooks == nil {
 		hooks = NoOpRunHooks{}
 	}
 
 	toolUseTracker := NewAgentToolUseTracker()
-	originalInput := CopyGeneralInput(params.Input)
+	originalInput := CopyGeneralInput(input)
 	currentTurn := uint64(0)
 
-	maxTurns := params.MaxTurns
+	maxTurns := r.Config.MaxTurns
 	if maxTurns == 0 {
 		maxTurns = DefaultMaxTurns
 	}
@@ -127,10 +118,10 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 
 	ctx = usage.NewContext(ctx, usage.NewUsage())
 
-	if params.StartingAgent == nil {
+	if startingAgent == nil {
 		return nil, fmt.Errorf("StartingAgent must not be nil")
 	}
-	currentAgent := params.StartingAgent
+	currentAgent := startingAgent
 	shouldRunAgentStartHooks := true
 
 	shouldGetAgentTools := true
@@ -166,9 +157,9 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 				defer wg.Done()
 				inputGuardrailResults, guardrailsError = r.runInputGuardrails(
 					childCtx,
-					params.StartingAgent,
-					slices.Concat(params.StartingAgent.InputGuardrails, params.RunConfig.InputGuardrails),
-					CopyGeneralInput(params.Input),
+					startingAgent,
+					slices.Concat(startingAgent.InputGuardrails, r.Config.InputGuardrails),
+					CopyGeneralInput(input),
 				)
 				if guardrailsError != nil {
 					cancel()
@@ -185,10 +176,10 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 					originalInput,
 					generatedItems,
 					hooks,
-					params.RunConfig,
+					r.Config,
 					shouldRunAgentStartHooks,
 					toolUseTracker,
-					params.PreviousResponseID,
+					r.Config.PreviousResponseID,
 				)
 				if turnError != nil {
 					cancel()
@@ -208,10 +199,10 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 				originalInput,
 				generatedItems,
 				hooks,
-				params.RunConfig,
+				r.Config,
 				shouldRunAgentStartHooks,
 				toolUseTracker,
-				params.PreviousResponseID,
+				r.Config.PreviousResponseID,
 			)
 			if err != nil {
 				return nil, err
@@ -228,7 +219,7 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 		case NextStepFinalOutput:
 			outputGuardrailResults, err := r.runOutputGuardrails(
 				childCtx,
-				slices.Concat(currentAgent.OutputGuardrails, params.RunConfig.OutputGuardrails),
+				slices.Concat(currentAgent.OutputGuardrails, r.Config.OutputGuardrails),
 				currentAgent,
 				nextStep.Output,
 			)
@@ -260,30 +251,6 @@ func (r runner) Run(ctx context.Context, params RunParams) (*RunResult, error) {
 	}
 }
 
-type RunStreamedParams struct {
-	// The starting agent to run.
-	StartingAgent *Agent
-
-	// The initial input to the agent.
-	// You can pass a single string for a user message, or a list of input items.
-	Input Input
-
-	// Optional maximum number of turns to run the agent for.
-	// A turn is defined as one AI invocation (including any tool calls that might occur).
-	// Default (when left zero): DefaultMaxTurns.
-	MaxTurns uint64
-
-	// An object that receives callbacks on various lifecycle events.
-	Hooks RunHooks
-
-	// Optional global settings for the entire agent run.
-	RunConfig RunConfig
-
-	// Optional ID of the previous response, if using OpenAI models via the Responses API,
-	// this allows you to skip passing in input from the previous turn.
-	PreviousResponseID string
-}
-
 // RunStreamed run a workflow starting at the given agent in streaming mode.
 // The returned result object contains a method you can use to stream semantic
 // events as they are generated.
@@ -301,34 +268,34 @@ type RunStreamedParams struct {
 // Note that only the first agent's input guardrails are run.
 //
 // It returns a result object that contains data about the run, as well as a method to stream events.
-func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*RunResultStreaming, error) {
-	hooks := params.Hooks
+func (r Runner) RunStreamed(ctx context.Context, startingAgent *Agent, input Input) (*RunResultStreaming, error) {
+	hooks := r.Config.Hooks
 	if hooks == nil {
 		hooks = NoOpRunHooks{}
 	}
 
-	maxTurns := params.MaxTurns
+	maxTurns := r.Config.MaxTurns
 	if maxTurns == 0 {
 		maxTurns = DefaultMaxTurns
 	}
 
-	if params.StartingAgent == nil {
+	if startingAgent == nil {
 		return nil, fmt.Errorf("StartingAgent must not be nil")
 	}
 
-	outputSchema := params.StartingAgent.OutputSchema
+	outputSchema := startingAgent.OutputSchema
 	ctx = usage.NewContext(ctx, usage.NewUsage())
 
 	streamedResult := &RunResultStreaming{
 		RunResultBase: RunResultBase{
-			Input:                  CopyGeneralInput(params.Input),
+			Input:                  CopyGeneralInput(input),
 			NewItems:               nil,
 			RawResponses:           nil,
 			FinalOutput:            nil,
 			InputGuardrailResults:  nil,
 			OutputGuardrailResults: nil,
 		},
-		CurrentAgent:             params.StartingAgent,
+		CurrentAgent:             startingAgent,
 		CurrentTurn:              new(atomic.Uint64),
 		MaxTurns:                 maxTurns,
 		currentAgentOutputSchema: outputSchema,
@@ -344,20 +311,20 @@ func (r runner) RunStreamed(ctx context.Context, params RunStreamedParams) (*Run
 	streamedResult.runImplTask.Store(asynctask.CreateTask(ctx, func(ctx context.Context) error {
 		return r.runStreamedImpl(
 			ctx,
-			params.Input,
+			input,
 			streamedResult,
-			params.StartingAgent,
+			startingAgent,
 			maxTurns,
 			hooks,
-			params.RunConfig,
-			params.PreviousResponseID,
+			r.Config,
+			r.Config.PreviousResponseID,
 		)
 	}))
 
 	return streamedResult, nil
 }
 
-func (r runner) runInputGuardrailsWithQueue(
+func (r Runner) runInputGuardrailsWithQueue(
 	ctx context.Context,
 	agent *Agent,
 	guardrails []InputGuardrail,
@@ -400,7 +367,7 @@ func (r runner) runInputGuardrailsWithQueue(
 	return nil
 }
 
-func (r runner) runStreamedImpl(
+func (r Runner) runStreamedImpl(
 	ctx context.Context,
 	startingInput Input,
 	streamedResult *RunResultStreaming,
@@ -529,7 +496,7 @@ func (r runner) runStreamedImpl(
 	return nil
 }
 
-func (r runner) runSingleTurnStreamed(
+func (r Runner) runSingleTurnStreamed(
 	ctx context.Context,
 	streamedResult *RunResultStreaming,
 	agent *Agent,
@@ -681,7 +648,7 @@ func (r runner) runSingleTurnStreamed(
 	return singleStepResult, nil
 }
 
-func (r runner) runSingleTurn(
+func (r Runner) runSingleTurn(
 	ctx context.Context,
 	agent *Agent,
 	allTools []tools.Tool,
@@ -775,7 +742,7 @@ func (r runner) runSingleTurn(
 	)
 }
 
-func (runner) getSingleStepResultFromResponse(
+func (Runner) getSingleStepResultFromResponse(
 	ctx context.Context,
 	agent *Agent,
 	allTools []tools.Tool,
@@ -813,7 +780,7 @@ func (runner) getSingleStepResultFromResponse(
 	)
 }
 
-func (runner) runInputGuardrails(
+func (Runner) runInputGuardrails(
 	ctx context.Context,
 	agent *Agent,
 	guardrails []InputGuardrail,
@@ -863,7 +830,7 @@ func (runner) runInputGuardrails(
 	return guardrailResults, nil
 }
 
-func (runner) runOutputGuardrails(
+func (Runner) runOutputGuardrails(
 	ctx context.Context,
 	guardrails []OutputGuardrail,
 	agent *Agent,
@@ -913,7 +880,7 @@ func (runner) runOutputGuardrails(
 	return guardrailResults, nil
 }
 
-func (r runner) getNewResponse(
+func (r Runner) getNewResponse(
 	ctx context.Context,
 	agent *Agent,
 	systemPrompt param.Opt[string],
@@ -953,7 +920,7 @@ func (r runner) getNewResponse(
 	return newResponse, err
 }
 
-func (runner) getHandoffs(agent *Agent) ([]Handoff, error) {
+func (Runner) getHandoffs(agent *Agent) ([]Handoff, error) {
 	handoffs := make([]Handoff, 0, len(agent.Handoffs)+len(agent.AgentHandoffs))
 	for _, h := range agent.Handoffs {
 		handoffs = append(handoffs, h)
@@ -968,11 +935,11 @@ func (runner) getHandoffs(agent *Agent) ([]Handoff, error) {
 	return handoffs, nil
 }
 
-func (runner) getAllTools(agent *Agent) []tools.Tool {
+func (Runner) getAllTools(agent *Agent) []tools.Tool {
 	return agent.GetAllTools()
 }
 
-func (r runner) getModel(agent *Agent, runConfig RunConfig) (Model, error) {
+func (r Runner) getModel(agent *Agent, runConfig RunConfig) (Model, error) {
 	modelProvider := runConfig.ModelProvider
 	if modelProvider == nil {
 		modelProvider = NewMultiProvider(NewMultiProviderParams{})

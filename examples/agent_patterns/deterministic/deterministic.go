@@ -99,10 +99,7 @@ func main() {
 	inputPrompt := string(line)
 
 	// 1. Generate an outline
-	outlineResult, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: StoryOutlineAgent,
-		Input:         agents.InputString(inputPrompt),
-	})
+	outlineResult, err := agents.Runner{}.Run(context.Background(), StoryOutlineAgent, agents.InputString(inputPrompt))
 	if err != nil {
 		panic(err)
 	}
@@ -110,10 +107,7 @@ func main() {
 	fmt.Println("Outline generated")
 
 	// 2. Check the outline
-	outlineCheckerRunResult, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: OutlineCheckerAgent,
-		Input:         agents.InputString(outlineResult.FinalOutput.(string)),
-	})
+	outlineCheckerRunResult, err := agents.Runner{}.Run(context.Background(), OutlineCheckerAgent, agents.InputString(outlineResult.FinalOutput.(string)))
 	if err != nil {
 		panic(err)
 	}
@@ -131,10 +125,7 @@ func main() {
 	fmt.Println("Outline is good quality and a scifi story, so we continue to write the story.")
 
 	// 4. Write the story
-	storyResult, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: StoryAgent,
-		Input:         agents.InputString(outlineResult.FinalOutput.(string)),
-	})
+	storyResult, err := agents.Runner{}.Run(context.Background(), StoryAgent, agents.InputString(outlineResult.FinalOutput.(string)))
 	if err != nil {
 		panic(err)
 	}

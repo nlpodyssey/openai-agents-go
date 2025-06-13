@@ -193,7 +193,7 @@ func TestHandoffsParsedCorrectly(t *testing.T) {
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
 	}
-	runnerHandoffs, err := Runner().getHandoffs(agent3)
+	runnerHandoffs, err := Runner{}.getHandoffs(agent3)
 	require.NoError(t, err)
 	result, err = RunImpl().ProcessModelResponse(
 		agent3,
@@ -229,7 +229,7 @@ func TestMissingHandoffFails(t *testing.T) {
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
 	}
-	runnerHandoffs, err := Runner().getHandoffs(agent3)
+	runnerHandoffs, err := Runner{}.getHandoffs(agent3)
 	require.NoError(t, err)
 	_, err = RunImpl().ProcessModelResponse(
 		agent3,
@@ -257,7 +257,7 @@ func TestMultipleHandoffsDoesntError(t *testing.T) {
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
 	}
-	runnerHandoffs, err := Runner().getHandoffs(agent3)
+	runnerHandoffs, err := Runner{}.getHandoffs(agent3)
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
 		agent3,
@@ -470,7 +470,7 @@ func TestToolAndHandoffParsedCorrectly(t *testing.T) {
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
 	}
-	runnerHandoffs, err := Runner().getHandoffs(agent3)
+	runnerHandoffs, err := Runner{}.getHandoffs(agent3)
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
 		agent3,

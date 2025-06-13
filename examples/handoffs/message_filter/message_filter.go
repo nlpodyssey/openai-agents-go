@@ -83,10 +83,7 @@ var (
 
 func main() {
 	// 1. Send a regular message to the first agent
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: FirstAgent,
-		Input:         agents.InputString("Hi, my name is Sora."),
-	})
+	result, err := agents.Runner{}.Run(context.Background(), FirstAgent, agents.InputString("Hi, my name is Sora."))
 	if err != nil {
 		panic(err)
 	}
@@ -94,9 +91,9 @@ func main() {
 	fmt.Println("Step 1 done")
 
 	// 2. Ask it to generate a number
-	result, err = agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: FirstAgent,
-		Input: agents.InputItems(append(
+	result, err = agents.Runner{}.Run(
+		context.Background(), FirstAgent,
+		agents.InputItems(append(
 			result.ToInputList(),
 			agents.TResponseInputItem{
 				OfMessage: &responses.EasyInputMessageParam{
@@ -108,7 +105,7 @@ func main() {
 				},
 			},
 		)),
-	})
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -116,9 +113,9 @@ func main() {
 	fmt.Println("Step 2 done")
 
 	// 3. Call the second agent
-	result, err = agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: SecondAgent,
-		Input: agents.InputItems(append(
+	result, err = agents.Runner{}.Run(
+		context.Background(), SecondAgent,
+		agents.InputItems(append(
 			result.ToInputList(),
 			agents.TResponseInputItem{
 				OfMessage: &responses.EasyInputMessageParam{
@@ -130,7 +127,7 @@ func main() {
 				},
 			},
 		)),
-	})
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -138,9 +135,9 @@ func main() {
 	fmt.Println("Step 3 done")
 
 	// 4. Cause a handoff to occur
-	result, err = agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: SecondAgent,
-		Input: agents.InputItems(append(
+	result, err = agents.Runner{}.Run(
+		context.Background(), SecondAgent,
+		agents.InputItems(append(
 			result.ToInputList(),
 			agents.TResponseInputItem{
 				OfMessage: &responses.EasyInputMessageParam{
@@ -152,7 +149,7 @@ func main() {
 				},
 			},
 		)),
-	})
+	)
 	if err != nil {
 		panic(err)
 	}

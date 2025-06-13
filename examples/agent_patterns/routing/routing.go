@@ -70,10 +70,9 @@ func main() {
 	}}
 
 	for {
-		result, err := agents.Runner().RunStreamed(context.Background(), agents.RunStreamedParams{
-			StartingAgent: agent,
-			Input:         agents.InputItems(inputs),
-		})
+		result, err := agents.Runner{}.RunStreamed(
+			context.Background(), agent, agents.InputItems(inputs),
+		)
 		if err != nil {
 			panic(err)
 		}

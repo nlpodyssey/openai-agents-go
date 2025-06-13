@@ -50,22 +50,18 @@ var Client = agents.NewOpenaiClient(
 	option.WithAPIKey(APIKey),
 )
 
-/*
-An alternate approach that would also work:
-
-provider := agents.NewOpenAIProvider(agents.OpenAIProviderParams{
-	OpenaiClient: &Client,
-})
-agent := agents.New("Assistant").
-        // ...
-        WithModel("some-custom-model")
-result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-	// ...
-	RunConfig: agents.RunConfig{
-		ModelProvider: provider,
-	},
-})
-*/
+//
+// An alternate approach that would also work:
+//
+// provider := agents.NewOpenAIProvider(agents.OpenAIProviderParams{
+//     OpenaiClient: &Client,
+// })
+// agent := agents.New("Assistant").
+//         // ...
+//         WithModel("some-custom-model")
+// result, err := (agents.Runner{Config: agents.RunConfig{ModelProvider: provider}}).
+//         Run(context.Background(), agent /* ... */)
+//
 
 type GetWeatherArgs struct {
 	City string `json:"city"`
@@ -85,10 +81,7 @@ func main() {
 		WithModelOpt(param.NewOpt(agents.NewAgentModel(agents.NewOpenAIChatCompletionsModel(ModelName, Client)))).
 		WithTools(GetWeatherTool)
 
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("What's the weather in Tokyo?"),
-	})
+	result, err := agents.Runner{}.Run(context.Background(), agent, agents.InputString("What's the weather in Tokyo?"))
 	if err != nil {
 		panic(err)
 	}

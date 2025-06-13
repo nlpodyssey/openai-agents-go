@@ -442,7 +442,7 @@ func getFinalOutputMessage(args string) responses.ResponseOutputItemUnion {
 
 func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepResult {
 	outputSchema := params.agent.OutputSchema
-	handoffs, err := Runner().getHandoffs(params.agent)
+	handoffs, err := Runner{}.getHandoffs(params.agent)
 	require.NoError(t, err)
 
 	processedResponse, err := RunImpl().ProcessModelResponse(

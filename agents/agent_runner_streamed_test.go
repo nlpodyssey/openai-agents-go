@@ -42,10 +42,7 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 		},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("test"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, agents.InputString("test"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -66,12 +63,9 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 		},
 	})
 
-	result, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input: agents.InputItems{
-			agentstesting.GetTextInputItem("message"),
-			agentstesting.GetTextInputItem("another_message"),
-		},
+	result, err = agents.Runner{}.RunStreamed(t.Context(), agent, agents.InputItems{
+		agentstesting.GetTextInputItem("message"),
+		agentstesting.GetTextInputItem("another_message"),
 	})
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -96,10 +90,7 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 		},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("test"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, agents.InputString("test"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -114,10 +105,7 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 		},
 	})
 
-	result, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputItems(result.ToInputList()),
-	})
+	result, err = agents.Runner{}.RunStreamed(t.Context(), agent, agents.InputItems(result.ToInputList()))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -155,10 +143,7 @@ func TestToolCallRunsStreamed(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -209,10 +194,7 @@ func TestHandoffsStreaming(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -262,12 +244,9 @@ func TestStructuredOutputStreamed(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent2,
-		Input: agents.InputItems{
-			agentstesting.GetTextInputItem("user_message"),
-			agentstesting.GetTextInputItem("another_message"),
-		},
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent2, agents.InputItems{
+		agentstesting.GetTextInputItem("user_message"),
+		agentstesting.GetTextInputItem("another_message"),
 	})
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
@@ -309,10 +288,7 @@ func TestHandoffFiltersStreamed(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent2,
-		Input:         agents.InputString("user_message"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent2, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -364,10 +340,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent2,
-		Input:         agents.InputString("user_message"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent2, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	assert.ErrorIs(t, err, inputFilterError)
@@ -418,10 +391,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent2,
-		Input:         agents.InputString("user_message"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent2, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -455,10 +425,7 @@ func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 
@@ -489,10 +456,7 @@ func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-	})
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 
@@ -515,16 +479,12 @@ func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-		RunConfig: agents.RunConfig{
-			InputGuardrails: []agents.InputGuardrail{{
-				Name:              "guardrail_function",
-				GuardrailFunction: guardrailFunction,
-			}},
-		},
-	})
+	result, err := (agents.Runner{Config: agents.RunConfig{
+		InputGuardrails: []agents.InputGuardrail{{
+			Name:              "guardrail_function",
+			GuardrailFunction: guardrailFunction,
+		}},
+	}}).RunStreamed(t.Context(), agent, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 
@@ -551,16 +511,12 @@ func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("user_message"),
-		RunConfig: agents.RunConfig{
-			OutputGuardrails: []agents.OutputGuardrail{{
-				Name:              "guardrail_function",
-				GuardrailFunction: guardrailFunction,
-			}},
-		},
-	})
+	result, err := (agents.Runner{Config: agents.RunConfig{
+		OutputGuardrails: []agents.OutputGuardrail{{
+			Name:              "guardrail_function",
+			GuardrailFunction: guardrailFunction,
+		}},
+	}}).RunStreamed(t.Context(), agent, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 
@@ -609,12 +565,9 @@ func TestStreamingEvents(t *testing.T) {
 	var itemData []agents.RunItem
 	var agentData []agents.AgentUpdatedStreamEvent
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent2,
-		Input: agents.InputItems{
-			agentstesting.GetTextInputItem("user_message"),
-			agentstesting.GetTextInputItem("another_message"),
-		},
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent2, agents.InputItems{
+		agentstesting.GetTextInputItem("user_message"),
+		agentstesting.GetTextInputItem("another_message"),
 	})
 	require.NoError(t, err)
 

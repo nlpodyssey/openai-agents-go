@@ -79,14 +79,9 @@ func main() {
 		WithInstructions("You only respond in haikus.").
 		WithTools(GetWeatherTool)
 
-	// This will use the custom model provider
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("What's the weather in Tokyo?"),
-		RunConfig: agents.RunConfig{
-			ModelProvider: CustomModelProvider,
-		},
-	})
+		// This will use the custom model provider
+	result, err := (agents.Runner{Config: agents.RunConfig{ModelProvider: CustomModelProvider}}).
+		Run(context.Background(), agent, agents.InputString("What's the weather in Tokyo?"))
 	if err != nil {
 		panic(err)
 	}
