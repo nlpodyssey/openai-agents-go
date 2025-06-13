@@ -32,30 +32,28 @@ func main() {
 
 	ctx := context.Background()
 
-	result, err := agents.Runner().Run(ctx, agents.RunParams{
-		StartingAgent: agent,
-		Input: agents.InputItems{
-			{OfMessage: &responses.EasyInputMessageParam{
-				Content: responses.EasyInputMessageContentUnionParam{
-					OfInputItemContentList: responses.ResponseInputMessageContentListParam{{
-						OfInputImage: &responses.ResponseInputImageParam{
-							Detail:   responses.ResponseInputImageDetailAuto,
-							ImageURL: param.NewOpt(URL),
-						},
-					}},
-				},
-				Role: responses.EasyInputMessageRoleUser,
-				Type: responses.EasyInputMessageTypeMessage,
-			}},
-			{OfMessage: &responses.EasyInputMessageParam{
-				Content: responses.EasyInputMessageContentUnionParam{
-					OfString: param.NewOpt("What do you see in this image?"),
-				},
-				Role: responses.EasyInputMessageRoleUser,
-				Type: responses.EasyInputMessageTypeMessage,
-			}},
-		},
-	})
+	result, err := agents.Runner{}.Run(ctx, agent, agents.InputItems{
+		{OfMessage: &responses.EasyInputMessageParam{
+			Content: responses.EasyInputMessageContentUnionParam{
+				OfInputItemContentList: responses.ResponseInputMessageContentListParam{{
+					OfInputImage: &responses.ResponseInputImageParam{
+						Detail:   responses.ResponseInputImageDetailAuto,
+						ImageURL: param.NewOpt(URL),
+					},
+				}},
+			},
+			Role: responses.EasyInputMessageRoleUser,
+			Type: responses.EasyInputMessageTypeMessage,
+		}},
+		{OfMessage: &responses.EasyInputMessageParam{
+			Content: responses.EasyInputMessageContentUnionParam{
+				OfString: param.NewOpt("What do you see in this image?"),
+			},
+			Role: responses.EasyInputMessageRoleUser,
+			Type: responses.EasyInputMessageTypeMessage,
+		}},
+	},
+	)
 
 	if err != nil {
 		panic(err)

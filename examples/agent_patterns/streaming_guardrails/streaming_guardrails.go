@@ -96,10 +96,7 @@ type CheckGuardrailResult struct {
 }
 
 func CheckGuardrail(text string) CheckGuardrailResult {
-	result, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: GuardrailAgent,
-		Input:         agents.InputString(text),
-	})
+	result, err := agents.Runner{}.Run(context.Background(), GuardrailAgent, agents.InputString(text))
 	if err != nil {
 		return CheckGuardrailResult{Error: err}
 	}
@@ -108,10 +105,9 @@ func CheckGuardrail(text string) CheckGuardrailResult {
 
 func main() {
 	question := "What is a black hole, and how does it behave?"
-	result, err := agents.Runner().RunStreamed(context.Background(), agents.RunStreamedParams{
-		StartingAgent: Agent,
-		Input:         agents.InputString(question),
-	})
+	result, err := agents.Runner{}.RunStreamed(
+		context.Background(), Agent, agents.InputString(question),
+	)
 	if err != nil {
 		panic(err)
 	}

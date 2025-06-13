@@ -31,10 +31,11 @@ func TestCancelCleansUpResources(t *testing.T) {
 		Model: param.NewOpt(NewAgentModel(FakeModel{})),
 	}
 
-	result, err := Runner().RunStreamed(t.Context(), RunStreamedParams{
-		StartingAgent: agent,
-		Input:         InputString("Please tell me 5 jokes."),
-	})
+	result, err := Runner{}.RunStreamed(
+		t.Context(),
+		agent,
+		InputString("Please tell me 5 jokes."),
+	)
 	require.NoError(t, err)
 
 	stopErr := errors.New("stop")

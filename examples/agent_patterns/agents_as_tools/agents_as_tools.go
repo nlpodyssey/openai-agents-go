@@ -85,10 +85,7 @@ func main() {
 	}
 	msg := string(line)
 
-	orchestratorResult, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: OrchestratorAgent,
-		Input:         agents.InputString(msg),
-	})
+	orchestratorResult, err := agents.Runner{}.Run(context.Background(), OrchestratorAgent, agents.InputString(msg))
 	if err != nil {
 		panic(err)
 	}
@@ -102,10 +99,7 @@ func main() {
 		}
 	}
 
-	synthesizerResult, err := agents.Runner().Run(context.Background(), agents.RunParams{
-		StartingAgent: SynthesizerAgent,
-		Input:         agents.InputItems(orchestratorResult.ToInputList()),
-	})
+	synthesizerResult, err := agents.Runner{}.Run(context.Background(), SynthesizerAgent, agents.InputItems(orchestratorResult.ToInputList()))
 	if err != nil {
 		panic(err)
 	}

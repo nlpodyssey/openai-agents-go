@@ -93,10 +93,7 @@ func TestNonStreamedAgentHooks(t *testing.T) {
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{agentstesting.GetTextMessage("user_message")},
 	})
-	output, err := agents.Runner().Run(t.Context(), agents.RunParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	output, err := agents.Runner{}.Run(t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{"OnStart": 1, "OnEnd": 1}, hooks.Events, output)
 	hooks.Reset()
@@ -116,10 +113,7 @@ func TestNonStreamedAgentHooks(t *testing.T) {
 			agentstesting.GetTextMessage("done"),
 		}},
 	})
-	_, err = agents.Runner().Run(t.Context(), agents.RunParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	_, err = agents.Runner{}.Run(t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 
 	// Shouldn't have OnEnd because it's not the last agent
@@ -152,10 +146,7 @@ func TestNonStreamedAgentHooks(t *testing.T) {
 			agentstesting.GetTextMessage("done"),
 		}},
 	})
-	_, err = agents.Runner().Run(t.Context(), agents.RunParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	_, err = agents.Runner{}.Run(t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]int{
@@ -193,10 +184,8 @@ func TestStreamedAgentHooks(t *testing.T) {
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{agentstesting.GetTextMessage("user_message")},
 	})
-	output, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	output, err := agents.Runner{}.RunStreamed(
+		t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -218,10 +207,8 @@ func TestStreamedAgentHooks(t *testing.T) {
 			agentstesting.GetTextMessage("done"),
 		}},
 	})
-	output, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	output, err = agents.Runner{}.RunStreamed(
+		t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -256,10 +243,8 @@ func TestStreamedAgentHooks(t *testing.T) {
 			agentstesting.GetTextMessage("done"),
 		}},
 	})
-	output, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	output, err = agents.Runner{}.RunStreamed(
+		t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -332,10 +317,7 @@ func TestStructuredOutputNonStreamedAgentHooks(t *testing.T) {
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{agentstesting.GetFinalOutputMessage(`{"a": "b"}`)},
 	})
-	output, err := agents.Runner().Run(t.Context(), agents.RunParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	output, err := agents.Runner{}.Run(t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{"OnStart": 1, "OnEnd": 1}, hooks.Events, output)
 	hooks.Reset()
@@ -355,10 +337,7 @@ func TestStructuredOutputNonStreamedAgentHooks(t *testing.T) {
 			agentstesting.GetTextMessage("done"),
 		}},
 	})
-	_, err = agents.Runner().Run(t.Context(), agents.RunParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	_, err = agents.Runner{}.Run(t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 
 	// Shouldn't have OnEnd because it's not the last agent
@@ -391,10 +370,7 @@ func TestStructuredOutputNonStreamedAgentHooks(t *testing.T) {
 			agentstesting.GetFinalOutputMessage(`{"a": "b"}`),
 		}},
 	})
-	_, err = agents.Runner().Run(t.Context(), agents.RunParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	_, err = agents.Runner{}.Run(t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]int{
@@ -433,10 +409,8 @@ func TestStructuredOutputStreamedAgentHooks(t *testing.T) {
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{agentstesting.GetFinalOutputMessage(`{"a": "b"}`)},
 	})
-	output, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	output, err := agents.Runner{}.RunStreamed(
+		t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -458,10 +432,8 @@ func TestStructuredOutputStreamedAgentHooks(t *testing.T) {
 			agentstesting.GetTextMessage("done"),
 		}},
 	})
-	output, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	output, err = agents.Runner{}.RunStreamed(
+		t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -496,10 +468,8 @@ func TestStructuredOutputStreamedAgentHooks(t *testing.T) {
 			agentstesting.GetFinalOutputMessage(`{"a": "b"}`),
 		}},
 	})
-	output, err = agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent3,
-		Input:         agents.InputString("user_message"),
-	})
+	output, err = agents.Runner{}.RunStreamed(
+		t.Context(), agent3, agents.InputString("user_message"))
 	require.NoError(t, err)
 	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)

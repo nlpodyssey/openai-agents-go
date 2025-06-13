@@ -27,7 +27,7 @@ func Test_runner_getModel(t *testing.T) {
 			Name:  "test",
 			Model: param.NewOpt(NewAgentModelName("gpt-4o")),
 		}
-		model, err := Runner().getModel(agent, RunConfig{})
+		model, err := Runner{}.getModel(agent, RunConfig{})
 		assert.NoError(t, err)
 		assert.IsType(t, OpenAIResponsesModel{}, model)
 		assert.Equal(t, "gpt-4o", model.(OpenAIResponsesModel).Model)
@@ -38,7 +38,7 @@ func Test_runner_getModel(t *testing.T) {
 			Name:  "test",
 			Model: param.NewOpt(NewAgentModelName("openai/gpt-4o")),
 		}
-		model, err := Runner().getModel(agent, RunConfig{})
+		model, err := Runner{}.getModel(agent, RunConfig{})
 		assert.NoError(t, err)
 		assert.IsType(t, OpenAIResponsesModel{}, model)
 		assert.Equal(t, "gpt-4o", model.(OpenAIResponsesModel).Model)

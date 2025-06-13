@@ -33,10 +33,8 @@ func TestSimpleStreamingWithCancel(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("Please tell me 5 jokes."),
-	})
+	result, err := agents.Runner{}.RunStreamed(
+		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
 	require.NoError(t, err)
 
 	numEvents := 0
@@ -78,10 +76,8 @@ func TestMultipleEventsStreamingWithCancel(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("Please tell me 5 jokes."),
-	})
+	result, err := agents.Runner{}.RunStreamed(
+		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
 	require.NoError(t, err)
 
 	numEvents := 0
@@ -108,10 +104,8 @@ func TestCancelPreventsFurtherEvents(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("Please tell me 5 jokes."),
-	})
+	result, err := agents.Runner{}.RunStreamed(
+		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
 	require.NoError(t, err)
 
 	stopErr := errors.New("stop")
@@ -147,10 +141,8 @@ func TestCancelIsIdempotent(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("Please tell me 5 jokes."),
-	})
+	result, err := agents.Runner{}.RunStreamed(
+		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
 	require.NoError(t, err)
 
 	stopErr := errors.New("stop")
@@ -175,10 +167,8 @@ func TestCancelBeforeStreaming(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	result, err := agents.Runner().RunStreamed(t.Context(), agents.RunStreamedParams{
-		StartingAgent: agent,
-		Input:         agents.InputString("Please tell me 5 jokes."),
-	})
+	result, err := agents.Runner{}.RunStreamed(
+		t.Context(), agent, agents.InputString("Please tell me 5 jokes."))
 	require.NoError(t, err)
 
 	result.Cancel() // Cancel before streaming

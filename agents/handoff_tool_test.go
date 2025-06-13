@@ -32,11 +32,11 @@ func TestSingleHandoffSetup(t *testing.T) {
 		AgentHandoffs: []*Agent{agent1},
 	}
 
-	handoffs, err := Runner().getHandoffs(agent1)
+	handoffs, err := Runner{}.getHandoffs(agent1)
 	require.NoError(t, err)
 	assert.Len(t, handoffs, 0)
 
-	handoffs, err = Runner().getHandoffs(agent2)
+	handoffs, err = Runner{}.getHandoffs(agent2)
 	require.NoError(t, err)
 	require.Len(t, handoffs, 1)
 
@@ -54,7 +54,7 @@ func TestMultipleHandoffsSetup(t *testing.T) {
 		AgentHandoffs: []*Agent{agent1, agent2},
 	}
 
-	handoffs, err := Runner().getHandoffs(agent3)
+	handoffs, err := Runner{}.getHandoffs(agent3)
 	require.NoError(t, err)
 	require.Len(t, handoffs, 2)
 
@@ -85,7 +85,7 @@ func TestCustomHandoffSetup(t *testing.T) {
 		},
 	}
 
-	handoffs, err := Runner().getHandoffs(agent3)
+	handoffs, err := Runner{}.getHandoffs(agent3)
 	require.NoError(t, err)
 	require.Len(t, handoffs, 2)
 
