@@ -397,6 +397,18 @@ func (runImpl) ProcessModelResponse(
 				Type:    "tool_call_item",
 			})
 			toolsUsed = append(toolsUsed, "file_search")
+		case "web_search_call":
+			output := responses.ResponseFunctionWebSearch{
+				ID:     outputUnion.ID,
+				Status: responses.ResponseFunctionWebSearchStatus(outputUnion.Status),
+				Type:   constant.ValueOf[constant.WebSearchCall](),
+			}
+			items = append(items, ToolCallItem{
+				Agent:   agent,
+				RawItem: ResponseFunctionWebSearch(output),
+				Type:    "tool_call_item",
+			})
+			toolsUsed = append(toolsUsed, "web_search")
 		case "reasoning":
 			output := responses.ResponseReasoningItem{
 				ID:               outputUnion.ID,

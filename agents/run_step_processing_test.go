@@ -312,6 +312,42 @@ func TestFileSearchToolCallParsedCorrectly(t *testing.T) {
 	assert.Empty(t, result.Handoffs)
 }
 
+func TestFunctionWebSearchToolCallParsedCorrectly(t *testing.T) {
+	agent := &Agent{Name: "test"}
+	webSearchCall := TResponseOutputItem{ // responses.ResponseFunctionWebSearch
+		ID:     "w1",
+		Status: "completed",
+		Type:   "web_search_call",
+	}
+	response := ModelResponse{
+		Output: []TResponseOutputItem{
+			getTextMessage("hello"),
+			webSearchCall,
+		},
+		Usage:      usage.NewUsage(),
+		ResponseID: "",
+	}
+	result, err := RunImpl().ProcessModelResponse(
+		agent,
+		agent.GetAllTools(),
+		response,
+		nil,
+	)
+	require.NoError(t, err)
+	require.Len(t, result.NewItems, 2)
+
+	item := result.NewItems[1]
+	require.IsType(t, ToolCallItem{}, item)
+	assert.Equal(t, ResponseFunctionWebSearch{
+		ID:     "w1",
+		Status: responses.ResponseFunctionWebSearchStatusCompleted,
+		Type:   constant.ValueOf[constant.WebSearchCall](),
+	}, item.(ToolCallItem).RawItem)
+
+	assert.Empty(t, result.Functions)
+	assert.Empty(t, result.Handoffs)
+}
+
 func TestReasoningItemParsedCorrectly(t *testing.T) {
 	// Verify that a Reasoning output item is converted into a ReasoningItem.
 	agent := &Agent{Name: "test"}

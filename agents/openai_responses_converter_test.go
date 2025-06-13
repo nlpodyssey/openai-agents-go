@@ -171,9 +171,12 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 		IncludeSearchResults: true,
 	}
 
+	// Web search tool with custom params
+	webTool := tools.WebSearch{SearchContextSize: responses.WebSearchToolSearchContextSizeHigh}
+
 	// Wrap our concrete computer in a tools.Computer for conversion.
 	compTool := tools.Computer{Computer: DummyComputer{}}
-	allTools := []tools.Tool{toolFn, fileTool, compTool}
+	allTools := []tools.Tool{toolFn, fileTool, webTool, compTool}
 	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), allTools, nil)
 	require.NoError(t, err)
 	assert.Equal(t, &agents.ConvertedTools{
@@ -192,6 +195,13 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 					VectorStoreIDs: []string{"vs1"},
 					MaxNumResults:  param.NewOpt[int64](3),
 					Type:           constant.ValueOf[constant.FileSearch](),
+				},
+			},
+			{
+				OfWebSearchPreview: &responses.WebSearchToolParam{
+					Type:              responses.WebSearchToolTypeWebSearchPreview,
+					UserLocation:      responses.WebSearchToolUserLocationParam{},
+					SearchContextSize: responses.WebSearchToolSearchContextSizeHigh,
 				},
 			},
 			{
