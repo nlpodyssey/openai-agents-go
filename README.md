@@ -169,6 +169,10 @@ The Agents SDK is designed to be highly flexible, allowing you to model a wide
 range of LLM workflows including deterministic flows, iterative loops, and more.
 See examples in [`examples/agent_patterns`](examples/agent_patterns).
 
+### Authors
+
+This project is currently being developed by [Matteo Grella](https://github.com/matteo-grella) and [Marco Nicola](https://github.com/marco-nicola) as an early-stage port of [OpenAI's Agents SDK](https://openai.github.io/openai-agents-python/), aimed at supporting its initial adoption by Go developers and offering something potentially useful to the OpenAI team.
+
 ## Acknowledgments
 
 We would like to thank the OpenAI team for creating the original [OpenAI Agents Python SDK](https://openai.github.io/openai-agents-python/) and the [official OpenAI Go client library](https://github.com/openai/openai-go), which serve as the foundation for this Go implementation.
