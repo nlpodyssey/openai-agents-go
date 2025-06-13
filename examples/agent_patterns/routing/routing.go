@@ -70,7 +70,7 @@ func main() {
 	}}
 
 	for {
-		result, err := agents.Runner{}.RunStreamed(
+		result, err := agents.RunStreamed(
 			context.Background(), agent, agents.InputItems(inputs),
 		)
 		if err != nil {

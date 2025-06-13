@@ -112,7 +112,7 @@ func main() {
 	var latestOutline *string
 
 	for {
-		storyOutlineResult, err := agents.Runner{}.Run(context.Background(), StoryOutlineGenerator, agents.InputItems(inputItems))
+		storyOutlineResult, err := agents.Run(context.Background(), StoryOutlineGenerator, agents.InputItems(inputItems))
 		if err != nil {
 			panic(err)
 		}
@@ -123,7 +123,7 @@ func main() {
 
 		fmt.Println("Story outline generated")
 
-		evaluatorResult, err := agents.Runner{}.Run(context.Background(), Evaluator, agents.InputItems(inputItems))
+		evaluatorResult, err := agents.Run(context.Background(), Evaluator, agents.InputItems(inputItems))
 		if err != nil {
 			panic(err)
 		}

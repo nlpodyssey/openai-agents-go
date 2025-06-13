@@ -130,7 +130,7 @@ func main() {
 
 	// First, let's try with a strict output type. This should raise an exception.
 	agent.OutputSchema = OutputTypeSchema{isStrictJSONSchema: true}
-	_, err := agents.Runner{}.Run(ctx, agent, agents.InputString(input))
+	_, err := agents.Run(ctx, agent, agents.InputString(input))
 	if err == nil {
 		panic("Should have raised an exception")
 	}
@@ -140,7 +140,7 @@ func main() {
 	// In some cases, it will raise an error - the schema isn't strict, so the model may
 	// produce an invalid JSON object.
 	agent.OutputSchema = OutputTypeSchema{isStrictJSONSchema: false}
-	result, err := agents.Runner{}.Run(ctx, agent, agents.InputString(input))
+	result, err := agents.Run(ctx, agent, agents.InputString(input))
 	if err != nil {
 		fmt.Printf("Error (expected occasionally, try again and you might get a good result): %s\n", err)
 	} else {
@@ -149,7 +149,7 @@ func main() {
 
 	// Finally, let's try a custom output type.
 	agent.OutputSchema = CustomOutputSchema{}
-	result, err = agents.Runner{}.Run(ctx, agent, agents.InputString(input))
+	result, err = agents.Run(ctx, agent, agents.InputString(input))
 	if err != nil {
 		fmt.Printf("Error (expected occasionally, try again and you might get a good result): %s\n", err)
 	} else {

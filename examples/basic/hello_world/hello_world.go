@@ -28,7 +28,7 @@ func main() {
 
 	ctx := context.Background()
 
-	result, err := agents.Runner{}.Run(ctx, agent, agents.InputString("Tell me about recursion in programming."))
+	result, err := agents.Run(ctx, agent, agents.InputString("Tell me about recursion in programming."))
 
 	if err != nil {
 		panic(err)

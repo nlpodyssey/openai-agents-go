@@ -164,7 +164,7 @@ func main() {
 
 	ctx := context.Background()
 
-	_, err = agents.Runner{}.Run(
+	_, err = agents.Run(
 		ctx, StartAgent,
 		agents.InputString(
 			fmt.Sprintf("Generate a random number between 0 and %s.", userInput),

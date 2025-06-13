@@ -32,14 +32,18 @@ import (
 	"github.com/openai/openai-go/packages/param"
 )
 
+const DefaultMaxTurns = 10
+
+// DefaultRunner is the default Runner instance used by package-level Run
+// helpers.
+var DefaultRunner = Runner{}
+
 // Runner executes agents using the configured RunConfig.
 //
 // The zero value is valid.
 type Runner struct {
 	Config RunConfig
 }
-
-const DefaultMaxTurns = 10
 
 // RunConfig configures settings for the entire agent run.
 type RunConfig struct {
@@ -76,6 +80,17 @@ type RunConfig struct {
 	// Optional ID of the previous response, if using OpenAI models via the Responses API,
 	// this allows you to skip passing in input from the previous turn.
 	PreviousResponseID string
+}
+
+// Run executes startingAgent with the provided input using the DefaultRunner.
+func Run(ctx context.Context, startingAgent *Agent, input Input) (*RunResult, error) {
+	return DefaultRunner.Run(ctx, startingAgent, input)
+}
+
+// RunStreamed executes startingAgent with the provided input using the
+// DefaultRunner and returns a streaming result.
+func RunStreamed(ctx context.Context, startingAgent *Agent, input Input) (*RunResultStreaming, error) {
+	return DefaultRunner.RunStreamed(ctx, startingAgent, input)
 }
 
 // Run a workflow starting at the given agent. The agent will run in a loop until a final
