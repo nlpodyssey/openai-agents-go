@@ -43,7 +43,7 @@ func TestSimpleFirstRun(t *testing.T) {
 		},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("test"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "test")
 	require.NoError(t, err)
 	assert.Equal(t, agents.InputString("test"), result.Input)
 	assert.Len(t, result.NewItems, 1)
@@ -62,7 +62,7 @@ func TestSimpleFirstRun(t *testing.T) {
 		},
 	})
 
-	result, err = agents.Runner{}.Run(t.Context(), agent, agents.InputItems{
+	result, err = agents.Runner{}.RunResponseInputs(t.Context(), agent, []agents.TResponseInputItem{
 		agentstesting.GetTextInputItem("message"),
 		agentstesting.GetTextInputItem("another_message"),
 	})
@@ -85,7 +85,7 @@ func TestSubsequentRuns(t *testing.T) {
 		},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("test"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "test")
 	require.NoError(t, err)
 	assert.Equal(t, agents.InputString("test"), result.Input)
 	assert.Len(t, result.NewItems, 1)
@@ -97,7 +97,7 @@ func TestSubsequentRuns(t *testing.T) {
 		},
 	})
 
-	result, err = agents.Runner{}.Run(t.Context(), agent, agents.InputItems(result.ToInputList()))
+	result, err = agents.Runner{}.RunResponseInputs(t.Context(), agent, result.ToInputList())
 	require.NoError(t, err)
 	assert.Len(t, result.Input.(agents.InputItems), 2)
 	assert.Len(t, result.NewItems, 1)
@@ -132,7 +132,7 @@ func TestToolCallRuns(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("user_message"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 	assert.Equal(t, "done", result.FinalOutput)
 
@@ -180,7 +180,7 @@ func TestHandoffs(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent3, agents.InputString("user_message"))
+	result, err := agents.Runner{}.Run(t.Context(), agent3, "user_message")
 	require.NoError(t, err)
 	assert.Equal(t, "done", result.FinalOutput)
 
@@ -259,7 +259,7 @@ func TestStructuredOutput(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent2, agents.InputItems{
+	result, err := agents.Runner{}.RunResponseInputs(t.Context(), agent2, []agents.TResponseInputItem{
 		agentstesting.GetTextInputItem("user_message"),
 		agentstesting.GetTextInputItem("another_message"),
 	})
@@ -308,7 +308,7 @@ func TestHandoffFilters(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent2, agents.InputString("user_message"))
+	result, err := agents.Runner{}.Run(t.Context(), agent2, "user_message")
 
 	require.NoError(t, err)
 	assert.Equal(t, "last", result.FinalOutput)
@@ -358,7 +358,7 @@ func TestInputFilterError(t *testing.T) {
 		}},
 	})
 
-	_, err := agents.Runner{}.Run(t.Context(), agent2, agents.InputString("user_message"))
+	_, err := agents.Runner{}.Run(t.Context(), agent2, "user_message")
 	assert.ErrorIs(t, err, inputFilterError)
 }
 
@@ -407,7 +407,7 @@ func TestHandoffOnInput(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent2, agents.InputString("user_message"))
+	result, err := agents.Runner{}.Run(t.Context(), agent2, "user_message")
 	assert.NoError(t, err)
 	assert.Equal(t, "last", result.FinalOutput)
 	assert.Equal(t, "test_input", callOutput)
@@ -448,7 +448,7 @@ func TestHandoffOnInputError(t *testing.T) {
 		}},
 	})
 
-	_, err := agents.Runner{}.Run(t.Context(), agent2, agents.InputString("user_message"))
+	_, err := agents.Runner{}.Run(t.Context(), agent2, "user_message")
 	assert.Error(t, err, onInputError)
 }
 
@@ -494,7 +494,7 @@ func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	_, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("user_message"))
+	_, err := agents.Runner{}.Run(t.Context(), agent, "user_message")
 	var target agents.InputGuardrailTripwireTriggeredError
 	assert.ErrorAs(t, err, &target)
 }
@@ -522,7 +522,7 @@ func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
-	_, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("user_message"))
+	_, err := agents.Runner{}.Run(t.Context(), agent, "user_message")
 	var target agents.OutputGuardrailTripwireTriggeredError
 	assert.ErrorAs(t, err, &target)
 }
@@ -582,7 +582,7 @@ func TestToolUseBehaviorFirstOutput(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("user_message"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 	assert.Equal(t, AgentRunnerTestFoo{Bar: "tool_one_result"}, result.FinalOutput)
 }
@@ -624,7 +624,7 @@ func TestToolUseBehaviorCustomFunction(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("user_message"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 	assert.Len(t, result.RawResponses, 2)
 	assert.Equal(t, "the_final_output", result.FinalOutput)
@@ -651,7 +651,7 @@ func TestModelSettingsOverride(t *testing.T) {
 		ModelSettings: modelsettings.ModelSettings{
 			Temperature: param.NewOpt(0.5),
 		},
-	}}).Run(t.Context(), agent, agents.InputString("user_message"))
+	}}).Run(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 
 	// Temperature is overridden by Runner.run, but MaxTokens is not
@@ -674,7 +674,7 @@ func TestPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 
 	assert.Equal(t, "", model.LastTurnArgs.PreviousResponseID)
 	_, _ = (agents.Runner{Config: agents.RunConfig{PreviousResponseID: "resp-non-streamed-test"}}).
-		Run(t.Context(), agent, agents.InputString("test"))
+		Run(t.Context(), agent, "test")
 	assert.Equal(t, "resp-non-streamed-test", model.LastTurnArgs.PreviousResponseID)
 }
 
@@ -704,7 +704,7 @@ func TestMultiTurnPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 
 	assert.Equal(t, "", model.LastTurnArgs.PreviousResponseID)
 	_, _ = (agents.Runner{Config: agents.RunConfig{PreviousResponseID: "resp-test-123"}}).
-		Run(t.Context(), agent, agents.InputString("test"))
+		Run(t.Context(), agent, "test")
 	assert.Equal(t, "resp-test-123", model.LastTurnArgs.PreviousResponseID)
 }
 
@@ -724,7 +724,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamed(t *testing.T) {
 	assert.Equal(t, "", model.LastTurnArgs.PreviousResponseID)
 
 	result, err := (agents.Runner{Config: agents.RunConfig{PreviousResponseID: "resp-stream-test"}}).
-		RunStreamed(t.Context(), agent, agents.InputString("test"))
+		RunStreamed(t.Context(), agent, "test")
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -759,7 +759,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamedMultiTurn(t *testing.T) {
 	assert.Equal(t, "", model.LastTurnArgs.PreviousResponseID)
 
 	result, err := (agents.Runner{Config: agents.RunConfig{PreviousResponseID: "resp-stream-test"}}).
-		RunStreamed(t.Context(), agent, agents.InputString("test"))
+		RunStreamed(t.Context(), agent, "test")
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)

@@ -41,7 +41,7 @@ func main() {
 				Truncation: param.NewOpt(modelsettings.TruncationAuto),
 			})
 
-		result, err := agents.Run(context.Background(), agent, agents.InputString("Search for SF sports news and summarize."))
+		result, err := agents.Run(context.Background(), agent, "Search for SF sports news and summarize.")
 		if err != nil {
 			return err
 		}

@@ -36,7 +36,7 @@ func TestPrettyResult(t *testing.T) {
 		Name:  "test_agent",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("Hello"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "Hello")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -64,7 +64,7 @@ func TestPrettyRunResultStreaming(t *testing.T) {
 	}
 
 	result, err := agents.Runner{}.RunStreamed(
-		t.Context(), agent, agents.InputString("Hello"))
+		t.Context(), agent, "Hello")
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -128,7 +128,7 @@ func TestPrettyRunResultStructuredOutput(t *testing.T) {
 		Model:        param.NewOpt(agents.NewAgentModel(model)),
 		OutputSchema: PrettyPrintTestFooSchema{},
 	}
-	result, err := agents.Runner{}.Run(t.Context(), agent, agents.InputString("Hello"))
+	result, err := agents.Runner{}.Run(t.Context(), agent, "Hello")
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -160,7 +160,7 @@ func TestPrettyRunResultStreamingStructuredOutput(t *testing.T) {
 	}
 
 	result, err := agents.Runner{}.RunStreamed(
-		t.Context(), agent, agents.InputString("Hello"))
+		t.Context(), agent, "Hello")
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)

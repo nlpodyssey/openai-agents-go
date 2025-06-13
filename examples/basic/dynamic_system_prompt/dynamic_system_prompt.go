@@ -64,7 +64,7 @@ func main() {
 
 	ctx := context.WithValue(context.Background(), customContextKey{}, customContext)
 
-	result, err := agents.Run(ctx, Agent, agents.InputString(userMessage))
+	result, err := agents.Run(ctx, Agent, userMessage)
 	if err != nil {
 		panic(err)
 	}

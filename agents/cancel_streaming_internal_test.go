@@ -34,7 +34,7 @@ func TestCancelCleansUpResources(t *testing.T) {
 	result, err := Runner{}.RunStreamed(
 		t.Context(),
 		agent,
-		InputString("Please tell me 5 jokes."),
+		"Please tell me 5 jokes.",
 	)
 	require.NoError(t, err)
 

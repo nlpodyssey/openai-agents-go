@@ -61,7 +61,7 @@ func main() {
 	for i := range N {
 		go func() {
 			defer wg.Done()
-			runResults[i], runErrors[i] = agents.Run(context.Background(), SpanishAgent, agents.InputString(msg))
+			runResults[i], runErrors[i] = agents.Run(context.Background(), SpanishAgent, msg)
 		}()
 	}
 
@@ -78,7 +78,7 @@ func main() {
 	translations := strings.Join(outputs[:], "\n\n")
 	fmt.Printf("\n\nTranslations:\n\n%s\n", translations)
 
-	bestTranslation, err := agents.Run(context.Background(), TranslationPicker, agents.InputString(fmt.Sprintf("Input: %s\n\nTranslations:\n%s", msg, translations)))
+	bestTranslation, err := agents.Run(context.Background(), TranslationPicker, fmt.Sprintf("Input: %s\n\nTranslations:\n%s", msg, translations))
 	if err != nil {
 		panic(err)
 	}

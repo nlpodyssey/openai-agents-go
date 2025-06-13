@@ -81,7 +81,7 @@ func main() {
 
 		// This will use the custom model provider
 	result, err := (agents.Runner{Config: agents.RunConfig{ModelProvider: CustomModelProvider}}).
-		Run(context.Background(), agent, agents.InputString("What's the weather in Tokyo?"))
+		Run(context.Background(), agent, "What's the weather in Tokyo?")
 	if err != nil {
 		panic(err)
 	}
