@@ -15,10 +15,6 @@
 package agents
 
 import (
-	"context"
-	"errors"
-
-	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/responses"
 )
 
@@ -32,12 +28,4 @@ func (t ImageGenerationTool) ToolName() string {
 	return "image_generation"
 }
 
-func (t ImageGenerationTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
-	return &responses.ToolUnionParam{
-		OfImageGeneration: &t.ToolConfig,
-	}, nil, nil
-}
-
-func (t ImageGenerationTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("ImageGenerationTool.ConvertToChatCompletions not implemented")
-}
+func (t ImageGenerationTool) isTool() {}

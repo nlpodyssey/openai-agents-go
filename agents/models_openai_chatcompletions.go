@@ -184,7 +184,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 
 	var convertedTools []openai.ChatCompletionToolParam
 	for _, tool := range tools {
-		v, err := tool.ConvertToChatCompletions(ctx)
+		v, err := ChatCmplConverter().ToolToOpenai(tool)
 		if err != nil {
 			return nil, nil, err
 		}

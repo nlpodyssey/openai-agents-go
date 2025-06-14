@@ -492,6 +492,27 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 	return result, nil
 }
 
+func (chatCmplConverter) ToolToOpenai(tool Tool) (*openai.ChatCompletionToolParam, error) {
+	functionTool, ok := tool.(FunctionTool)
+	if !ok {
+		return nil, UserErrorf("hosted tools are not supported with the ChatCompletions API. Got tool %#v", tool)
+	}
+
+	description := param.Null[string]()
+	if functionTool.Description != "" {
+		description = param.NewOpt(functionTool.Description)
+	}
+
+	return &openai.ChatCompletionToolParam{
+		Function: openai.FunctionDefinitionParam{
+			Name:        functionTool.Name,
+			Description: description,
+			Parameters:  functionTool.ParamsJSONSchema,
+		},
+		Type: constant.ValueOf[constant.Function](),
+	}, nil
+}
+
 func (chatCmplConverter) ConvertHandoffTool(handoff Handoff) openai.ChatCompletionToolParam {
 	description := param.Null[string]()
 	if handoff.ToolDescription != "" {

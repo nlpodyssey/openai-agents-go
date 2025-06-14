@@ -15,10 +15,6 @@
 package agents
 
 import (
-	"context"
-	"errors"
-
-	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/responses"
 )
 
@@ -36,16 +32,4 @@ func (t WebSearchTool) ToolName() string {
 	return "web_search_preview"
 }
 
-func (t WebSearchTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
-	return &responses.ToolUnionParam{
-		OfWebSearchPreview: &responses.WebSearchToolParam{
-			Type:              responses.WebSearchToolTypeWebSearchPreview,
-			UserLocation:      t.UserLocation,
-			SearchContextSize: t.SearchContextSize,
-		},
-	}, nil, nil
-}
-
-func (t WebSearchTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("WebSearchTool.ConvertToChatCompletions not implemented")
-}
+func (t WebSearchTool) isTool() {}

@@ -21,10 +21,7 @@ import (
 	"reflect"
 
 	"github.com/invopop/jsonschema"
-	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared/constant"
 )
 
 // FunctionTool is a Tool that wraps a function.
@@ -65,32 +62,7 @@ func (t FunctionTool) ToolName() string {
 	return t.Name
 }
 
-func (t FunctionTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
-	return &responses.ToolUnionParam{
-		OfFunction: &responses.FunctionToolParam{
-			Name:        t.Name,
-			Parameters:  t.ParamsJSONSchema,
-			Strict:      param.NewOpt(t.StrictJSONSchema.Or(true)),
-			Description: param.NewOpt(t.Description),
-			Type:        constant.ValueOf[constant.Function](),
-		},
-	}, nil, nil
-}
-
-func (t FunctionTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	description := param.Null[string]()
-	if t.Description != "" {
-		description = param.NewOpt(t.Description)
-	}
-	return &openai.ChatCompletionToolParam{
-		Function: openai.FunctionDefinitionParam{
-			Name:        t.Name,
-			Description: description,
-			Parameters:  t.ParamsJSONSchema,
-		},
-		Type: constant.ValueOf[constant.Function](),
-	}, nil
-}
+func (t FunctionTool) isTool() {}
 
 type FunctionToolEnabler interface {
 	IsEnabled(ctx context.Context, agent *Agent) (bool, error)

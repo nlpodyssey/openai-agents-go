@@ -278,7 +278,7 @@ func (conv responsesConverter) ConvertTools(ctx context.Context, ts []Tool, hand
 	}
 
 	for _, tool := range ts {
-		convertedTool, include, err := tool.ConvertToResponses(ctx)
+		convertedTool, include, err := conv.convertTool(ctx, tool)
 		if err != nil {
 			return nil, err
 		}
@@ -296,6 +296,93 @@ func (conv responsesConverter) ConvertTools(ctx context.Context, ts []Tool, hand
 		Tools:    convertedTools,
 		Includes: includes,
 	}, nil
+}
+
+// convertTool returns converted tool and includes.
+func (conv responsesConverter) convertTool(
+	ctx context.Context,
+	tool Tool,
+) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+	var convertedTool *responses.ToolUnionParam
+	var includes *responses.ResponseIncludable
+
+	switch t := tool.(type) {
+	case FunctionTool:
+		convertedTool = &responses.ToolUnionParam{
+			OfFunction: &responses.FunctionToolParam{
+				Name:        t.Name,
+				Parameters:  t.ParamsJSONSchema,
+				Strict:      param.NewOpt(t.StrictJSONSchema.Or(true)),
+				Description: param.NewOpt(t.Description),
+				Type:        constant.ValueOf[constant.Function](),
+			},
+		}
+		includes = nil
+	case WebSearchTool:
+		convertedTool = &responses.ToolUnionParam{
+			OfWebSearchPreview: &responses.WebSearchToolParam{
+				Type:              responses.WebSearchToolTypeWebSearchPreview,
+				UserLocation:      t.UserLocation,
+				SearchContextSize: t.SearchContextSize,
+			},
+		}
+		includes = nil
+	case FileSearchTool:
+		convertedTool = &responses.ToolUnionParam{
+			OfFileSearch: &responses.FileSearchToolParam{
+				VectorStoreIDs: t.VectorStoreIDs,
+				MaxNumResults:  t.MaxNumResults,
+				Filters:        t.Filters,
+				RankingOptions: t.RankingOptions,
+				Type:           constant.ValueOf[constant.FileSearch](),
+			},
+		}
+		if t.IncludeSearchResults {
+			includes = new(responses.ResponseIncludable)
+			*includes = responses.ResponseIncludableFileSearchCallResults
+		}
+	case ComputerTool:
+		environment, err := t.Computer.Environment(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		dimensions, err := t.Computer.Dimensions(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		convertedTool = &responses.ToolUnionParam{
+			OfComputerUsePreview: &responses.ComputerToolParam{
+				DisplayHeight: dimensions.Height,
+				DisplayWidth:  dimensions.Width,
+				Environment:   responses.ComputerToolEnvironment(environment),
+				Type:          constant.ValueOf[constant.ComputerUsePreview](),
+			},
+		}
+		includes = nil
+	case ImageGenerationTool:
+		convertedTool = &responses.ToolUnionParam{
+			OfImageGeneration: &t.ToolConfig,
+		}
+		includes = nil
+	case CodeInterpreterTool:
+		convertedTool = &responses.ToolUnionParam{
+			OfCodeInterpreter: &t.ToolConfig,
+		}
+		includes = nil
+	case LocalShellTool:
+		convertedTool = &responses.ToolUnionParam{
+			OfLocalShell: &responses.ToolLocalShellParam{
+				Type: constant.ValueOf[constant.LocalShell](),
+			},
+		}
+		includes = nil
+	default:
+		return nil, nil, UserErrorf("Unknown tool type: %T", tool)
+	}
+
+	return convertedTool, includes, nil
 }
 
 func (responsesConverter) convertHandoffTool(handoff Handoff) responses.ToolUnionParam {

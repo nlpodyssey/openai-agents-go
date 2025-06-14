@@ -44,7 +44,7 @@ func TestToOpenaiWithFunctionTool(t *testing.T) {
 		},
 	}
 
-	result, err := tool.ConvertToChatCompletions(t.Context())
+	result, err := agents.ChatCmplConverter().ToolToOpenai(tool)
 	require.NoError(t, err)
 	assert.Equal(t, &openai.ChatCompletionToolParam{
 		Function: openai.FunctionDefinitionParam{

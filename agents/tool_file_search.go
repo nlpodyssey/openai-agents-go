@@ -15,13 +15,8 @@
 package agents
 
 import (
-	"context"
-	"errors"
-
-	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared/constant"
 )
 
 // FileSearchTool is a hosted tool that lets the LLM search through a vector store.
@@ -47,26 +42,4 @@ func (t FileSearchTool) ToolName() string {
 	return "file_search"
 }
 
-func (t FileSearchTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
-	convertedTool := &responses.ToolUnionParam{
-		OfFileSearch: &responses.FileSearchToolParam{
-			VectorStoreIDs: t.VectorStoreIDs,
-			MaxNumResults:  t.MaxNumResults,
-			Filters:        t.Filters,
-			RankingOptions: t.RankingOptions,
-			Type:           constant.ValueOf[constant.FileSearch](),
-		},
-	}
-
-	var includes *responses.ResponseIncludable
-	if t.IncludeSearchResults {
-		includes = new(responses.ResponseIncludable)
-		*includes = responses.ResponseIncludableFileSearchCallResults
-	}
-
-	return convertedTool, includes, nil
-}
-
-func (t FileSearchTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("FileSearchTool.ConvertToChatCompletions not implemented")
-}
+func (t FileSearchTool) isTool() {}

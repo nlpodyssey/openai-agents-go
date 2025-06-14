@@ -14,30 +14,9 @@
 
 package agents
 
-import (
-	"context"
-
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/responses"
-)
-
 // A Tool that can be used in an Agent.
 type Tool interface {
 	// ToolName returns the name of the tool.
 	ToolName() string
-
-	// ConvertToResponses converts a Tool to an OpenAI Responses API object,
-	// optionally providing the name of an additional output data to include
-	// in the model response.
-	//
-	// If you don't plan to use Responses API, this function can panic or
-	// always return an error (preferred).
-	ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error)
-
-	// ConvertToChatCompletions converts a Tool to an OpenAI Chat Completions
-	// API object.
-	//
-	// If you don't plan to use Chat Completions API, this function can panic or
-	// always return an error (preferred).
-	ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error)
+	isTool()
 }
