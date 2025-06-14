@@ -53,6 +53,12 @@ type Function struct {
 	// We **strongly** recommend setting this to True, as it increases the likelihood of correct JSON input.
 	// Defaults to true if omitted.
 	StrictJSONSchema param.Opt[bool]
+
+	// Optional flag reporting whether the tool is enabled.
+	// It can be either a boolean or a function which allows you to dynamically
+	// enable/disable a tool based on your context/state.
+	// Default value, if omitted: true.
+	IsEnabled FunctionToolEnabler
 }
 
 func (f Function) ToolName() string {
@@ -84,6 +90,42 @@ func (f Function) ConvertToChatCompletions(context.Context) (*openai.ChatComplet
 		},
 		Type: constant.ValueOf[constant.Function](),
 	}, nil
+}
+
+type FunctionToolEnabler interface {
+	IsEnabled(ctx context.Context) (bool, error)
+	// TODO: should also have Agent param, but for now it would imply a circular package dependency
+}
+
+// FunctionToolEnabledFlag is a static FunctionToolEnabler which always returns the configured flag value.
+type FunctionToolEnabledFlag struct {
+	isEnabled bool
+}
+
+func (f FunctionToolEnabledFlag) IsEnabled(context.Context) (bool, error) {
+	return f.isEnabled, nil
+}
+
+// NewFunctionToolEnabledFlag returns a FunctionToolEnabledFlag which always returns the configured flag value.
+func NewFunctionToolEnabledFlag(isEnabled bool) FunctionToolEnabledFlag {
+	return FunctionToolEnabledFlag{isEnabled: isEnabled}
+}
+
+// FunctionToolEnabled returns a static FunctionToolEnabler which always returns true.
+func FunctionToolEnabled() FunctionToolEnabler {
+	return NewFunctionToolEnabledFlag(true)
+}
+
+// FunctionToolDisabled returns a static FunctionToolEnabler which always returns false.
+func FunctionToolDisabled() FunctionToolEnabler {
+	return NewFunctionToolEnabledFlag(false)
+}
+
+// FunctionToolEnablerFunc can wrap a function to implement FunctionToolEnabler interface.
+type FunctionToolEnablerFunc func(ctx context.Context) (bool, error)
+
+func (f FunctionToolEnablerFunc) IsEnabled(ctx context.Context) (bool, error) {
+	return f(ctx)
 }
 
 // NewFunctionTool creates a Function tool with automatic JSON schema generation.

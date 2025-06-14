@@ -178,7 +178,11 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*Ru
 
 	for {
 		if shouldGetAgentTools {
-			allTools = r.getAllTools(currentAgent)
+			var err error
+			allTools, err = r.getAllTools(childCtx, currentAgent)
+			if err != nil {
+				return nil, err
+			}
 			shouldGetAgentTools = false
 		}
 
@@ -449,7 +453,10 @@ func (r Runner) runStreamedImpl(
 		}
 
 		if shouldGetAgentTools {
-			allTools = r.getAllTools(currentAgent)
+			allTools, err = r.getAllTools(ctx, currentAgent)
+			if err != nil {
+				return err
+			}
 			shouldGetAgentTools = false
 		}
 
@@ -981,8 +988,8 @@ func (Runner) getHandoffs(agent *Agent) ([]Handoff, error) {
 	return handoffs, nil
 }
 
-func (Runner) getAllTools(agent *Agent) []tools.Tool {
-	return agent.GetAllTools()
+func (Runner) getAllTools(ctx context.Context, agent *Agent) ([]tools.Tool, error) {
+	return agent.GetAllTools(ctx)
 }
 
 func (r Runner) getModel(agent *Agent, runConfig RunConfig) (Model, error) {

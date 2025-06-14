@@ -445,9 +445,12 @@ func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepRes
 	handoffs, err := Runner{}.getHandoffs(params.agent)
 	require.NoError(t, err)
 
+	allTools, err := params.agent.GetAllTools(t.Context())
+	require.NoError(t, err)
+
 	processedResponse, err := RunImpl().ProcessModelResponse(
 		params.agent,
-		params.agent.GetAllTools(),
+		allTools,
 		params.response,
 		handoffs,
 	)

@@ -16,7 +16,9 @@ package agents
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/tools"
@@ -183,6 +185,44 @@ func (a *Agent) GetSystemPrompt(ctx context.Context) (param.Opt[string], error) 
 
 // GetAllTools returns all agent tools.
 // It only includes function tools, since other types are omitted, as we don't need them.
-func (a *Agent) GetAllTools() []tools.Tool {
-	return a.Tools
+func (a *Agent) GetAllTools(ctx context.Context) ([]tools.Tool, error) {
+	isEnabledResults := make([]bool, len(a.Tools))
+	isEnabledErrors := make([]error, len(a.Tools))
+
+	childCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	wg.Add(len(a.Tools))
+
+	for i, tool := range a.Tools {
+		go func() {
+			defer wg.Done()
+
+			functionTool, ok := tool.(tools.Function)
+			if !ok || functionTool.IsEnabled == nil {
+				isEnabledResults[i] = true
+				return
+			}
+
+			isEnabledResults[i], isEnabledErrors[i] = functionTool.IsEnabled.IsEnabled(childCtx)
+			if isEnabledErrors[i] != nil {
+				cancel()
+			}
+		}()
+	}
+
+	wg.Wait()
+	if err := errors.Join(isEnabledErrors...); err != nil {
+		return nil, err
+	}
+
+	var enabledTools []tools.Tool
+	for i, tool := range a.Tools {
+		if isEnabledResults[i] {
+			enabledTools = append(enabledTools, tool)
+		}
+	}
+
+	return enabledTools, nil
 }
