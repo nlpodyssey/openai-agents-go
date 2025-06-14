@@ -27,8 +27,8 @@ import (
 	"github.com/openai/openai-go/shared/constant"
 )
 
-// Function Tool that wraps a function.
-type Function struct {
+// FunctionTool is a Tool that wraps a function.
+type FunctionTool struct {
 	// The name of the tool, as shown to the LLM. Generally the name of the function.
 	Name string
 
@@ -61,32 +61,32 @@ type Function struct {
 	IsEnabled FunctionToolEnabler
 }
 
-func (f Function) ToolName() string {
-	return f.Name
+func (t FunctionTool) ToolName() string {
+	return t.Name
 }
 
-func (f Function) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+func (t FunctionTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
 	return &responses.ToolUnionParam{
 		OfFunction: &responses.FunctionToolParam{
-			Name:        f.Name,
-			Parameters:  f.ParamsJSONSchema,
-			Strict:      param.NewOpt(f.StrictJSONSchema.Or(true)),
-			Description: param.NewOpt(f.Description),
+			Name:        t.Name,
+			Parameters:  t.ParamsJSONSchema,
+			Strict:      param.NewOpt(t.StrictJSONSchema.Or(true)),
+			Description: param.NewOpt(t.Description),
 			Type:        constant.ValueOf[constant.Function](),
 		},
 	}, nil, nil
 }
 
-func (f Function) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
+func (t FunctionTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
 	description := param.Null[string]()
-	if f.Description != "" {
-		description = param.NewOpt(f.Description)
+	if t.Description != "" {
+		description = param.NewOpt(t.Description)
 	}
 	return &openai.ChatCompletionToolParam{
 		Function: openai.FunctionDefinitionParam{
-			Name:        f.Name,
+			Name:        t.Name,
 			Description: description,
-			Parameters:  f.ParamsJSONSchema,
+			Parameters:  t.ParamsJSONSchema,
 		},
 		Type: constant.ValueOf[constant.Function](),
 	}, nil
@@ -128,7 +128,7 @@ func (f FunctionToolEnablerFunc) IsEnabled(ctx context.Context) (bool, error) {
 	return f(ctx)
 }
 
-// NewFunctionTool creates a Function tool with automatic JSON schema generation.
+// NewFunctionTool creates a FunctionTool tool with automatic JSON schema generation.
 //
 // This helper function simplifies tool creation by automatically generating the
 // JSON schema from the Go types T (input arguments).
@@ -171,8 +171,8 @@ func (f FunctionToolEnablerFunc) IsEnabled(ctx context.Context) (bool, error) {
 //	// Create tool with auto-generated schema
 //	tool := NewFunctionTool("get_weather", "Get current weather", getWeather)
 //
-// For more control over the schema, create a Function manually instead.
-func NewFunctionTool[T, R any](name string, description string, handler func(ctx context.Context, args T) (R, error)) Function {
+// For more control over the schema, create a FunctionTool manually instead.
+func NewFunctionTool[T, R any](name string, description string, handler func(ctx context.Context, args T) (R, error)) FunctionTool {
 	reflector := &jsonschema.Reflector{
 		ExpandedStruct:             true,
 		RequiredFromJSONSchemaTags: false,
@@ -205,7 +205,7 @@ func NewFunctionTool[T, R any](name string, description string, handler func(ctx
 		schemaMap["description"] = description
 	}
 
-	return Function{
+	return FunctionTool{
 		Name:             name,
 		ParamsJSONSchema: schemaMap,
 		StrictJSONSchema: param.NewOpt(true),

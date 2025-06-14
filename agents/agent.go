@@ -137,7 +137,7 @@ func (a *Agent) AsTool(params AgentAsToolParams) tools.Tool {
 		name = transforms.TransformStringFunctionStyle(a.Name)
 	}
 
-	return tools.Function{
+	return tools.FunctionTool{
 		Name:             name,
 		Description:      params.ToolDescription,
 		ParamsJSONSchema: a.agentAsToolParamsJSONSchema(name + "_args"),
@@ -199,7 +199,7 @@ func (a *Agent) GetAllTools(ctx context.Context) ([]tools.Tool, error) {
 		go func() {
 			defer wg.Done()
 
-			functionTool, ok := tool.(tools.Function)
+			functionTool, ok := tool.(tools.FunctionTool)
 			if !ok || functionTool.IsEnabled == nil {
 				isEnabledResults[i] = true
 				return

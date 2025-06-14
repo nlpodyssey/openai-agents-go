@@ -12,8 +12,8 @@ import (
 
 var testingAgent = agents.New("Agent1").
 	WithTools(
-		tools.Function{Name: "Tool1"},
-		tools.Function{Name: "Tool2"},
+		tools.FunctionTool{Name: "Tool1"},
+		tools.FunctionTool{Name: "Tool2"},
 	).
 	WithAgentHandoffs(
 		agents.New("Handoff1"),

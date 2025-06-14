@@ -155,7 +155,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	// a matching list of tool params and the expected includes.
 
 	// Simple function tool
-	toolFn := tools.Function{
+	toolFn := tools.FunctionTool{
 		Name:             "fn",
 		Description:      "...",
 		ParamsJSONSchema: map[string]any{"title": "Fn"},
