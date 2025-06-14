@@ -527,7 +527,7 @@ func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 	assert.ErrorAs(t, err, &target)
 }
 
-var TestToolOne = tools.Function{
+var TestToolOne = tools.FunctionTool{
 	Name:        "test_tool_one",
 	Description: "",
 	ParamsJSONSchema: map[string]any{
@@ -543,7 +543,7 @@ var TestToolOne = tools.Function{
 	StrictJSONSchema: param.NewOpt(true),
 }
 
-var TestToolTwo = tools.Function{
+var TestToolTwo = tools.FunctionTool{
 	Name:        "test_tool_two",
 	Description: "",
 	ParamsJSONSchema: map[string]any{

@@ -25,7 +25,7 @@ import (
 
 func TestAgentBuilder_Chaining(t *testing.T) {
 	instr := "hello"
-	tool := tools.Function{Name: "t"}
+	tool := tools.FunctionTool{Name: "t"}
 
 	agent := New("agent").
 		WithInstructions(instr).
@@ -38,7 +38,7 @@ func TestAgentBuilder_Chaining(t *testing.T) {
 	assert.Equal(t, InstructionsStr(instr), agent.Instructions)
 	assert.Equal(t, "desc", agent.HandoffDescription)
 	assert.Len(t, agent.Tools, 2)
-	assert.Equal(t, "t", agent.Tools[0].(tools.Function).Name)
+	assert.Equal(t, "t", agent.Tools[0].(tools.FunctionTool).Name)
 	assert.Equal(t, param.NewOpt(NewAgentModelName("model")), agent.Model)
 }
 

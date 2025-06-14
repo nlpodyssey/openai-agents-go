@@ -89,7 +89,7 @@ type ToolRunHandoff struct {
 
 type ToolRunFunction struct {
 	ToolCall     ResponseFunctionToolCall
-	FunctionTool tools.Function
+	FunctionTool tools.FunctionTool
 }
 
 type ToolRunComputerAction struct {
@@ -355,11 +355,11 @@ func (runImpl) ProcessModelResponse(
 		handoffMap[handoff.ToolName] = handoff
 	}
 
-	functionMap := make(map[string]tools.Function)
+	functionMap := make(map[string]tools.FunctionTool)
 
 	for _, tool := range allTools {
 		switch t := tool.(type) {
-		case tools.Function:
+		case tools.FunctionTool:
 			functionMap[t.Name] = t
 		case tools.ComputerTool:
 			computerTool = &t
@@ -548,7 +548,7 @@ func (runImpl) ProcessModelResponse(
 
 type FunctionToolResult struct {
 	// The tool that was run.
-	Tool tools.Function
+	Tool tools.FunctionTool
 
 	// The output of the tool.
 	Output any
@@ -565,7 +565,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 ) ([]FunctionToolResult, error) {
 	runSingleTool := func(
 		ctx context.Context,
-		funcTool tools.Function,
+		funcTool tools.FunctionTool,
 		toolCall ResponseFunctionToolCall,
 	) (any, error) {
 		var (

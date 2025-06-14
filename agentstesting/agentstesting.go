@@ -49,8 +49,8 @@ func GetTextMessage(content string) responses.ResponseOutputItemUnion {
 	}
 }
 
-func GetFunctionTool(name string, returnValue string) tools.Function {
-	return tools.Function{
+func GetFunctionTool(name string, returnValue string) tools.FunctionTool {
+	return tools.FunctionTool{
 		Name: name,
 		ParamsJSONSchema: map[string]any{
 			"title":                name + "_args",

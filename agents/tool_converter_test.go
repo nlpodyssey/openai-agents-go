@@ -28,7 +28,7 @@ import (
 )
 
 func TestToOpenaiWithFunctionTool(t *testing.T) {
-	tool := tools.Function{
+	tool := tools.FunctionTool{
 		Name:        "some_function",
 		Description: "Function description.",
 		ParamsJSONSchema: map[string]any{

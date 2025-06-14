@@ -29,8 +29,8 @@ import (
 func getFunctionTool(
 	name string,
 	returnValue string,
-) tools.Function {
-	return tools.Function{
+) tools.FunctionTool {
+	return tools.FunctionTool{
 		Name: name,
 		ParamsJSONSchema: map[string]any{
 			"title":                name + "_args",
