@@ -15,13 +15,7 @@
 package agents
 
 import (
-	"context"
-	"errors"
-
 	"github.com/nlpodyssey/openai-agents-go/computer"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared/constant"
 )
 
 // ComputerTool is a hosted tool that lets the LLM control a computer.
@@ -36,27 +30,4 @@ func (t ComputerTool) ToolName() string {
 	return "computer_use_preview"
 }
 
-func (t ComputerTool) ConvertToResponses(ctx context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
-	environment, err := t.Computer.Environment(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	dimensions, err := t.Computer.Dimensions(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return &responses.ToolUnionParam{
-		OfComputerUsePreview: &responses.ComputerToolParam{
-			DisplayHeight: dimensions.Height,
-			DisplayWidth:  dimensions.Width,
-			Environment:   responses.ComputerToolEnvironment(environment),
-			Type:          constant.ValueOf[constant.ComputerUsePreview](),
-		},
-	}, nil, nil
-}
-
-func (t ComputerTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("ComputerTool.ConvertToChatCompletions not implemented")
-}
+func (t ComputerTool) isTool() {}

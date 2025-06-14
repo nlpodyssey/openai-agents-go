@@ -15,10 +15,6 @@
 package agents
 
 import (
-	"context"
-	"errors"
-
-	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/responses"
 )
 
@@ -32,12 +28,4 @@ func (t CodeInterpreterTool) ToolName() string {
 	return "code_interpreter"
 }
 
-func (t CodeInterpreterTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
-	return &responses.ToolUnionParam{
-		OfCodeInterpreter: &t.ToolConfig,
-	}, nil, nil
-}
-
-func (t CodeInterpreterTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("CodeInterpreterTool.ConvertToChatCompletions not implemented")
-}
+func (t CodeInterpreterTool) isTool() {}

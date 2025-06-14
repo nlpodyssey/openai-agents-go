@@ -16,11 +16,8 @@ package agents
 
 import (
 	"context"
-	"errors"
 
-	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared/constant"
 )
 
 // LocalShellCommandRequest is a request to execute a command on a shell.
@@ -42,14 +39,4 @@ func (t LocalShellTool) ToolName() string {
 	return "local_shell"
 }
 
-func (t LocalShellTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
-	return &responses.ToolUnionParam{
-		OfLocalShell: &responses.ToolLocalShellParam{
-			Type: constant.ValueOf[constant.LocalShell](),
-		},
-	}, nil, nil
-}
-
-func (t LocalShellTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("LocalShellTool.ConvertToChatCompletions not implemented")
-}
+func (t LocalShellTool) isTool() {}
