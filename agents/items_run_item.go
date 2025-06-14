@@ -130,6 +130,10 @@ type ResponseFunctionWebSearch responses.ResponseFunctionWebSearch
 
 func (ResponseFunctionWebSearch) isToolCallItemType() {}
 
+type ResponseCodeInterpreterToolCall responses.ResponseCodeInterpreterToolCall
+
+func (ResponseCodeInterpreterToolCall) isToolCallItemType() {}
+
 func TResponseInputItemFromToolCallItemType(input ToolCallItemType) TResponseInputItem {
 	switch v := input.(type) {
 	case ResponseFunctionToolCall:
