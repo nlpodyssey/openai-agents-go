@@ -26,7 +26,7 @@ import (
 func main() {
 	agent := agents.New("File searcher").
 		WithInstructions("You are a helpful agent.").
-		WithTools(tools.FileSearch{
+		WithTools(tools.FileSearchTool{
 			VectorStoreIDs:       []string{"vs_67bf88953f748191be42b462090e53e7"},
 			MaxNumResults:        param.NewOpt[int64](3),
 			IncludeSearchResults: true,

@@ -24,9 +24,9 @@ import (
 	"github.com/openai/openai-go/shared/constant"
 )
 
-// FileSearch is a hosted tool that lets the LLM search through a vector store.
+// FileSearchTool is a hosted tool that lets the LLM search through a vector store.
 // Currently only supported with OpenAI models, using the Responses API.
-type FileSearch struct {
+type FileSearchTool struct {
 	// The IDs of the vector stores to search.
 	VectorStoreIDs []string
 
@@ -43,23 +43,23 @@ type FileSearch struct {
 	Filters responses.FileSearchToolFiltersUnionParam
 }
 
-func (fs FileSearch) ToolName() string {
+func (t FileSearchTool) ToolName() string {
 	return "file_search"
 }
 
-func (fs FileSearch) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+func (t FileSearchTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
 	convertedTool := &responses.ToolUnionParam{
 		OfFileSearch: &responses.FileSearchToolParam{
-			VectorStoreIDs: fs.VectorStoreIDs,
-			MaxNumResults:  fs.MaxNumResults,
-			Filters:        fs.Filters,
-			RankingOptions: fs.RankingOptions,
+			VectorStoreIDs: t.VectorStoreIDs,
+			MaxNumResults:  t.MaxNumResults,
+			Filters:        t.Filters,
+			RankingOptions: t.RankingOptions,
 			Type:           constant.ValueOf[constant.FileSearch](),
 		},
 	}
 
 	var includes *responses.ResponseIncludable
-	if fs.IncludeSearchResults {
+	if t.IncludeSearchResults {
 		includes = new(responses.ResponseIncludable)
 		*includes = responses.ResponseIncludableFileSearchCallResults
 	}
@@ -67,6 +67,6 @@ func (fs FileSearch) ConvertToResponses(context.Context) (*responses.ToolUnionPa
 	return convertedTool, includes, nil
 }
 
-func (fs FileSearch) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("FileSearch.ConvertToChatCompletions not implemented")
+func (t FileSearchTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
+	return nil, errors.New("FileSearchTool.ConvertToChatCompletions not implemented")
 }

@@ -165,7 +165,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	}
 
 	// File search tool with IncludeSearchResults set
-	fileTool := tools.FileSearch{
+	fileTool := tools.FileSearchTool{
 		MaxNumResults:        param.NewOpt[int64](3),
 		VectorStoreIDs:       []string{"vs1"},
 		IncludeSearchResults: true,
