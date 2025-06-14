@@ -32,17 +32,17 @@ type LocalShellCommandRequest struct {
 // LocalShellExecutor is a function that executes a command on a shell.
 type LocalShellExecutor = func(context.Context, LocalShellCommandRequest) (string, error)
 
-// LocalShell is a tool that allows the LLM to execute commands on a shell.
-type LocalShell struct {
+// LocalShellTool is a tool that allows the LLM to execute commands on a shell.
+type LocalShellTool struct {
 	// A function that executes a command on a shell.
 	Executor LocalShellExecutor
 }
 
-func (s LocalShell) ToolName() string {
+func (t LocalShellTool) ToolName() string {
 	return "local_shell"
 }
 
-func (s LocalShell) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+func (t LocalShellTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
 	return &responses.ToolUnionParam{
 		OfLocalShell: &responses.ToolLocalShellParam{
 			Type: constant.ValueOf[constant.LocalShell](),
@@ -50,6 +50,6 @@ func (s LocalShell) ConvertToResponses(context.Context) (*responses.ToolUnionPar
 	}, nil, nil
 }
 
-func (s LocalShell) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("LocalShell.ConvertToChatCompletions not implemented")
+func (t LocalShellTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
+	return nil, errors.New("LocalShellTool.ConvertToChatCompletions not implemented")
 }

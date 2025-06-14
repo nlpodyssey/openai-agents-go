@@ -99,7 +99,7 @@ type ToolRunComputerAction struct {
 
 type ToolRunLocalShellCall struct {
 	ToolCall       responses.ResponseOutputItemLocalShellCall
-	LocalShellTool tools.LocalShell
+	LocalShellTool tools.LocalShellTool
 }
 
 type ProcessedResponse struct {
@@ -346,7 +346,7 @@ func (runImpl) ProcessModelResponse(
 		computerActions []ToolRunComputerAction
 		localShellCalls []ToolRunLocalShellCall
 		computerTool    *tools.ComputerTool
-		localShellTool  *tools.LocalShell
+		localShellTool  *tools.LocalShellTool
 		toolsUsed       []string
 	)
 
@@ -363,7 +363,7 @@ func (runImpl) ProcessModelResponse(
 			functionMap[t.Name] = t
 		case tools.ComputerTool:
 			computerTool = &t
-		case tools.LocalShell:
+		case tools.LocalShellTool:
 			localShellTool = &t
 		}
 	}
