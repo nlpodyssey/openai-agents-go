@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/nlpodyssey/openai-agents-go/agents"
 	. "github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
@@ -246,4 +247,51 @@ func TestNewFunctionTool_EmptyStructArgs(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "ok", result.(string))
 	})
+}
+
+func TestFunctionTool_IsEnabled(t *testing.T) {
+	type BoolCtx struct {
+		EnableTools bool
+	}
+
+	type boolCtxKey struct{}
+
+	disabledTool := NewFunctionTool("disabled_tool", "", func(context.Context, struct{}) (string, error) {
+		return "nope", nil
+	})
+	disabledTool.IsEnabled = FunctionToolDisabled()
+
+	anotherTool := NewFunctionTool("another_tool", "", func(context.Context, struct{}) (string, error) {
+		return "hi", nil
+	})
+	anotherTool.IsEnabled = FunctionToolEnablerFunc(func(ctx context.Context) (bool, error) {
+		return ctx.Value(boolCtxKey{}).(*BoolCtx).EnableTools, nil
+	})
+
+	thirdTool := Function{
+		Name:             "third_tool",
+		Description:      "third tool",
+		ParamsJSONSchema: nil,
+		OnInvokeTool: func(context.Context, string) (any, error) {
+			return "third", nil
+		},
+		IsEnabled: FunctionToolEnablerFunc(func(ctx context.Context) (bool, error) {
+			return ctx.Value(boolCtxKey{}).(*BoolCtx).EnableTools, nil
+		}),
+	}
+
+	agent := agents.New("t").WithTools(disabledTool, anotherTool, thirdTool)
+
+	ctx1 := context.WithValue(t.Context(), boolCtxKey{}, &BoolCtx{EnableTools: false})
+	ctx2 := context.WithValue(t.Context(), boolCtxKey{}, &BoolCtx{EnableTools: true})
+
+	toolsWithCtx, err := agent.GetAllTools(ctx1)
+	require.NoError(t, err)
+	assert.Empty(t, toolsWithCtx)
+
+	toolsWithCtx, err = agent.GetAllTools(ctx2)
+	require.NoError(t, err)
+	assert.Len(t, toolsWithCtx, 2)
+	assert.Equal(t, "another_tool", toolsWithCtx[0].ToolName())
+	assert.Equal(t, "third_tool", toolsWithCtx[1].ToolName())
 }
