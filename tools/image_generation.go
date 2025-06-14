@@ -22,22 +22,22 @@ import (
 	"github.com/openai/openai-go/responses"
 )
 
-// ImageGeneration is a tool that allows the LLM to generate images.
-type ImageGeneration struct {
+// ImageGenerationTool is a tool that allows the LLM to generate images.
+type ImageGenerationTool struct {
 	// The tool config, which image generation settings.
 	ToolConfig responses.ToolImageGenerationParam
 }
 
-func (fs ImageGeneration) ToolName() string {
+func (t ImageGenerationTool) ToolName() string {
 	return "image_generation"
 }
 
-func (fs ImageGeneration) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+func (t ImageGenerationTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
 	return &responses.ToolUnionParam{
-		OfImageGeneration: &fs.ToolConfig,
+		OfImageGeneration: &t.ToolConfig,
 	}, nil, nil
 }
 
-func (fs ImageGeneration) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("ImageGeneration.ConvertToChatCompletions not implemented")
+func (t ImageGenerationTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
+	return nil, errors.New("ImageGenerationTool.ConvertToChatCompletions not implemented")
 }
