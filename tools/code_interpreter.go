@@ -22,22 +22,22 @@ import (
 	"github.com/openai/openai-go/responses"
 )
 
-// CodeInterpreter is a tool that allows the LLM to execute code in a sandboxed environment.
-type CodeInterpreter struct {
+// CodeInterpreterTool is a tool that allows the LLM to execute code in a sandboxed environment.
+type CodeInterpreterTool struct {
 	// The tool config, which includes the container and other settings.
 	ToolConfig responses.ToolCodeInterpreterParam
 }
 
-func (fs CodeInterpreter) ToolName() string {
+func (t CodeInterpreterTool) ToolName() string {
 	return "code_interpreter"
 }
 
-func (fs CodeInterpreter) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+func (t CodeInterpreterTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
 	return &responses.ToolUnionParam{
-		OfCodeInterpreter: &fs.ToolConfig,
+		OfCodeInterpreter: &t.ToolConfig,
 	}, nil, nil
 }
 
-func (fs CodeInterpreter) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("CodeInterpreter.ConvertToChatCompletions not implemented")
+func (t CodeInterpreterTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
+	return nil, errors.New("CodeInterpreterTool.ConvertToChatCompletions not implemented")
 }
