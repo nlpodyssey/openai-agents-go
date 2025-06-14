@@ -18,7 +18,7 @@ import (
 func main() {
 	agent := agents.New("Image generator").
 		WithInstructions("You are a helpful agent.").
-		WithTools(tools.ImageGeneration{
+		WithTools(tools.ImageGenerationTool{
 			ToolConfig: responses.ToolImageGenerationParam{
 				Quality: "low",
 				Type:    constant.ValueOf[constant.ImageGeneration](),
