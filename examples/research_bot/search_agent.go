@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 )
 
 const SearchAgentInstructions = "You are a research assistant. Given a search term, you search the web for that term and " +
@@ -15,7 +14,7 @@ const SearchAgentInstructions = "You are a research assistant. Given a search te
 
 var SearchAgent = agents.New("Search agent").
 	WithInstructions(SearchAgentInstructions).
-	WithTools(tools.WebSearchTool{}).
+	WithTools(agents.WebSearchTool{}).
 	WithModel("gpt-4o").
 	WithModelSettings(modelsettings.ModelSettings{
 		ToolChoice: "required",

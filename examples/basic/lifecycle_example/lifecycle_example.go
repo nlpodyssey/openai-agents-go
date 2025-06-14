@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 )
 
@@ -58,7 +57,7 @@ func (e *ExampleHooks) OnAgentEnd(ctx context.Context, agent *agents.Agent, outp
 	return nil
 }
 
-func (e *ExampleHooks) OnToolStart(ctx context.Context, _ *agents.Agent, tool tools.Tool) error {
+func (e *ExampleHooks) OnToolStart(ctx context.Context, _ *agents.Agent, tool agents.Tool) error {
 	e.eventCounter += 1
 	u, _ := usage.FromContext(ctx)
 	fmt.Printf(
@@ -68,7 +67,7 @@ func (e *ExampleHooks) OnToolStart(ctx context.Context, _ *agents.Agent, tool to
 	return nil
 }
 
-func (e *ExampleHooks) OnToolEnd(ctx context.Context, _ *agents.Agent, tool tools.Tool, result any) error {
+func (e *ExampleHooks) OnToolEnd(ctx context.Context, _ *agents.Agent, tool agents.Tool, result any) error {
 	e.eventCounter += 1
 	u, _ := usage.FromContext(ctx)
 	fmt.Printf(
@@ -142,9 +141,9 @@ func (f FinalResultOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 var (
 	Hooks = &ExampleHooks{}
 
-	RandomNumberTool = tools.NewFunctionTool("random_number", "Generate a random number up to the provided max.", RandomNumber)
+	RandomNumberTool = agents.NewFunctionTool("random_number", "Generate a random number up to the provided max.", RandomNumber)
 
-	MultiplyByTwoTool = tools.NewFunctionTool("multiply_by_two", "Return x times two.", MultiplyByTwo)
+	MultiplyByTwoTool = agents.NewFunctionTool("multiply_by_two", "Return x times two.", MultiplyByTwo)
 
 	MultiplyAgent = agents.New("Multiply Agent").
 			WithInstructions("Multiply the number by 2 and then return the final result.").

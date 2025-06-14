@@ -16,7 +16,6 @@ package agents
 
 import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -88,13 +87,13 @@ func (a *Agent) WithModelSettings(settings modelsettings.ModelSettings) *Agent {
 }
 
 // WithTools sets the list of tools available to the agent.
-func (a *Agent) WithTools(t ...tools.Tool) *Agent {
-	a.Tools = append([]tools.Tool{}, t...)
+func (a *Agent) WithTools(t ...Tool) *Agent {
+	a.Tools = append([]Tool{}, t...)
 	return a
 }
 
 // AddTool appends a tool to the agent's tool list.
-func (a *Agent) AddTool(t tools.Tool) *Agent {
+func (a *Agent) AddTool(t Tool) *Agent {
 	a.Tools = append(a.Tools, t)
 	return a
 }

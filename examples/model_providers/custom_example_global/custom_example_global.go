@@ -20,7 +20,6 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -64,7 +63,7 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (string, error) {
 	return fmt.Sprintf("The weather in %s is sunny.", args.City), nil
 }
 
-var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
+var GetWeatherTool = agents.NewFunctionTool("get_weather", "", GetWeather)
 
 func main() {
 	agent := agents.New("Assistant").

@@ -6,14 +6,13 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/visualization"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/stretchr/testify/assert"
 )
 
 var testingAgent = agents.New("Agent1").
 	WithTools(
-		tools.FunctionTool{Name: "Tool1"},
-		tools.FunctionTool{Name: "Tool2"},
+		agents.FunctionTool{Name: "Tool1"},
+		agents.FunctionTool{Name: "Tool2"},
 	).
 	WithAgentHandoffs(
 		agents.New("Handoff1"),

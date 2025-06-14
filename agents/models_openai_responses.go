@@ -22,7 +22,6 @@ import (
 	"reflect"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -140,7 +139,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
-	tools []tools.Tool,
+	tools []Tool,
 	outputSchema AgentOutputSchemaInterface,
 	handoffs []Handoff,
 	previousResponseID string,
@@ -264,13 +263,13 @@ func (responsesConverter) GetResponseFormat(
 	}
 }
 
-func (conv responsesConverter) ConvertTools(ctx context.Context, ts []tools.Tool, handoffs []Handoff) (*ConvertedTools, error) {
+func (conv responsesConverter) ConvertTools(ctx context.Context, ts []Tool, handoffs []Handoff) (*ConvertedTools, error) {
 	var convertedTools []responses.ToolUnionParam
 	var includes []responses.ResponseIncludable
 
-	var computerTools []tools.ComputerTool
+	var computerTools []ComputerTool
 	for _, tool := range ts {
-		if ct, ok := tool.(tools.ComputerTool); ok {
+		if ct, ok := tool.(ComputerTool); ok {
 			computerTools = append(computerTools, ct)
 		}
 	}

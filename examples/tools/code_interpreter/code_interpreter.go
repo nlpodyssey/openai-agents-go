@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
 )
@@ -28,7 +27,7 @@ func main() {
 	agent := agents.New("Code interpreter").
 		WithInstructions("You love doing math.").
 		WithTools(
-			tools.CodeInterpreterTool{
+			agents.CodeInterpreterTool{
 				ToolConfig: responses.ToolCodeInterpreterParam{
 					Container: responses.ToolCodeInterpreterContainerUnionParam{
 						OfCodeInterpreterContainerAuto: &responses.ToolCodeInterpreterContainerCodeInterpreterContainerAutoParam{

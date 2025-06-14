@@ -21,7 +21,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/computer"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -155,7 +154,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	// a matching list of tool params and the expected includes.
 
 	// Simple function tool
-	toolFn := tools.FunctionTool{
+	toolFn := agents.FunctionTool{
 		Name:             "fn",
 		Description:      "...",
 		ParamsJSONSchema: map[string]any{"title": "Fn"},
@@ -165,18 +164,18 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	}
 
 	// File search tool with IncludeSearchResults set
-	fileTool := tools.FileSearchTool{
+	fileTool := agents.FileSearchTool{
 		MaxNumResults:        param.NewOpt[int64](3),
 		VectorStoreIDs:       []string{"vs1"},
 		IncludeSearchResults: true,
 	}
 
 	// Web search tool with custom params
-	webTool := tools.WebSearchTool{SearchContextSize: responses.WebSearchToolSearchContextSizeHigh}
+	webTool := agents.WebSearchTool{SearchContextSize: responses.WebSearchToolSearchContextSizeHigh}
 
 	// Wrap our concrete computer in a tools.ComputerTool for conversion.
-	compTool := tools.ComputerTool{Computer: DummyComputer{}}
-	allTools := []tools.Tool{toolFn, fileTool, webTool, compTool}
+	compTool := agents.ComputerTool{Computer: DummyComputer{}}
+	allTools := []agents.Tool{toolFn, fileTool, webTool, compTool}
 	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), allTools, nil)
 	require.NoError(t, err)
 	assert.Equal(t, &agents.ConvertedTools{
@@ -221,7 +220,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	}, converted)
 
 	t.Run("only one computer tool should be allowed", func(t *testing.T) {
-		_, err = agents.ResponsesConverter().ConvertTools(t.Context(), []tools.Tool{compTool, compTool}, nil)
+		_, err = agents.ResponsesConverter().ConvertTools(t.Context(), []agents.Tool{compTool, compTool}, nil)
 		var target agents.UserError
 		assert.ErrorAs(t, err, &target)
 	})
