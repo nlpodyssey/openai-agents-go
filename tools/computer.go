@@ -24,25 +24,25 @@ import (
 	"github.com/openai/openai-go/shared/constant"
 )
 
-// Computer is a hosted tool that lets the LLM control a computer.
-type Computer struct {
+// ComputerTool is a hosted tool that lets the LLM control a computer.
+type ComputerTool struct {
 	// The Computer implementation, which describes the environment and
 	// dimensions of the computer, as well as implements the computer actions
 	// like click, screenshot, etc.
 	Computer computer.Computer
 }
 
-func (c Computer) ToolName() string {
+func (t ComputerTool) ToolName() string {
 	return "computer_use_preview"
 }
 
-func (c Computer) ConvertToResponses(ctx context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
-	environment, err := c.Computer.Environment(ctx)
+func (t ComputerTool) ConvertToResponses(ctx context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+	environment, err := t.Computer.Environment(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	dimensions, err := c.Computer.Dimensions(ctx)
+	dimensions, err := t.Computer.Dimensions(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -57,6 +57,6 @@ func (c Computer) ConvertToResponses(ctx context.Context) (*responses.ToolUnionP
 	}, nil, nil
 }
 
-func (c Computer) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("Computer.ConvertToChatCompletions not implemented")
+func (t ComputerTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
+	return nil, errors.New("ComputerTool.ConvertToChatCompletions not implemented")
 }

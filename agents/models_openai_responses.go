@@ -268,9 +268,9 @@ func (conv responsesConverter) ConvertTools(ctx context.Context, ts []tools.Tool
 	var convertedTools []responses.ToolUnionParam
 	var includes []responses.ResponseIncludable
 
-	var computerTools []tools.Computer
+	var computerTools []tools.ComputerTool
 	for _, tool := range ts {
-		if ct, ok := tool.(tools.Computer); ok {
+		if ct, ok := tool.(tools.ComputerTool); ok {
 			computerTools = append(computerTools, ct)
 		}
 	}

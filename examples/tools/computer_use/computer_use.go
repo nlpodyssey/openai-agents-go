@@ -34,7 +34,7 @@ func main() {
 	err := WithLocalPlaywrightComputer(func(comp *LocalPlaywrightComputer) error {
 		agent := agents.New("Browser user").
 			WithInstructions("You are a helpful agent.").
-			WithTools(tools.Computer{Computer: comp}).
+			WithTools(tools.ComputerTool{Computer: comp}).
 			// Use the computer using model, and set truncation to auto because its required
 			WithModel("computer-use-preview").
 			WithModelSettings(modelsettings.ModelSettings{
