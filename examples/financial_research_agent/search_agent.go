@@ -16,7 +16,7 @@ const SearchInstructions = "You are a research assistant specializing in financi
 
 var SearchAgent = agents.New("FinancialSearchAgent").
 	WithInstructions(SearchInstructions).
-	WithTools(tools.WebSearch{}).
+	WithTools(tools.WebSearchTool{}).
 	WithModelSettings(modelsettings.ModelSettings{
 		ToolChoice: "required",
 	}).
