@@ -94,7 +94,7 @@ type ToolRunFunction struct {
 
 type ToolRunComputerAction struct {
 	ToolCall     responses.ResponseComputerToolCall
-	ComputerTool tools.Computer
+	ComputerTool tools.ComputerTool
 }
 
 type ToolRunLocalShellCall struct {
@@ -345,7 +345,7 @@ func (runImpl) ProcessModelResponse(
 		functions       []ToolRunFunction
 		computerActions []ToolRunComputerAction
 		localShellCalls []ToolRunLocalShellCall
-		computerTool    *tools.Computer
+		computerTool    *tools.ComputerTool
 		localShellTool  *tools.LocalShell
 		toolsUsed       []string
 	)
@@ -361,7 +361,7 @@ func (runImpl) ProcessModelResponse(
 		switch t := tool.(type) {
 		case tools.Function:
 			functionMap[t.Name] = t
-		case tools.Computer:
+		case tools.ComputerTool:
 			computerTool = &t
 		case tools.LocalShell:
 			localShellTool = &t

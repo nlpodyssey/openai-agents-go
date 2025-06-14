@@ -174,8 +174,8 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	// Web search tool with custom params
 	webTool := tools.WebSearch{SearchContextSize: responses.WebSearchToolSearchContextSizeHigh}
 
-	// Wrap our concrete computer in a tools.Computer for conversion.
-	compTool := tools.Computer{Computer: DummyComputer{}}
+	// Wrap our concrete computer in a tools.ComputerTool for conversion.
+	compTool := tools.ComputerTool{Computer: DummyComputer{}}
 	allTools := []tools.Tool{toolFn, fileTool, webTool, compTool}
 	converted, err := agents.ResponsesConverter().ConvertTools(t.Context(), allTools, nil)
 	require.NoError(t, err)
