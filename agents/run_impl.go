@@ -444,6 +444,19 @@ func (runImpl) ProcessModelResponse(
 				ToolCall:     output,
 				ComputerTool: *computerTool,
 			})
+		case "image_generation_call":
+			output := responses.ResponseOutputItemImageGenerationCall{
+				ID:     outputUnion.ID,
+				Result: outputUnion.Result,
+				Status: outputUnion.Status,
+				Type:   constant.ValueOf[constant.ImageGenerationCall](),
+			}
+			items = append(items, ToolCallItem{
+				Agent:   agent,
+				RawItem: ResponseOutputItemImageGenerationCall(output),
+				Type:    "tool_call_item",
+			})
+			toolsUsed = append(toolsUsed, "image_generation")
 		case "code_interpreter_call":
 			output := responses.ResponseCodeInterpreterToolCall{
 				ID:          outputUnion.ID,
