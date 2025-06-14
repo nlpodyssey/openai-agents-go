@@ -444,6 +444,21 @@ func (runImpl) ProcessModelResponse(
 				ToolCall:     output,
 				ComputerTool: *computerTool,
 			})
+		case "code_interpreter_call":
+			output := responses.ResponseCodeInterpreterToolCall{
+				ID:          outputUnion.ID,
+				Code:        outputUnion.Code,
+				Results:     outputUnion.Results.OfResponseCodeInterpreterToolCallResults,
+				Status:      responses.ResponseCodeInterpreterToolCallStatus(outputUnion.Status),
+				Type:        constant.ValueOf[constant.CodeInterpreterCall](),
+				ContainerID: outputUnion.ContainerID,
+			}
+			items = append(items, ToolCallItem{
+				Agent:   agent,
+				RawItem: ResponseCodeInterpreterToolCall(output),
+				Type:    "tool_call_item",
+			})
+			toolsUsed = append(toolsUsed, "code_interpreter")
 		case "local_shell_call":
 			output := responses.ResponseOutputItemLocalShellCall{
 				ID:     outputUnion.ID,
