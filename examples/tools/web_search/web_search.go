@@ -28,7 +28,7 @@ import (
 func main() {
 	agent := agents.New("Web searcher").
 		WithInstructions("You are a helpful agent.").
-		WithTools(tools.WebSearch{
+		WithTools(tools.WebSearchTool{
 			UserLocation: responses.WebSearchToolUserLocationParam{
 				City: param.NewOpt("New York"),
 				Type: constant.ValueOf[constant.Approximate](),

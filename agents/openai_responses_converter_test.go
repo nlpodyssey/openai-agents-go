@@ -172,7 +172,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 	}
 
 	// Web search tool with custom params
-	webTool := tools.WebSearch{SearchContextSize: responses.WebSearchToolSearchContextSizeHigh}
+	webTool := tools.WebSearchTool{SearchContextSize: responses.WebSearchToolSearchContextSizeHigh}
 
 	// Wrap our concrete computer in a tools.ComputerTool for conversion.
 	compTool := tools.ComputerTool{Computer: DummyComputer{}}

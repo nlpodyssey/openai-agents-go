@@ -15,7 +15,7 @@ const SearchAgentInstructions = "You are a research assistant. Given a search te
 
 var SearchAgent = agents.New("Search agent").
 	WithInstructions(SearchAgentInstructions).
-	WithTools(tools.WebSearch{}).
+	WithTools(tools.WebSearchTool{}).
 	WithModel("gpt-4o").
 	WithModelSettings(modelsettings.ModelSettings{
 		ToolChoice: "required",

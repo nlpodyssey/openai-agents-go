@@ -22,9 +22,9 @@ import (
 	"github.com/openai/openai-go/responses"
 )
 
-// WebSearch is a hosted tool that lets the LLM search the web.
+// WebSearchTool is a hosted tool that lets the LLM search the web.
 // Currently only supported with OpenAI models, using the Responses API.
-type WebSearch struct {
+type WebSearchTool struct {
 	// Optional location for the search. Lets you customize results to be relevant to a location.
 	UserLocation responses.WebSearchToolUserLocationParam
 
@@ -32,20 +32,20 @@ type WebSearch struct {
 	SearchContextSize responses.WebSearchToolSearchContextSize
 }
 
-func (ws WebSearch) ToolName() string {
+func (t WebSearchTool) ToolName() string {
 	return "web_search_preview"
 }
 
-func (ws WebSearch) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
+func (t WebSearchTool) ConvertToResponses(context.Context) (*responses.ToolUnionParam, *responses.ResponseIncludable, error) {
 	return &responses.ToolUnionParam{
 		OfWebSearchPreview: &responses.WebSearchToolParam{
 			Type:              responses.WebSearchToolTypeWebSearchPreview,
-			UserLocation:      ws.UserLocation,
-			SearchContextSize: ws.SearchContextSize,
+			UserLocation:      t.UserLocation,
+			SearchContextSize: t.SearchContextSize,
 		},
 	}, nil, nil
 }
 
-func (ws WebSearch) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
-	return nil, errors.New("WebSearch.ConvertToChatCompletions not implemented")
+func (t WebSearchTool) ConvertToChatCompletions(context.Context) (*openai.ChatCompletionToolParam, error) {
+	return nil, errors.New("WebSearchTool.ConvertToChatCompletions not implemented")
 }
