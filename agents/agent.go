@@ -204,7 +204,7 @@ func (a *Agent) GetAllTools(ctx context.Context) ([]Tool, error) {
 				return
 			}
 
-			isEnabledResults[i], isEnabledErrors[i] = functionTool.IsEnabled.IsEnabled(childCtx)
+			isEnabledResults[i], isEnabledErrors[i] = functionTool.IsEnabled.IsEnabled(childCtx, a)
 			if isEnabledErrors[i] != nil {
 				cancel()
 			}

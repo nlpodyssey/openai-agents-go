@@ -263,7 +263,7 @@ func TestFunctionTool_IsEnabled(t *testing.T) {
 	anotherTool := agents.NewFunctionTool("another_tool", "", func(context.Context, struct{}) (string, error) {
 		return "hi", nil
 	})
-	anotherTool.IsEnabled = agents.FunctionToolEnablerFunc(func(ctx context.Context) (bool, error) {
+	anotherTool.IsEnabled = agents.FunctionToolEnablerFunc(func(ctx context.Context, _ *agents.Agent) (bool, error) {
 		return ctx.Value(boolCtxKey{}).(*BoolCtx).EnableTools, nil
 	})
 
@@ -274,7 +274,7 @@ func TestFunctionTool_IsEnabled(t *testing.T) {
 		OnInvokeTool: func(context.Context, string) (any, error) {
 			return "third", nil
 		},
-		IsEnabled: agents.FunctionToolEnablerFunc(func(ctx context.Context) (bool, error) {
+		IsEnabled: agents.FunctionToolEnablerFunc(func(ctx context.Context, _ *agents.Agent) (bool, error) {
 			return ctx.Value(boolCtxKey{}).(*BoolCtx).EnableTools, nil
 		}),
 	}

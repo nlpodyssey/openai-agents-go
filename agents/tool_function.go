@@ -93,8 +93,7 @@ func (t FunctionTool) ConvertToChatCompletions(context.Context) (*openai.ChatCom
 }
 
 type FunctionToolEnabler interface {
-	IsEnabled(ctx context.Context) (bool, error)
-	// TODO: should also have Agent param, but for now it would imply a circular package dependency
+	IsEnabled(ctx context.Context, agent *Agent) (bool, error)
 }
 
 // FunctionToolEnabledFlag is a static FunctionToolEnabler which always returns the configured flag value.
@@ -102,7 +101,7 @@ type FunctionToolEnabledFlag struct {
 	isEnabled bool
 }
 
-func (f FunctionToolEnabledFlag) IsEnabled(context.Context) (bool, error) {
+func (f FunctionToolEnabledFlag) IsEnabled(context.Context, *Agent) (bool, error) {
 	return f.isEnabled, nil
 }
 
@@ -122,10 +121,10 @@ func FunctionToolDisabled() FunctionToolEnabler {
 }
 
 // FunctionToolEnablerFunc can wrap a function to implement FunctionToolEnabler interface.
-type FunctionToolEnablerFunc func(ctx context.Context) (bool, error)
+type FunctionToolEnablerFunc func(ctx context.Context, agent *Agent) (bool, error)
 
-func (f FunctionToolEnablerFunc) IsEnabled(ctx context.Context) (bool, error) {
-	return f(ctx)
+func (f FunctionToolEnablerFunc) IsEnabled(ctx context.Context, agent *Agent) (bool, error) {
+	return f(ctx, agent)
 }
 
 // NewFunctionTool creates a FunctionTool tool with automatic JSON schema generation.
