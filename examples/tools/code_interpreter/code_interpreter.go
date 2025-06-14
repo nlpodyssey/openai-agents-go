@@ -28,7 +28,7 @@ func main() {
 	agent := agents.New("Code interpreter").
 		WithInstructions("You love doing math.").
 		WithTools(
-			tools.CodeInterpreter{
+			tools.CodeInterpreterTool{
 				ToolConfig: responses.ToolCodeInterpreterParam{
 					Container: responses.ToolCodeInterpreterContainerUnionParam{
 						OfCodeInterpreterContainerAuto: &responses.ToolCodeInterpreterContainerCodeInterpreterContainerAutoParam{
