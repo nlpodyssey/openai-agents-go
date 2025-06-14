@@ -134,6 +134,10 @@ type ResponseCodeInterpreterToolCall responses.ResponseCodeInterpreterToolCall
 
 func (ResponseCodeInterpreterToolCall) isToolCallItemType() {}
 
+type ResponseOutputItemImageGenerationCall responses.ResponseOutputItemImageGenerationCall
+
+func (ResponseOutputItemImageGenerationCall) isToolCallItemType() {}
+
 func TResponseInputItemFromToolCallItemType(input ToolCallItemType) TResponseInputItem {
 	switch v := input.(type) {
 	case ResponseFunctionToolCall:
