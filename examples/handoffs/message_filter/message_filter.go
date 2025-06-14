@@ -24,7 +24,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_filters"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -38,7 +37,7 @@ func RandomNumber(_ context.Context, args RandomNumberArgs) (int64, error) {
 	return rand.Int63n(args.Max + 1), nil
 }
 
-var RandomNumberTool = tools.NewFunctionTool("random_number", "Return a random integer between 0 and the given maximum.", RandomNumber)
+var RandomNumberTool = agents.NewFunctionTool("random_number", "Return a random integer between 0 and the given maximum.", RandomNumber)
 
 func SpanishHandoffMessageFilter(_ context.Context, handoffMessageData agents.HandoffInputData) (agents.HandoffInputData, error) {
 	// First, we'll remove any tool-related messages from the message history

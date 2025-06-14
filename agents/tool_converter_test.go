@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/shared/constant"
@@ -28,7 +27,7 @@ import (
 )
 
 func TestToOpenaiWithFunctionTool(t *testing.T) {
-	tool := tools.FunctionTool{
+	tool := agents.FunctionTool{
 		Name:        "some_function",
 		Description: "Function description.",
 		ParamsJSONSchema: map[string]any{

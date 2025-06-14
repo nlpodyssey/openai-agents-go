@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 )
 
 // Given a search term, use web search to pull back a brief summary.
@@ -16,7 +15,7 @@ const SearchInstructions = "You are a research assistant specializing in financi
 
 var SearchAgent = agents.New("FinancialSearchAgent").
 	WithInstructions(SearchInstructions).
-	WithTools(tools.WebSearchTool{}).
+	WithTools(agents.WebSearchTool{}).
 	WithModelSettings(modelsettings.ModelSettings{
 		ToolChoice: "required",
 	}).

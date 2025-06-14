@@ -19,7 +19,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/shared/constant"
 	"github.com/stretchr/testify/assert"
@@ -29,8 +28,8 @@ import (
 func getFunctionTool(
 	name string,
 	returnValue string,
-) tools.FunctionTool {
-	return tools.FunctionTool{
+) FunctionTool {
+	return FunctionTool{
 		Name: name,
 		ParamsJSONSchema: map[string]any{
 			"title":                name + "_args",
@@ -159,7 +158,7 @@ func TestCustomToolUseBehaviorError(t *testing.T) {
 func TestToolNamesToStopAtBehavior(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []tools.Tool{
+		Tools: []Tool{
 			getFunctionTool("tool1", "tool1_output"),
 			getFunctionTool("tool2", "tool2_output"),
 			getFunctionTool("tool3", "tool3_output"),

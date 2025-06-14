@@ -20,14 +20,13 @@ import (
 	"math/rand"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 )
 
 func HowManyJokes(_ context.Context, _ struct{}) (int64, error) {
 	return rand.Int63n(10) + 1, nil
 }
 
-var HowManyJokesTool = tools.NewFunctionTool[struct{}, int64]("how_many_jokes", "", HowManyJokes)
+var HowManyJokesTool = agents.NewFunctionTool[struct{}, int64]("how_many_jokes", "", HowManyJokes)
 
 func main() {
 	agent := agents.New("Joker").

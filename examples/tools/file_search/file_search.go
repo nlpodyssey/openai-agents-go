@@ -19,14 +19,13 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
 func main() {
 	agent := agents.New("File searcher").
 		WithInstructions("You are a helpful agent.").
-		WithTools(tools.FileSearchTool{
+		WithTools(agents.FileSearchTool{
 			VectorStoreIDs:       []string{"vs_67bf88953f748191be42b462090e53e7"},
 			MaxNumResults:        param.NewOpt[int64](3),
 			IncludeSearchResults: true,

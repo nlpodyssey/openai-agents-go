@@ -20,7 +20,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,7 +58,7 @@ func TestMultipleEventsStreamingWithCancel(t *testing.T) {
 	agent := &agents.Agent{
 		Name:  "Joker",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
-		Tools: []tools.Tool{
+		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("foo", "tool_result"),
 		},
 	}

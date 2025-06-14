@@ -25,7 +25,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/computer"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/playwright-community/playwright-go"
 )
@@ -34,7 +33,7 @@ func main() {
 	err := WithLocalPlaywrightComputer(func(comp *LocalPlaywrightComputer) error {
 		agent := agents.New("Browser user").
 			WithInstructions("You are a helpful agent.").
-			WithTools(tools.ComputerTool{Computer: comp}).
+			WithTools(agents.ComputerTool{Computer: comp}).
 			// Use the computer using model, and set truncation to auto because its required
 			WithModel("computer-use-preview").
 			WithModelSettings(modelsettings.ModelSettings{

@@ -22,7 +22,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -64,7 +63,7 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (Weather, error) {
 	}, nil
 }
 
-var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
+var GetWeatherTool = agents.NewFunctionTool("get_weather", "", GetWeather)
 
 func CustomToolUseBehavior(_ context.Context, results []agents.FunctionToolResult) (agents.ToolsToFinalOutputResult, error) {
 	weather := results[0].Output.(Weather)

@@ -18,14 +18,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAgentBuilder_Chaining(t *testing.T) {
 	instr := "hello"
-	tool := tools.FunctionTool{Name: "t"}
+	tool := FunctionTool{Name: "t"}
 
 	agent := New("agent").
 		WithInstructions(instr).
@@ -38,7 +37,7 @@ func TestAgentBuilder_Chaining(t *testing.T) {
 	assert.Equal(t, InstructionsStr(instr), agent.Instructions)
 	assert.Equal(t, "desc", agent.HandoffDescription)
 	assert.Len(t, agent.Tools, 2)
-	assert.Equal(t, "t", agent.Tools[0].(tools.FunctionTool).Name)
+	assert.Equal(t, "t", agent.Tools[0].(FunctionTool).Name)
 	assert.Equal(t, param.NewOpt(NewAgentModelName("model")), agent.Model)
 }
 

@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 )
 
 type Weather struct {
@@ -41,7 +40,7 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (Weather, error) {
 	}, nil
 }
 
-var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
+var GetWeatherTool = agents.NewFunctionTool("get_weather", "", GetWeather)
 
 func main() {
 	agent := agents.New("Hello world").

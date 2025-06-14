@@ -16,8 +16,6 @@ package agents
 
 import (
 	"context"
-
-	"github.com/nlpodyssey/openai-agents-go/tools"
 )
 
 // RunHooks is implemented by an object that receives callbacks on various
@@ -33,10 +31,10 @@ type RunHooks interface {
 	OnHandoff(ctx context.Context, fromAgent, toAgent *Agent) error
 
 	// OnToolStart is called before a tool is invoked.
-	OnToolStart(ctx context.Context, agent *Agent, tool tools.Tool) error
+	OnToolStart(ctx context.Context, agent *Agent, tool Tool) error
 
 	// OnToolEnd is called after a tool is invoked.
-	OnToolEnd(ctx context.Context, agent *Agent, tool tools.Tool, result any) error
+	OnToolEnd(ctx context.Context, agent *Agent, tool Tool, result any) error
 }
 
 type NoOpRunHooks struct{}
@@ -50,10 +48,10 @@ func (NoOpRunHooks) OnAgentEnd(context.Context, *Agent, any) error {
 func (NoOpRunHooks) OnHandoff(context.Context, *Agent, *Agent) error {
 	return nil
 }
-func (NoOpRunHooks) OnToolStart(context.Context, *Agent, tools.Tool) error {
+func (NoOpRunHooks) OnToolStart(context.Context, *Agent, Tool) error {
 	return nil
 }
-func (NoOpRunHooks) OnToolEnd(context.Context, *Agent, tools.Tool, any) error {
+func (NoOpRunHooks) OnToolEnd(context.Context, *Agent, Tool, any) error {
 	return nil
 }
 
@@ -72,8 +70,8 @@ type AgentHooks interface {
 	OnHandoff(ctx context.Context, agent, source *Agent) error
 
 	// OnToolStart is called before a tool is invoked.
-	OnToolStart(ctx context.Context, agent *Agent, tool tools.Tool) error
+	OnToolStart(ctx context.Context, agent *Agent, tool Tool) error
 
 	// OnToolEnd is called after a tool is invoked.
-	OnToolEnd(ctx context.Context, agent *Agent, tool tools.Tool, result any) error
+	OnToolEnd(ctx context.Context, agent *Agent, tool Tool, result any) error
 }

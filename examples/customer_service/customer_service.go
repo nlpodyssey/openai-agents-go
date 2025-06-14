@@ -25,7 +25,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_prompt"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -65,7 +64,7 @@ func FAQLookup(_ context.Context, args FAQLookupArgs) (string, error) {
 	}
 }
 
-var FAQLookupTool = tools.NewFunctionTool("faq_lookup_tool", "Lookup frequently asked questions.", FAQLookup)
+var FAQLookupTool = agents.NewFunctionTool("faq_lookup_tool", "Lookup frequently asked questions.", FAQLookup)
 
 type UpdateSeatArgs struct {
 	ConfirmationNumber string `json:"confirmation_number" jsonschema_description:"The confirmation number for the flight."`
@@ -89,7 +88,7 @@ func UpdateSeat(ctx context.Context, args UpdateSeatArgs) (string, error) {
 	), nil
 }
 
-var UpdateSeatTool = tools.NewFunctionTool("update_seat", "Update the seat for a given confirmation number.", UpdateSeat)
+var UpdateSeatTool = agents.NewFunctionTool("update_seat", "Update the seat for a given confirmation number.", UpdateSeat)
 
 ////// HOOKS
 

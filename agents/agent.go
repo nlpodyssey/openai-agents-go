@@ -21,7 +21,6 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -75,7 +74,7 @@ type Agent struct {
 	ModelSettings modelsettings.ModelSettings
 
 	// A list of tools that the agent can use.
-	Tools []tools.Tool
+	Tools []Tool
 
 	// A list of checks that run in parallel to the agent's execution, before generating a
 	// response. Runs only if the agent is the first agent in the chain.
@@ -131,13 +130,13 @@ type AgentAsToolParams struct {
 //     receives generated input.
 //  2. In handoffs, the new agent takes over the conversation. In this tool, the new agent is
 //     called as a tool, and the conversation is continued by the original agent.
-func (a *Agent) AsTool(params AgentAsToolParams) tools.Tool {
+func (a *Agent) AsTool(params AgentAsToolParams) Tool {
 	name := params.ToolName
 	if name == "" {
 		name = transforms.TransformStringFunctionStyle(a.Name)
 	}
 
-	return tools.FunctionTool{
+	return FunctionTool{
 		Name:             name,
 		Description:      params.ToolDescription,
 		ParamsJSONSchema: a.agentAsToolParamsJSONSchema(name + "_args"),
@@ -185,7 +184,7 @@ func (a *Agent) GetSystemPrompt(ctx context.Context) (param.Opt[string], error) 
 
 // GetAllTools returns all agent tools.
 // It only includes function tools, since other types are omitted, as we don't need them.
-func (a *Agent) GetAllTools(ctx context.Context) ([]tools.Tool, error) {
+func (a *Agent) GetAllTools(ctx context.Context) ([]Tool, error) {
 	isEnabledResults := make([]bool, len(a.Tools))
 	isEnabledErrors := make([]error, len(a.Tools))
 
@@ -199,7 +198,7 @@ func (a *Agent) GetAllTools(ctx context.Context) ([]tools.Tool, error) {
 		go func() {
 			defer wg.Done()
 
-			functionTool, ok := tool.(tools.FunctionTool)
+			functionTool, ok := tool.(FunctionTool)
 			if !ok || functionTool.IsEnabled == nil {
 				isEnabledResults[i] = true
 				return
@@ -217,7 +216,7 @@ func (a *Agent) GetAllTools(ctx context.Context) ([]tools.Tool, error) {
 		return nil, err
 	}
 
-	var enabledTools []tools.Tool
+	var enabledTools []Tool
 	for i, tool := range a.Tools {
 		if isEnabledResults[i] {
 			enabledTools = append(enabledTools, tool)

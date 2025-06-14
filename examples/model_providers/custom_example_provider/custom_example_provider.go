@@ -20,7 +20,6 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -71,7 +70,7 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (string, error) {
 	return fmt.Sprintf("The weather in %s is sunny.", args.City), nil
 }
 
-var GetWeatherTool = tools.NewFunctionTool("get_weather", "", GetWeather)
+var GetWeatherTool = agents.NewFunctionTool("get_weather", "", GetWeather)
 
 func main() {
 
@@ -79,7 +78,7 @@ func main() {
 		WithInstructions("You only respond in haikus.").
 		WithTools(GetWeatherTool)
 
-		// This will use the custom model provider
+	// This will use the custom model provider
 	result, err := (agents.Runner{Config: agents.RunConfig{ModelProvider: CustomModelProvider}}).
 		Run(context.Background(), agent, "What's the weather in Tokyo?")
 	if err != nil {

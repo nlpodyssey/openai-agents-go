@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -28,7 +27,7 @@ import (
 func main() {
 	agent := agents.New("Web searcher").
 		WithInstructions("You are a helpful agent.").
-		WithTools(tools.WebSearchTool{
+		WithTools(agents.WebSearchTool{
 			UserLocation: responses.WebSearchToolUserLocationParam{
 				City: param.NewOpt("New York"),
 				Type: constant.ValueOf[constant.Approximate](),

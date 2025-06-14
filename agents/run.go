@@ -27,7 +27,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
 )
@@ -171,7 +170,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*Ru
 	shouldRunAgentStartHooks := true
 
 	shouldGetAgentTools := true
-	var allTools []tools.Tool
+	var allTools []Tool
 
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -445,7 +444,7 @@ func (r Runner) runStreamedImpl(
 	})
 
 	shouldGetAgentTools := true
-	var allTools []tools.Tool
+	var allTools []Tool
 
 	for {
 		if streamedResult.IsComplete.Load() {
@@ -557,7 +556,7 @@ func (r Runner) runSingleTurnStreamed(
 	runConfig RunConfig,
 	shouldRunAgentStartHooks bool,
 	toolUseTracker *AgentToolUseTracker,
-	allTools []tools.Tool,
+	allTools []Tool,
 	previousResponseID string,
 ) (*SingleStepResult, error) {
 	if shouldRunAgentStartHooks {
@@ -704,7 +703,7 @@ func (r Runner) runSingleTurnStreamed(
 func (r Runner) runSingleTurn(
 	ctx context.Context,
 	agent *Agent,
-	allTools []tools.Tool,
+	allTools []Tool,
 	originalInput Input,
 	generatedItems []RunItem,
 	hooks RunHooks,
@@ -798,7 +797,7 @@ func (r Runner) runSingleTurn(
 func (Runner) getSingleStepResultFromResponse(
 	ctx context.Context,
 	agent *Agent,
-	allTools []tools.Tool,
+	allTools []Tool,
 	originalInput Input,
 	preStepItems []RunItem,
 	newResponse ModelResponse,
@@ -939,7 +938,7 @@ func (r Runner) getNewResponse(
 	systemPrompt param.Opt[string],
 	input []TResponseInputItem,
 	outputSchema AgentOutputSchemaInterface,
-	allTools []tools.Tool,
+	allTools []Tool,
 	handoffs []Handoff,
 	runConfig RunConfig,
 	toolUseTracker *AgentToolUseTracker,
@@ -988,7 +987,7 @@ func (Runner) getHandoffs(agent *Agent) ([]Handoff, error) {
 	return handoffs, nil
 }
 
-func (Runner) getAllTools(ctx context.Context, agent *Agent) ([]tools.Tool, error) {
+func (Runner) getAllTools(ctx context.Context, agent *Agent) ([]Tool, error) {
 	return agent.GetAllTools(ctx)
 }
 

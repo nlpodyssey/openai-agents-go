@@ -27,7 +27,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/computer"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -89,17 +88,17 @@ type ToolRunHandoff struct {
 
 type ToolRunFunction struct {
 	ToolCall     ResponseFunctionToolCall
-	FunctionTool tools.FunctionTool
+	FunctionTool FunctionTool
 }
 
 type ToolRunComputerAction struct {
 	ToolCall     responses.ResponseComputerToolCall
-	ComputerTool tools.ComputerTool
+	ComputerTool ComputerTool
 }
 
 type ToolRunLocalShellCall struct {
 	ToolCall       responses.ResponseOutputItemLocalShellCall
-	LocalShellTool tools.LocalShellTool
+	LocalShellTool LocalShellTool
 }
 
 type ProcessedResponse struct {
@@ -335,7 +334,7 @@ func (runImpl) MaybeResetToolChoice(
 
 func (runImpl) ProcessModelResponse(
 	agent *Agent,
-	allTools []tools.Tool,
+	allTools []Tool,
 	response ModelResponse,
 	handoffs []Handoff,
 ) (*ProcessedResponse, error) {
@@ -345,8 +344,8 @@ func (runImpl) ProcessModelResponse(
 		functions       []ToolRunFunction
 		computerActions []ToolRunComputerAction
 		localShellCalls []ToolRunLocalShellCall
-		computerTool    *tools.ComputerTool
-		localShellTool  *tools.LocalShellTool
+		computerTool    *ComputerTool
+		localShellTool  *LocalShellTool
 		toolsUsed       []string
 	)
 
@@ -355,15 +354,15 @@ func (runImpl) ProcessModelResponse(
 		handoffMap[handoff.ToolName] = handoff
 	}
 
-	functionMap := make(map[string]tools.FunctionTool)
+	functionMap := make(map[string]FunctionTool)
 
 	for _, tool := range allTools {
 		switch t := tool.(type) {
-		case tools.FunctionTool:
+		case FunctionTool:
 			functionMap[t.Name] = t
-		case tools.ComputerTool:
+		case ComputerTool:
 			computerTool = &t
-		case tools.LocalShellTool:
+		case LocalShellTool:
 			localShellTool = &t
 		}
 	}
@@ -548,7 +547,7 @@ func (runImpl) ProcessModelResponse(
 
 type FunctionToolResult struct {
 	// The tool that was run.
-	Tool tools.FunctionTool
+	Tool FunctionTool
 
 	// The output of the tool.
 	Output any
@@ -565,7 +564,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 ) ([]FunctionToolResult, error) {
 	runSingleTool := func(
 		ctx context.Context,
-		funcTool tools.FunctionTool,
+		funcTool FunctionTool,
 		toolCall ResponseFunctionToolCall,
 	) (any, error) {
 		var (
@@ -1224,7 +1223,7 @@ func (localShellAction) Execute(
 	}
 
 	// TODO: why this does not run concurrently with the hooks, as for other tools?
-	request := tools.LocalShellCommandRequest{Data: call.ToolCall}
+	request := LocalShellCommandRequest{Data: call.ToolCall}
 	result, err := call.LocalShellTool.Executor(ctx, request)
 	if err != nil {
 		return nil, err

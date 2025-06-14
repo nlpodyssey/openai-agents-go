@@ -19,7 +19,6 @@ import (
 	"iter"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -43,7 +42,7 @@ type ModelGetResponseParams struct {
 	ModelSettings modelsettings.ModelSettings
 
 	// The tools available to the model.
-	Tools []tools.Tool
+	Tools []Tool
 
 	// Optional output schema to use.
 	OutputSchema AgentOutputSchemaInterface
@@ -67,7 +66,7 @@ type ModelStreamResponseParams struct {
 	ModelSettings modelsettings.ModelSettings
 
 	// The tools available to the model.
-	Tools []tools.Tool
+	Tools []Tool
 
 	// Optional output schema to use.
 	OutputSchema AgentOutputSchemaInterface

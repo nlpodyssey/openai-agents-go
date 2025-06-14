@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/computer"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -179,11 +178,11 @@ type LoggingRunHooks struct {
 func (h *LoggingRunHooks) OnAgentStart(context.Context, *Agent) error      { return nil }
 func (h *LoggingRunHooks) OnAgentEnd(context.Context, *Agent, any) error   { return nil }
 func (h *LoggingRunHooks) OnHandoff(context.Context, *Agent, *Agent) error { return nil }
-func (h *LoggingRunHooks) OnToolStart(_ context.Context, agent *Agent, tool tools.Tool) error {
+func (h *LoggingRunHooks) OnToolStart(_ context.Context, agent *Agent, tool Tool) error {
 	h.Started = append(h.Started, []any{agent, tool})
 	return nil
 }
-func (h *LoggingRunHooks) OnToolEnd(_ context.Context, agent *Agent, tool tools.Tool, result any) error {
+func (h *LoggingRunHooks) OnToolEnd(_ context.Context, agent *Agent, tool Tool, result any) error {
 	h.Ended = append(h.Ended, []any{agent, tool, result})
 	return nil
 }
@@ -197,11 +196,11 @@ type LoggingAgentHooks struct {
 func (h *LoggingAgentHooks) OnStart(context.Context, *Agent) error           { return nil }
 func (h *LoggingAgentHooks) OnEnd(context.Context, *Agent, any) error        { return nil }
 func (h *LoggingAgentHooks) OnHandoff(context.Context, *Agent, *Agent) error { return nil }
-func (h *LoggingAgentHooks) OnToolStart(_ context.Context, agent *Agent, tool tools.Tool) error {
+func (h *LoggingAgentHooks) OnToolStart(_ context.Context, agent *Agent, tool Tool) error {
 	h.Started = append(h.Started, []any{agent, tool})
 	return nil
 }
-func (h *LoggingAgentHooks) OnToolEnd(_ context.Context, agent *Agent, tool tools.Tool, result any) error {
+func (h *LoggingAgentHooks) OnToolEnd(_ context.Context, agent *Agent, tool Tool, result any) error {
 	h.Ended = append(h.Ended, []any{agent, tool, result})
 	return nil
 }
@@ -210,7 +209,7 @@ func TestExecuteInvokesHooksAndReturnsToolCallOutput(t *testing.T) {
 	// ComputerAction().Execute() should invoke lifecycle hooks and return a proper ToolCallOutputItem.
 
 	comp := NewLoggingComputer("xyz")
-	compTool := tools.ComputerTool{Computer: comp}
+	compTool := ComputerTool{Computer: comp}
 
 	// Create a dummy click action to trigger a click and screenshot.
 	action := responses.ResponseComputerToolCallActionUnion{
@@ -233,7 +232,7 @@ func TestExecuteInvokesHooksAndReturnsToolCallOutput(t *testing.T) {
 	// Setup agent and hooks.
 	agent := &Agent{
 		Name:  "test_agent",
-		Tools: []tools.Tool{compTool},
+		Tools: []Tool{compTool},
 	}
 	// Attach per-agent hooks as well as global run hooks.
 	agentHooks := &LoggingAgentHooks{}

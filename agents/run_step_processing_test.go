@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/computer"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -70,7 +69,7 @@ func TestNoToolCalls(t *testing.T) {
 func TestSingleToolCall(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []tools.Tool{
+		Tools: []Tool{
 			getFunctionTool("test", ""),
 		},
 	}
@@ -103,7 +102,7 @@ func TestSingleToolCall(t *testing.T) {
 func TestMissingToolCallRaisesError(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []tools.Tool{
+		Tools: []Tool{
 			getFunctionTool("test", ""),
 		},
 	}
@@ -130,7 +129,7 @@ func TestMissingToolCallRaisesError(t *testing.T) {
 func TestRunStepProcessingMultipleToolCalls(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
-		Tools: []tools.Tool{
+		Tools: []Tool{
 			getFunctionTool("test_1", ""),
 			getFunctionTool("test_2", ""),
 			getFunctionTool("test_3", ""),
@@ -465,10 +464,10 @@ func TestComputerToolCallWithComputerToolParsedCorrectly(t *testing.T) {
 	// If the agent contains a tools.ComputerTool, ensure that a ResponseComputerToolCall is parsed into a
 	// ToolCallItem and scheduled to run in computer_actions.
 	dummyComputer := DummyComputer{}
-	computerTool := tools.ComputerTool{Computer: dummyComputer}
+	computerTool := ComputerTool{Computer: dummyComputer}
 	agent := &Agent{
 		Name:  "test",
-		Tools: []tools.Tool{computerTool},
+		Tools: []Tool{computerTool},
 	}
 	computerCall := TResponseOutputItem{ // responses.ResponseComputerToolCall
 		ID:   "c1",
@@ -516,7 +515,7 @@ func TestToolAndHandoffParsedCorrectly(t *testing.T) {
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
 		Name: "test_3",
-		Tools: []tools.Tool{
+		Tools: []Tool{
 			getFunctionTool("test", ""),
 		},
 		AgentHandoffs: []*Agent{agent1, agent2},

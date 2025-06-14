@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/nlpodyssey/openai-agents-go/tools"
 )
 
 // summaryExtractor is a custom output extractor for sub‑agents that return an AnalysisSummary.
@@ -134,7 +133,7 @@ func (frm FinancialResearchManager) writeReport(ctx context.Context, query strin
 	// Clone the agent and attach tools.
 	writerWithTools := new(agents.Agent)
 	*writerWithTools = *WriterAgent
-	writerWithTools.Tools = []tools.Tool{fundamentalsTool, riskTool}
+	writerWithTools.Tools = []agents.Tool{fundamentalsTool, riskTool}
 
 	fmt.Println("Generating report...")
 
