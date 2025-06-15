@@ -912,7 +912,7 @@ func (Runner) runOutputGuardrails(
 				guardrailErrors[i] = fmt.Errorf("failed to run output guardrail %s: %w", guardrail.Name, err)
 			} else if result.Output.TripwireTriggered {
 				cancel() // Cancel all guardrail tasks if a tripwire is triggered.
-				err := NewOutputGuardrailTripwireTriggeredError(guardrail.Name, result)
+				err := NewOutputGuardrailTripwireTriggeredError(result)
 				tripwireErr.Store(&err)
 			} else {
 				guardrailResults[i] = result
