@@ -72,7 +72,7 @@ func (chatCmplConverter) ConvertResponseFormat(
 	}, true
 }
 
-func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessage) []TResponseOutputItem {
+func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessage) ([]TResponseOutputItem, error) {
 	items := make([]TResponseOutputItem, 0)
 
 	messageItem := responses.ResponseOutputItemUnion{
@@ -96,7 +96,7 @@ func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessa
 		})
 	}
 	if !reflect.ValueOf(message.Audio).IsZero() {
-		panic(errors.New("audio is not currently supported"))
+		return nil, errors.New("audio is not currently supported")
 	}
 
 	if len(messageItem.Content) > 0 {
@@ -113,7 +113,7 @@ func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessa
 		})
 	}
 
-	return items
+	return items, nil
 }
 
 func (conv chatCmplConverter) ExtractTextContentFromEasyInputMessageContentUnionParam(
@@ -342,7 +342,7 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 				}
 				result = append(result, msgAssistant)
 			default:
-				return nil, UserErrorf("unexpected rone in EasyInputMessageParam: %q", role)
+				return nil, UserErrorf("unexpected role in EasyInputMessageParam: %q", role)
 			}
 		} else if inMsg := item.OfInputMessage; !param.IsOmitted(inMsg) { // 2) Check input message
 			role := inMsg.Role
@@ -393,7 +393,7 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 				}
 				result = append(result, msgDeveloper)
 			default:
-				return nil, UserErrorf("unexpected role in input_message: %+q", role)
+				return nil, UserErrorf("unexpected role in ResponseInputItemMessageParam: %q", role)
 			}
 		} else if respMsg := item.OfOutputMessage; !param.IsOmitted(respMsg) { // 3) response output message => assistant
 			flushAssistantMessage()
@@ -449,7 +449,6 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 			}
 			toolCalls = append(toolCalls, newToolCall)
 			asst.ToolCalls = toolCalls
-
 		} else if funcCall := item.OfFunctionCall; !param.IsOmitted(funcCall) {
 			asst := ensureAssistantMessage()
 			toolCalls := slices.Clone(asst.ToolCalls)

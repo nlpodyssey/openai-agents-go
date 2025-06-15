@@ -28,9 +28,9 @@ type AgentOutputSchemaInterface interface {
 	JSONSchema() map[string]any
 
 	// IsStrictJSONSchema reports whether the JSON schema is in strict mode.
-	// Strict mode constrains the JSON schema features, but guarantees valis JSON.
+	// Strict mode constrains the JSON schema features, but guarantees valid JSON.
 	//
-	// See here for details: https://platform.openai.com/docs/guides/structured-outputs#supported-schemas
+	// For more details, see https://platform.openai.com/docs/guides/structured-outputs#supported-schemas
 	IsStrictJSONSchema() bool
 
 	// ValidateJSON validates a JSON string against the output type.
