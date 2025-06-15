@@ -91,7 +91,10 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 		}
 	}
 
-	items := ChatCmplConverter().MessageToOutputItems(response.Choices[0].Message)
+	items, err := ChatCmplConverter().MessageToOutputItems(response.Choices[0].Message)
+	if err != nil {
+		return nil, err
+	}
 	return &ModelResponse{
 		Output:     items,
 		Usage:      u,

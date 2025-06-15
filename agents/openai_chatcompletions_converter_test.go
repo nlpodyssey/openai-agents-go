@@ -36,7 +36,8 @@ func TestMessageToOutputItemsWithTextOnly(t *testing.T) {
 		Role:    constant.ValueOf[constant.Assistant](),
 	}
 
-	items := agents.ChatCmplConverter().MessageToOutputItems(msg)
+	items, err := agents.ChatCmplConverter().MessageToOutputItems(msg)
+	require.NoError(t, err)
 	assert.Equal(t, []agents.TResponseOutputItem{
 		{
 			ID: agents.FakeResponsesID,
@@ -63,7 +64,8 @@ func TestMessageToOutputItemsWithRefusal(t *testing.T) {
 		Role:    constant.ValueOf[constant.Assistant](),
 	}
 
-	items := agents.ChatCmplConverter().MessageToOutputItems(msg)
+	items, err := agents.ChatCmplConverter().MessageToOutputItems(msg)
+	require.NoError(t, err)
 	assert.Equal(t, []agents.TResponseOutputItem{
 		{
 			ID: agents.FakeResponsesID,
@@ -100,7 +102,8 @@ func TestMessageToOutputItemsWithToolCall(t *testing.T) {
 		Role:      constant.ValueOf[constant.Assistant](),
 	}
 
-	items := agents.ChatCmplConverter().MessageToOutputItems(msg)
+	items, err := agents.ChatCmplConverter().MessageToOutputItems(msg)
+	require.NoError(t, err)
 	assert.Equal(t, []agents.TResponseOutputItem{
 		{
 			ID: agents.FakeResponsesID,
