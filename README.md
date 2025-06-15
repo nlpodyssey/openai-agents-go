@@ -108,7 +108,6 @@ import (
         "fmt"
 
         "github.com/nlpodyssey/openai-agents-go/agents"
-        "github.com/nlpodyssey/openai-agents-go/tools"
 )
 
 // Tool params type
@@ -122,7 +121,7 @@ func getWeather(_ context.Context, params GetWeatherParams) (string, error) {
 }
 
 // Tool registration (using SDK's NewFunctionTool)
-var getWeatherTool = tools.NewFunctionTool("GetWeather", "", getWeather)
+var getWeatherTool = agents.NewFunctionTool("GetWeather", "", getWeather)
 
 func main() {
         agent := agents.New("Hello world").
