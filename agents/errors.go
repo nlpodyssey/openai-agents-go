@@ -89,19 +89,16 @@ func NewInputGuardrailTripwireTriggeredError(guardrailResult InputGuardrailResul
 
 // OutputGuardrailTripwireTriggeredError is returned when a guardrail tripwire is triggered.
 type OutputGuardrailTripwireTriggeredError struct {
-	GuardrailName string
-
 	// The result data of the guardrail that was triggered.
 	GuardrailResult OutputGuardrailResult
 }
 
 func (err OutputGuardrailTripwireTriggeredError) Error() string {
-	return fmt.Sprintf("output guardrail %s triggered tripwire", err.GuardrailName)
+	return fmt.Sprintf("output guardrail %s triggered tripwire", err.GuardrailResult.Guardrail.Name)
 }
 
-func NewOutputGuardrailTripwireTriggeredError(guardrailName string, guardrailResult OutputGuardrailResult) OutputGuardrailTripwireTriggeredError {
+func NewOutputGuardrailTripwireTriggeredError(guardrailResult OutputGuardrailResult) OutputGuardrailTripwireTriggeredError {
 	return OutputGuardrailTripwireTriggeredError{
-		GuardrailName:   guardrailName,
 		GuardrailResult: guardrailResult,
 	}
 }
