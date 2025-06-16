@@ -568,7 +568,7 @@ func TestToolUseBehaviorFirstOutput(t *testing.T) {
 			TestToolOne,
 			TestToolTwo,
 		},
-		ToolUseBehavior: agents.StopOnFirstTool{},
+		ToolUseBehavior: agents.StopOnFirstTool(),
 		OutputSchema:    AgentRunnerTestFooSchema{},
 	}
 

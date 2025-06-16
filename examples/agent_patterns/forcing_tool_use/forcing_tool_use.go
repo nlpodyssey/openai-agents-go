@@ -90,10 +90,10 @@ func main() {
 
 	switch *toolUseBehavior {
 	case "default":
-		behavior = agents.RunLLMAgain{}
+		behavior = agents.RunLLMAgain()
 		toolChoice = ""
 	case "first_tool":
-		behavior = agents.StopOnFirstTool{}
+		behavior = agents.StopOnFirstTool()
 		toolChoice = "required"
 	case "custom":
 		behavior = agents.ToolsToFinalOutputFunction(CustomToolUseBehavior)

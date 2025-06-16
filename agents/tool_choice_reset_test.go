@@ -145,7 +145,7 @@ func TestRequiredWithStopAtToolName(t *testing.T) {
 		Model:           param.NewOpt(agents.NewAgentModel(fakeModel)),
 		Tools:           []agents.Tool{firstTool, secondTool},
 		ModelSettings:   modelsettings.ModelSettings{ToolChoice: "required"},
-		ToolUseBehavior: agents.StopAtTools{StopAtToolNames: []string{"second_tool"}},
+		ToolUseBehavior: agents.StopAtTools("second_tool"),
 	}
 
 	// Run should stop after using second_tool

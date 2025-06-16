@@ -36,11 +36,6 @@ type queueCompleteSentinel struct{}
 
 func (queueCompleteSentinel) isStreamEvent() {}
 
-var notFinalOutput = ToolsToFinalOutputResult{
-	IsFinalOutput: false,
-	FinalOutput:   param.Null[any](),
-}
-
 type AgentToolUseTracker struct {
 	AgentToTools []AgentToToolsItem
 }
@@ -991,7 +986,6 @@ func (runImpl) StreamStepResultToQueue(stepResult SingleStepResult, queue *async
 	}
 }
 
-// Returns (i, final_output).
 func (runImpl) checkForFinalOutputFromTools(
 	ctx context.Context,
 	agent *Agent,
@@ -1003,33 +997,10 @@ func (runImpl) checkForFinalOutputFromTools(
 
 	toolUseBehavior := agent.ToolUseBehavior
 	if toolUseBehavior == nil {
-		toolUseBehavior = RunLLMAgain{}
+		toolUseBehavior = RunLLMAgain()
 	}
 
-	switch v := toolUseBehavior.(type) {
-	case RunLLMAgain:
-		return notFinalOutput, nil
-	case StopOnFirstTool:
-		return ToolsToFinalOutputResult{
-			IsFinalOutput: true,
-			FinalOutput:   param.NewOpt(toolResults[0].Output),
-		}, nil
-	case StopAtTools:
-		for _, toolResult := range toolResults {
-			if slices.Contains(v.StopAtToolNames, toolResult.Tool.Name) {
-				return ToolsToFinalOutputResult{
-					IsFinalOutput: true,
-					FinalOutput:   param.NewOpt(toolResult.Output),
-				}, nil
-			}
-		}
-		return notFinalOutput, nil
-	case ToolsToFinalOutputFunction:
-		return v(ctx, toolResults)
-	default:
-		// This would be an unrecoverable implementation bug, so a panic is appropriate.
-		panic(fmt.Errorf("unexpected ToolUseBehavior type %T", v))
-	}
+	return toolUseBehavior.ToolsToFinalOutput(ctx, toolResults)
 }
 
 type computerAction struct{}

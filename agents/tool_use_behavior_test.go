@@ -80,7 +80,7 @@ func TestRunLlmAgainBehavior(t *testing.T) {
 	// With the default RunLLMAgain behavior, even with tools we still expect to keep running.
 	agent := &Agent{
 		Name:            "test",
-		ToolUseBehavior: RunLLMAgain{},
+		ToolUseBehavior: RunLLMAgain(),
 	}
 	toolResults := []FunctionToolResult{
 		makeFunctionToolResult(agent, "ignored", ""),
@@ -97,7 +97,7 @@ func TestStopOnFirstToolBehavior(t *testing.T) {
 	// When tool_use_behavior is stop_on_first_tool, we should surface first tool output as final.
 	agent := &Agent{
 		Name:            "test",
-		ToolUseBehavior: StopOnFirstTool{},
+		ToolUseBehavior: StopOnFirstTool(),
 	}
 	toolResults := []FunctionToolResult{
 		makeFunctionToolResult(agent, "first_tool_output", ""),
@@ -163,7 +163,7 @@ func TestToolNamesToStopAtBehavior(t *testing.T) {
 			getFunctionTool("tool2", "tool2_output"),
 			getFunctionTool("tool3", "tool3_output"),
 		},
-		ToolUseBehavior: StopAtTools{StopAtToolNames: []string{"tool1"}},
+		ToolUseBehavior: StopAtTools("tool1"),
 	}
 	toolResults := []FunctionToolResult{
 		makeFunctionToolResult(agent, "ignored2", "tool2"),
