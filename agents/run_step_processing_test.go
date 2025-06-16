@@ -99,7 +99,7 @@ func TestSingleToolCall(t *testing.T) {
 	assert.Equal(t, "", fn.ToolCall.Arguments)
 }
 
-func TestMissingToolCallRaisesError(t *testing.T) {
+func TestMissingToolCallReturnsError(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
 		Tools: []Tool{
@@ -429,7 +429,7 @@ func (DummyComputer) Move(context.Context, int64, int64) error                  
 func (DummyComputer) Keypress(context.Context, []string) error                   { return nil }
 func (DummyComputer) Drag(context.Context, []computer.Position) error            { return nil }
 
-func TestComputerToolCallWithoutComputerToolRaisesError(t *testing.T) {
+func TestComputerToolCallWithoutComputerToolReturnsError(t *testing.T) {
 	// If the agent has no tools.ComputerTool in its tools, ProcessModelResponse should return a
 	// ModelBehaviorError when encountering a ResponseComputerToolCall.
 	agent := &Agent{Name: "test"}

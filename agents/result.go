@@ -275,7 +275,7 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 		item := r.eventQueue.Get()
 
 		if _, ok := item.(queueCompleteSentinel); ok {
-			// Check for errors, in case the queue was completed due to an exception
+			// Check for errors, in case the queue was completed due to an error
 			if err = r.checkErrors(); err != nil {
 				return err
 			}
@@ -325,7 +325,7 @@ func (r *RunResultStreaming) checkErrors() error {
 		r.setStoredError(maxTurnsErr)
 	}
 
-	// Fetch all the completed guardrail results from the queue and raise if needed
+	// Fetch all the completed guardrail results from the queue and set an error if needed
 	for !r.inputGuardrailQueue.IsEmpty() {
 		guardrailResult, ok := r.inputGuardrailQueue.GetNoWait()
 		if ok && guardrailResult.Output.TripwireTriggered {
