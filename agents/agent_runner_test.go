@@ -51,7 +51,7 @@ func TestSimpleFirstRun(t *testing.T) {
 	assert.Equal(t, []agents.TResponseOutputItem{
 		agentstesting.GetTextMessage("first"),
 	}, result.RawResponses[0].Output)
-	assert.Same(t, agent, result.LastAgent())
+	assert.Same(t, agent, result.LastAgent)
 
 	assert.Len(t, result.ToInputList(), 2, "should have original input and generated item")
 
@@ -105,7 +105,7 @@ func TestSubsequentRuns(t *testing.T) {
 	assert.Equal(t, []agents.TResponseOutputItem{
 		agentstesting.GetTextMessage("fourth"),
 	}, result.RawResponses[0].Output)
-	assert.Same(t, agent, result.LastAgent())
+	assert.Same(t, agent, result.LastAgent)
 	assert.Len(t, result.ToInputList(), 3, "should have original input and generated items")
 }
 
@@ -187,7 +187,7 @@ func TestHandoffs(t *testing.T) {
 	assert.Len(t, result.ToInputList(), 7,
 		"should have 7 inputs: orig input, tool call, tool result, "+
 			"message, handoff, handoff result, and done message")
-	assert.Same(t, agent1, result.LastAgent(), "should have handed off to agent1")
+	assert.Same(t, agent1, result.LastAgent, "should have handed off to agent1")
 }
 
 type AgentRunnerTestFoo struct {
@@ -268,7 +268,7 @@ func TestStructuredOutput(t *testing.T) {
 	assert.Len(t, result.ToInputList(), 10,
 		"should have input: 2 orig inputs, function call, function call result, message, "+
 			"handoff, handoff output, tool call, tool call result, final output message")
-	assert.Same(t, agent1, result.LastAgent(), "should have handed off to agent1")
+	assert.Same(t, agent1, result.LastAgent, "should have handed off to agent1")
 }
 
 func RemoveNewItems(_ context.Context, handoffInputData agents.HandoffInputData) (agents.HandoffInputData, error) {

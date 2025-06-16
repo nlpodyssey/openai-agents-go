@@ -294,15 +294,13 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 				return nil, err
 			}
 			return &RunResult{
-				RunResultBase: RunResultBase{
-					Input:                  originalInput,
-					NewItems:               generatedItems,
-					RawResponses:           modelResponses,
-					FinalOutput:            nextStep.Output,
-					InputGuardrailResults:  inputGuardrailResults,
-					OutputGuardrailResults: outputGuardrailResults,
-				},
-				lastAgent: currentAgent,
+				Input:                  originalInput,
+				NewItems:               generatedItems,
+				RawResponses:           modelResponses,
+				FinalOutput:            nextStep.Output,
+				InputGuardrailResults:  inputGuardrailResults,
+				OutputGuardrailResults: outputGuardrailResults,
+				LastAgent:              currentAgent,
 			}, nil
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
@@ -354,14 +352,12 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 	ctx = usage.NewContext(ctx, usage.NewUsage())
 
 	streamedResult := &RunResultStreaming{
-		RunResultBase: RunResultBase{
-			Input:                  CopyGeneralInput(input),
-			NewItems:               nil,
-			RawResponses:           nil,
-			FinalOutput:            nil,
-			InputGuardrailResults:  nil,
-			OutputGuardrailResults: nil,
-		},
+		Input:                    CopyGeneralInput(input),
+		NewItems:                 nil,
+		RawResponses:             nil,
+		FinalOutput:              nil,
+		InputGuardrailResults:    nil,
+		OutputGuardrailResults:   nil,
 		context:                  ctx,
 		CurrentAgent:             startingAgent,
 		CurrentTurn:              new(atomic.Uint64),

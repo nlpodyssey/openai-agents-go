@@ -32,22 +32,22 @@ func indent(text string, indentLevel int) string {
 	return sb.String()
 }
 
-func finalOutputStr(result RunResultBase) string {
-	switch finalOutput := result.FinalOutput.(type) {
+func finalOutputStr(finalOutput any) string {
+	switch v := finalOutput.(type) {
 	case nil:
 		return "None"
 	case string:
-		return finalOutput
+		return v
 	case []byte:
-		return string(finalOutput)
+		return string(v)
 	default:
 		var buf bytes.Buffer
 		enc := json.NewEncoder(&buf)
 		enc.SetIndent("", "  ")
 		enc.SetEscapeHTML(false)
-		err := enc.Encode(finalOutput)
+		err := enc.Encode(v)
 		if err != nil {
-			return fmt.Sprintf("%+v", finalOutput)
+			return fmt.Sprintf("%+v", v)
 		}
 		return buf.String()
 	}
@@ -57,10 +57,10 @@ func PrettyPrintResult(result RunResult) string {
 	var sb strings.Builder
 
 	sb.WriteString("RunResult:")
-	_, _ = fmt.Fprintf(&sb, "\n- Last agent: Agent(name=%q, ...)", result.LastAgent().Name)
+	_, _ = fmt.Fprintf(&sb, "\n- Last agent: Agent(name=%q, ...)", result.LastAgent.Name)
 
 	_, _ = fmt.Fprintf(&sb, "\n- Final output (%T):\n", result.FinalOutput)
-	sb.WriteString(indent(strings.TrimSuffix(finalOutputStr(result.RunResultBase), "\n"), 2))
+	sb.WriteString(indent(strings.TrimSuffix(finalOutputStr(result.FinalOutput), "\n"), 2))
 
 	_, _ = fmt.Fprintf(&sb, "\n- %d new item(s)", len(result.NewItems))
 	_, _ = fmt.Fprintf(&sb, "\n- %d raw response(s)", len(result.RawResponses))
@@ -81,7 +81,7 @@ func PrettyPrintRunResultStreaming(result RunResultStreaming) string {
 	_, _ = fmt.Fprintf(&sb, "\n- Is complete: %v", result.IsComplete.Load())
 
 	_, _ = fmt.Fprintf(&sb, "\n- Final output (%T):\n", result.FinalOutput)
-	sb.WriteString(indent(strings.TrimSuffix(finalOutputStr(result.RunResultBase), "\n"), 2))
+	sb.WriteString(indent(strings.TrimSuffix(finalOutputStr(result.FinalOutput), "\n"), 2))
 
 	_, _ = fmt.Fprintf(&sb, "\n- %d new item(s)", len(result.NewItems))
 	_, _ = fmt.Fprintf(&sb, "\n- %d raw response(s)", len(result.RawResponses))
