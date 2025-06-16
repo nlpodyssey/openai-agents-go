@@ -89,7 +89,7 @@ type RunResultStreaming struct {
 	runImplTask              *atomic.Pointer[asynctask.Task[error]]
 	inputGuardrailsTask      *atomic.Pointer[asynctask.Task[error]]
 	outputGuardrailsTask     *atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]
-	storedException          *atomic.Pointer[error]
+	storedError              *atomic.Pointer[error]
 }
 
 type outputGuardrailsTaskResult struct {
@@ -116,7 +116,7 @@ func newRunResultStreaming(ctx context.Context) *RunResultStreaming {
 		runImplTask:              new(atomic.Pointer[asynctask.Task[error]]),
 		inputGuardrailsTask:      new(atomic.Pointer[asynctask.Task[error]]),
 		outputGuardrailsTask:     new(atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]),
-		storedException:          newZeroValAtomicPointer[error](),
+		storedError:              newZeroValAtomicPointer[error](),
 	}
 }
 
@@ -214,8 +214,8 @@ func (r *RunResultStreaming) createOutputGuardrailsTask(ctx context.Context, fn 
 	r.setOutputGuardrailsTask(asynctask.CreateTask(ctx, fn))
 }
 
-func (r *RunResultStreaming) getStoredException() error  { return *r.storedException.Load() }
-func (r *RunResultStreaming) setStoredException(v error) { r.storedException.Store(&v) }
+func (r *RunResultStreaming) getStoredError() error  { return *r.storedError.Load() }
+func (r *RunResultStreaming) setStoredError(v error) { r.storedError.Store(&v) }
 
 // ToInputList creates a new input list, merging the original input with all the new items generated.
 func (r *RunResultStreaming) ToInputList() []TResponseInputItem {
@@ -262,8 +262,8 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 			return err
 		}
 
-		if r.getStoredException() != nil {
-			slog.Debug("Breaking due to stored exception")
+		if r.getStoredError() != nil {
+			slog.Debug("Breaking due to stored error")
 			r.markAsComplete()
 			break
 		}
@@ -302,7 +302,7 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 	}
 
 	r.cleanupTasks()
-	return r.getStoredException()
+	return r.getStoredError()
 }
 
 // createErrorDetails returns a RunErrorDetails object considering the current attributes of the class.
@@ -322,7 +322,7 @@ func (r *RunResultStreaming) checkErrors() error {
 	if r.CurrentTurn() > r.MaxTurns() {
 		maxTurnsErr := MaxTurnsExceededErrorf("Max turns (%d) exceeded", r.MaxTurns())
 		maxTurnsErr.AgentsError.RunData = r.createErrorDetails()
-		r.setStoredException(maxTurnsErr)
+		r.setStoredError(maxTurnsErr)
 	}
 
 	// Fetch all the completed guardrail results from the queue and raise if needed
@@ -331,11 +331,11 @@ func (r *RunResultStreaming) checkErrors() error {
 		if ok && guardrailResult.Output.TripwireTriggered {
 			tripwireErr := NewInputGuardrailTripwireTriggeredError(guardrailResult)
 			tripwireErr.AgentsError.RunData = r.createErrorDetails()
-			r.setStoredException(tripwireErr)
+			r.setStoredError(tripwireErr)
 		}
 	}
 
-	// Check the tasks for any exceptions
+	// Check the tasks for any error
 	if t := r.getRunImplTask(); t != nil && t.IsDone() {
 		result := t.Await()
 		if result.Canceled {
@@ -346,7 +346,7 @@ func (r *RunResultStreaming) checkErrors() error {
 			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
 				agentsErr.RunData = r.createErrorDetails()
 			}
-			r.setStoredException(fmt.Errorf("run-impl task error: %w", err))
+			r.setStoredError(fmt.Errorf("run-impl task error: %w", err))
 		}
 	}
 
@@ -360,7 +360,7 @@ func (r *RunResultStreaming) checkErrors() error {
 			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
 				agentsErr.RunData = r.createErrorDetails()
 			}
-			r.setStoredException(fmt.Errorf("input guardrails task error: %w", err))
+			r.setStoredError(fmt.Errorf("input guardrails task error: %w", err))
 		}
 	}
 
@@ -374,7 +374,7 @@ func (r *RunResultStreaming) checkErrors() error {
 			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
 				agentsErr.RunData = r.createErrorDetails()
 			}
-			r.setStoredException(fmt.Errorf("output guardrails task error: %w", err))
+			r.setStoredError(fmt.Errorf("output guardrails task error: %w", err))
 		}
 	}
 
