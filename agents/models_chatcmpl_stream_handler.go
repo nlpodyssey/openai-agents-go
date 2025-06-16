@@ -33,6 +33,15 @@ type StreamingState struct {
 	FunctionCalls                map[int64]*responses.ResponseOutputItemUnion // responses.ResponseFunctionToolCall
 }
 
+func NewStreamingState() StreamingState {
+	return StreamingState{
+		Started:                      false,
+		TextContentIndexAndOutput:    nil,
+		RefusalContentIndexAndOutput: nil,
+		FunctionCalls:                make(map[int64]*responses.ResponseOutputItemUnion), // responses.ResponseFunctionToolCall
+	}
+}
+
 type textContentIndexAndOutput struct {
 	Index  int64
 	Output responses.ResponseStreamEventUnionPart // responses.ResponseOutputText
@@ -41,6 +50,16 @@ type textContentIndexAndOutput struct {
 type refusalContentIndexAndOutput struct {
 	Index  int64
 	Output responses.ResponseStreamEventUnionPart // responses.ResponseOutputRefusal
+}
+
+type SequenceNumber struct {
+	n int64
+}
+
+func (sn *SequenceNumber) GetAndIncrement() int64 {
+	n := sn.n
+	sn.n += 1
+	return n
 }
 
 type chatCmplStreamHandler struct{}
@@ -55,12 +74,8 @@ func (chatCmplStreamHandler) HandleStream(
 		defer func() { _ = stream.Close() }()
 
 		var completionUsage *openai.CompletionUsage
-		state := StreamingState{
-			Started:                      false,
-			TextContentIndexAndOutput:    nil,
-			RefusalContentIndexAndOutput: nil,
-			FunctionCalls:                make(map[int64]*responses.ResponseOutputItemUnion), // responses.ResponseFunctionToolCall
-		}
+		state := NewStreamingState()
+		sequenceNumber := SequenceNumber{}
 
 		for stream.Next() {
 			chunk := stream.Current()
@@ -68,8 +83,9 @@ func (chatCmplStreamHandler) HandleStream(
 			if !state.Started {
 				state.Started = true
 				if !yield(&TResponseStreamEvent{
-					Response: response,
-					Type:     "response.created",
+					Response:       response,
+					Type:           "response.created",
+					SequenceNumber: sequenceNumber.GetAndIncrement(),
 				}, nil) {
 					return
 				}
@@ -111,9 +127,10 @@ func (chatCmplStreamHandler) HandleStream(
 					}
 					// Notify consumers of the start of a new output message + first content part
 					if !yield(&TResponseStreamEvent{ // responses.ResponseOutputItemAddedEvent
-						Item:        assistantItem,
-						OutputIndex: 0,
-						Type:        "response.output_item.added",
+						Item:           assistantItem,
+						OutputIndex:    0,
+						Type:           "response.output_item.added",
+						SequenceNumber: sequenceNumber.GetAndIncrement(),
 					}, nil) {
 						return
 					}
@@ -126,7 +143,8 @@ func (chatCmplStreamHandler) HandleStream(
 							Type:        "output_text",
 							Annotations: nil,
 						},
-						Type: "response.content_part.added",
+						Type:           "response.content_part.added",
+						SequenceNumber: sequenceNumber.GetAndIncrement(),
 					}, nil) {
 						return
 					}
@@ -137,9 +155,10 @@ func (chatCmplStreamHandler) HandleStream(
 					Delta: responses.ResponseStreamEventUnionDelta{
 						OfString: delta.Content,
 					},
-					ItemID:      FakeResponsesID,
-					OutputIndex: 0,
-					Type:        "response.output_text.delta",
+					ItemID:         FakeResponsesID,
+					OutputIndex:    0,
+					Type:           "response.output_text.delta",
+					SequenceNumber: sequenceNumber.GetAndIncrement(),
 				}, nil) {
 					return
 				}
@@ -172,9 +191,10 @@ func (chatCmplStreamHandler) HandleStream(
 					}
 					// Notify downstream that assistant message + first content part are starting
 					if !yield(&TResponseStreamEvent{ // responses.ResponseOutputItemAddedEvent
-						Item:        assistantItem,
-						OutputIndex: 0,
-						Type:        "response.output_item.added",
+						Item:           assistantItem,
+						OutputIndex:    0,
+						Type:           "response.output_item.added",
+						SequenceNumber: sequenceNumber.GetAndIncrement(),
 					}, nil) {
 						return
 					}
@@ -187,7 +207,8 @@ func (chatCmplStreamHandler) HandleStream(
 							Type:        "output_text",
 							Annotations: nil,
 						},
-						Type: "response.content_part.added",
+						Type:           "response.content_part.added",
+						SequenceNumber: sequenceNumber.GetAndIncrement(),
 					}, nil) {
 						return
 					}
@@ -198,9 +219,10 @@ func (chatCmplStreamHandler) HandleStream(
 					Delta: responses.ResponseStreamEventUnionDelta{
 						OfString: delta.Refusal,
 					},
-					ItemID:      FakeResponsesID,
-					OutputIndex: 0,
-					Type:        "response.refusal.delta",
+					ItemID:         FakeResponsesID,
+					OutputIndex:    0,
+					Type:           "response.refusal.delta",
+					SequenceNumber: sequenceNumber.GetAndIncrement(),
 				}, nil) {
 					return
 				}
@@ -214,7 +236,6 @@ func (chatCmplStreamHandler) HandleStream(
 			for _, tcDelta := range delta.ToolCalls {
 				tc, ok := state.FunctionCalls[tcDelta.Index]
 				if !ok {
-
 					tc = &responses.ResponseOutputItemUnion{ // responses.ResponseFunctionToolCall
 						ID:        FakeResponsesID,
 						Arguments: "",
@@ -241,11 +262,12 @@ func (chatCmplStreamHandler) HandleStream(
 			functionCallStartingIndex += 1
 			// Send end event for this content part
 			if !yield(&TResponseStreamEvent{ // responses.ResponseContentPartDoneEvent
-				ContentIndex: state.TextContentIndexAndOutput.Index,
-				ItemID:       FakeResponsesID,
-				OutputIndex:  0,
-				Part:         state.TextContentIndexAndOutput.Output,
-				Type:         "response.content_part.done",
+				ContentIndex:   state.TextContentIndexAndOutput.Index,
+				ItemID:         FakeResponsesID,
+				OutputIndex:    0,
+				Part:           state.TextContentIndexAndOutput.Output,
+				Type:           "response.content_part.done",
+				SequenceNumber: sequenceNumber.GetAndIncrement(),
 			}, nil) {
 				return
 			}
@@ -255,11 +277,12 @@ func (chatCmplStreamHandler) HandleStream(
 			functionCallStartingIndex += 1
 			// Send end event for this content part
 			if !yield(&TResponseStreamEvent{ // responses.ResponseContentPartDoneEvent
-				ContentIndex: state.RefusalContentIndexAndOutput.Index,
-				ItemID:       FakeResponsesID,
-				OutputIndex:  0,
-				Part:         state.RefusalContentIndexAndOutput.Output,
-				Type:         "response.content_part.done",
+				ContentIndex:   state.RefusalContentIndexAndOutput.Index,
+				ItemID:         FakeResponsesID,
+				OutputIndex:    0,
+				Part:           state.RefusalContentIndexAndOutput.Output,
+				Type:           "response.content_part.done",
+				SequenceNumber: sequenceNumber.GetAndIncrement(),
 			}, nil) {
 				return
 			}
@@ -276,8 +299,9 @@ func (chatCmplStreamHandler) HandleStream(
 					Name:      functionCall.Name,
 					Type:      "function_call",
 				},
-				OutputIndex: functionCallStartingIndex,
-				Type:        "response.output_item.added",
+				OutputIndex:    functionCallStartingIndex,
+				Type:           "response.output_item.added",
+				SequenceNumber: sequenceNumber.GetAndIncrement(),
 			}, nil) {
 				return
 			}
@@ -286,9 +310,10 @@ func (chatCmplStreamHandler) HandleStream(
 				Delta: responses.ResponseStreamEventUnionDelta{
 					OfString: functionCall.Arguments,
 				},
-				ItemID:      FakeResponsesID,
-				OutputIndex: functionCallStartingIndex,
-				Type:        "response.function_call_arguments.delta",
+				ItemID:         FakeResponsesID,
+				OutputIndex:    functionCallStartingIndex,
+				Type:           "response.function_call_arguments.delta",
+				SequenceNumber: sequenceNumber.GetAndIncrement(),
 			}, nil) {
 				return
 			}
@@ -301,8 +326,9 @@ func (chatCmplStreamHandler) HandleStream(
 					Name:      functionCall.Name,
 					Type:      "function_call",
 				},
-				OutputIndex: functionCallStartingIndex,
-				Type:        "response.output_item.done",
+				OutputIndex:    functionCallStartingIndex,
+				Type:           "response.output_item.done",
+				SequenceNumber: sequenceNumber.GetAndIncrement(),
 			}, nil) {
 				return
 			}
@@ -338,9 +364,10 @@ func (chatCmplStreamHandler) HandleStream(
 
 			// send a ResponseOutputItemDone for the assistant message
 			if !yield(&TResponseStreamEvent{ // responses.ResponseOutputItemDoneEvent
-				Item:        assistantMsg,
-				OutputIndex: 0,
-				Type:        "response.output_item.done",
+				Item:           assistantMsg,
+				OutputIndex:    0,
+				Type:           "response.output_item.done",
+				SequenceNumber: sequenceNumber.GetAndIncrement(),
 			}, nil) {
 				return
 			}
@@ -350,7 +377,7 @@ func (chatCmplStreamHandler) HandleStream(
 			outputs = append(outputs, *functionCall)
 		}
 
-		finalResponse := response
+		finalResponse := response // copy
 		finalResponse.Output = outputs
 
 		finalResponse.Usage = responses.ResponseUsage{}
@@ -369,8 +396,9 @@ func (chatCmplStreamHandler) HandleStream(
 		}
 
 		yield(&TResponseStreamEvent{ // responses.ResponseCompletedEvent
-			Response: finalResponse,
-			Type:     "response.completed",
+			Response:       finalResponse,
+			Type:           "response.completed",
+			SequenceNumber: sequenceNumber.GetAndIncrement(),
 		}, nil)
 	}
 }
