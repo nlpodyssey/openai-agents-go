@@ -379,66 +379,8 @@ func (conv responsesConverter) convertTool(
 		}
 		includes = nil
 	case MCPTool:
-		// Create a map for allowed tools if provided
-		var allowedTools responses.ToolMcpAllowedToolsUnionParam
-		if len(t.AllowedTools) > 0 {
-			allowedTools.OfMcpAllowedTools = t.AllowedTools
-		}
-
-		// Create a map for headers if provided
-		headers := t.Headers
-
-		// Handle RequireApproval based on its type
-		var requireApproval responses.ToolMcpRequireApprovalUnionParam
-		switch v := t.RequireApproval.(type) {
-		case string:
-			requireApproval.OfMcpToolApprovalSetting = param.NewOpt(v)
-		case map[string]interface{}:
-			// Handle the complex approval filter structure
-			filter := &responses.ToolMcpRequireApprovalMcpToolApprovalFilterParam{}
-
-			if always, ok := v["always"].(map[string]interface{}); ok {
-				if toolNames, ok := always["tool_names"].([]string); ok {
-					filter.Always.ToolNames = toolNames
-				} else if toolNamesRaw, ok := always["tool_names"].([]interface{}); ok {
-					// Convert []interface{} to []string
-					toolNames := make([]string, len(toolNamesRaw))
-					for i, name := range toolNamesRaw {
-						if strName, ok := name.(string); ok {
-							toolNames[i] = strName
-						}
-					}
-					filter.Always.ToolNames = toolNames
-				}
-			}
-
-			if never, ok := v["never"].(map[string]interface{}); ok {
-				if toolNames, ok := never["tool_names"].([]string); ok {
-					filter.Never.ToolNames = toolNames
-				} else if toolNamesRaw, ok := never["tool_names"].([]interface{}); ok {
-					// Convert []interface{} to []string
-					toolNames := make([]string, len(toolNamesRaw))
-					for i, name := range toolNamesRaw {
-						if strName, ok := name.(string); ok {
-							toolNames[i] = strName
-						}
-					}
-					filter.Never.ToolNames = toolNames
-				}
-			}
-
-			requireApproval.OfMcpToolApprovalFilter = filter
-		}
-
 		convertedTool = &responses.ToolUnionParam{
-			OfMcp: &responses.ToolMcpParam{
-				Type:            "mcp",
-				ServerLabel:     t.ServerLabel,
-				ServerURL:       t.ServerURL,
-				RequireApproval: requireApproval,
-				Headers:         headers,
-				AllowedTools:    allowedTools,
-			},
+			OfMcp: conv.convertMCPTool(t),
 		}
 		includes = nil
 	default:
@@ -458,4 +400,63 @@ func (responsesConverter) convertHandoffTool(handoff Handoff) responses.ToolUnio
 			Type:        constant.ValueOf[constant.Function](),
 		},
 	}
+}
+
+// convertMCPTool converts an MCPTool to a responses.ToolMcpParam.
+func (responsesConverter) convertMCPTool(t MCPTool) *responses.ToolMcpParam {
+	// Create a map for allowed tools if provided
+	var allowedTools responses.ToolMcpAllowedToolsUnionParam
+	if len(t.AllowedTools) > 0 {
+		allowedTools.OfMcpAllowedTools = t.AllowedTools
+	}
+
+	// Handle RequireApproval based on its type
+	var requireApproval responses.ToolMcpRequireApprovalUnionParam
+	switch v := t.RequireApproval.(type) {
+	case string:
+		requireApproval.OfMcpToolApprovalSetting = param.NewOpt(v)
+	case map[string]interface{}:
+		requireApproval.OfMcpToolApprovalFilter = convertMCPApprovalFilter(v)
+	}
+
+	return &responses.ToolMcpParam{
+		Type:            "mcp",
+		ServerLabel:     t.ServerLabel,
+		ServerURL:       t.ServerURL,
+		RequireApproval: requireApproval,
+		Headers:         t.Headers,
+		AllowedTools:    allowedTools,
+	}
+}
+
+// convertMCPApprovalFilter converts a map to a ToolMcpRequireApprovalMcpToolApprovalFilterParam.
+func convertMCPApprovalFilter(filterMap map[string]interface{}) *responses.ToolMcpRequireApprovalMcpToolApprovalFilterParam {
+	filter := &responses.ToolMcpRequireApprovalMcpToolApprovalFilterParam{}
+
+	if always, ok := filterMap["always"].(map[string]interface{}); ok {
+		filter.Always.ToolNames = convertToStringSlice(always["tool_names"])
+	}
+
+	if never, ok := filterMap["never"].(map[string]interface{}); ok {
+		filter.Never.ToolNames = convertToStringSlice(never["tool_names"])
+	}
+
+	return filter
+}
+
+// convertToStringSlice converts an interface{} to []string.
+func convertToStringSlice(value interface{}) []string {
+	switch v := value.(type) {
+	case []string:
+		return v
+	case []interface{}:
+		result := make([]string, 0, len(v))
+		for _, item := range v {
+			if str, ok := item.(string); ok {
+				result = append(result, str)
+			}
+		}
+		return result
+	}
+	return nil
 }
