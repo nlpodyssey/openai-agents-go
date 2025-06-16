@@ -134,38 +134,23 @@ func (a *Agent) AsTool(params AgentAsToolParams) Tool {
 		name = transforms.TransformStringFunctionStyle(a.Name)
 	}
 
-	return FunctionTool{
-		Name:             name,
-		Description:      params.ToolDescription,
-		ParamsJSONSchema: a.agentAsToolParamsJSONSchema(name + "_args"),
-		StrictJSONSchema: param.NewOpt(true),
-		OnInvokeTool: func(ctx context.Context, input string) (any, error) {
-			output, err := DefaultRunner.Run(ctx, a, input)
-			if err != nil {
-				return nil, fmt.Errorf("failed to run agent %s as tool: %w", a.Name, err)
-			}
-			if params.CustomOutputExtractor != nil {
-				return params.CustomOutputExtractor(*output)
-			}
-
-			return ItemHelpers().TextMessageOutputs(output.NewItems), nil
-		},
+	type argsType struct {
+		Input string `json:"input"`
 	}
-}
 
-func (*Agent) agentAsToolParamsJSONSchema(title string) map[string]any {
-	return map[string]any{
-		"title":                title,
-		"type":                 "object",
-		"required":             []string{"input"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"input": map[string]any{
-				"title": "Input",
-				"type":  "string",
-			},
-		},
+	runAgent := func(ctx context.Context, args argsType) (string, error) {
+		output, err := DefaultRunner.Run(ctx, a, args.Input)
+		if err != nil {
+			return "", fmt.Errorf("failed to run agent %s as tool: %w", a.Name, err)
+		}
+		if params.CustomOutputExtractor != nil {
+			return params.CustomOutputExtractor(*output)
+		}
+
+		return ItemHelpers().TextMessageOutputs(output.NewItems), nil
 	}
+
+	return NewFunctionTool(name, params.ToolDescription, runAgent)
 }
 
 // GetSystemPrompt returns the system prompt for the agent.
