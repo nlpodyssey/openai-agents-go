@@ -70,9 +70,9 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 	}
 
 	if DontLogModelData {
-		slog.Debug("LLM responded")
+		Logger().Debug("LLM responded")
 	} else {
-		slog.Debug("LLM responded", slog.String("message", SimplePrettyJSONMarshal(response.Choices[0].Message)))
+		Logger().Debug("LLM responded", slog.String("message", SimplePrettyJSONMarshal(response.Choices[0].Message)))
 	}
 
 	u := usage.NewUsage()
@@ -199,9 +199,9 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 	}
 
 	if DontLogModelData {
-		slog.Debug("Calling LLM")
+		Logger().Debug("Calling LLM")
 	} else {
-		slog.Debug(
+		Logger().Debug(
 			"Calling LLM",
 			slog.String("Messages", SimplePrettyJSONMarshal(convertedMessages)),
 			slog.String("Tools", SimplePrettyJSONMarshal(convertedTools)),

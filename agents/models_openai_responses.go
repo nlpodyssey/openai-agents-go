@@ -64,14 +64,14 @@ func (m OpenAIResponsesModel) GetResponse(
 
 	response, err := m.client.Responses.New(ctx, *body, opts...)
 	if err != nil {
-		slog.Error("error getting response", slog.String("error", err.Error()))
+		Logger().Error("error getting response", slog.String("error", err.Error()))
 		return nil, err
 	}
 
 	if DontLogModelData {
-		slog.Debug("LLM responded")
+		Logger().Debug("LLM responded")
 	} else {
-		slog.Debug("LLM responded", slog.String("output", SimplePrettyJSONMarshal(response.Output)))
+		Logger().Debug("LLM responded", slog.String("output", SimplePrettyJSONMarshal(response.Output)))
 	}
 
 	u := usage.NewUsage()
@@ -164,9 +164,9 @@ func (m OpenAIResponsesModel) prepareRequest(
 	responseFormat := ResponsesConverter().GetResponseFormat(outputSchema)
 
 	if DontLogModelData {
-		slog.Debug("Calling LLM")
+		Logger().Debug("Calling LLM")
 	} else {
-		slog.Debug(
+		Logger().Debug(
 			"Calling LLM",
 			slog.String("Input", SimplePrettyJSONMarshal(listInput)),
 			slog.String("Tools", SimplePrettyJSONMarshal(convertedTools.Tools)),

@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"slices"
 	"sync/atomic"
 
@@ -263,7 +262,7 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 		}
 
 		if r.getStoredError() != nil {
-			slog.Debug("Breaking due to stored error")
+			Logger().Debug("Breaking due to stored error")
 			r.markAsComplete()
 			break
 		}
