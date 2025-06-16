@@ -633,7 +633,7 @@ func (r Runner) runSingleTurnStreamed(
 	}
 
 	// 1. Stream the output events
-	stream, err := model.StreamResponse(ctx, ModelStreamResponseParams{
+	stream, err := model.StreamResponse(ctx, ModelResponseParams{
 		SystemInstructions: systemPrompt,
 		Input:              InputItems(input),
 		ModelSettings:      modelSettings,
@@ -961,7 +961,7 @@ func (r Runner) getNewResponse(
 	modelSettings := agent.ModelSettings.Resolve(runConfig.ModelSettings)
 	modelSettings = RunImpl().MaybeResetToolChoice(agent, toolUseTracker, modelSettings)
 
-	newResponse, err := model.GetResponse(ctx, ModelGetResponseParams{
+	newResponse, err := model.GetResponse(ctx, ModelResponseParams{
 		SystemInstructions: systemPrompt,
 		Input:              InputItems(input),
 		ModelSettings:      modelSettings,

@@ -75,7 +75,7 @@ func (m *FakeModel) GetNextOutput() FakeModelTurnOutput {
 	return v
 }
 
-func (m *FakeModel) GetResponse(_ context.Context, params agents.ModelGetResponseParams) (*agents.ModelResponse, error) {
+func (m *FakeModel) GetResponse(_ context.Context, params agents.ModelResponseParams) (*agents.ModelResponse, error) {
 	m.LastTurnArgs = FakeModelLastTurnArgs{
 		SystemInstructions: params.SystemInstructions,
 		Input:              params.Input,
@@ -103,7 +103,7 @@ func (m *FakeModel) GetResponse(_ context.Context, params agents.ModelGetRespons
 	}, nil
 }
 
-func (m *FakeModel) StreamResponse(_ context.Context, params agents.ModelStreamResponseParams) (iter.Seq2[*agents.TResponseStreamEvent, error], error) {
+func (m *FakeModel) StreamResponse(_ context.Context, params agents.ModelResponseParams) (iter.Seq2[*agents.TResponseStreamEvent, error], error) {
 	m.LastTurnArgs = FakeModelLastTurnArgs{
 		SystemInstructions: params.SystemInstructions,
 		Input:              params.Input,
