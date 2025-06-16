@@ -130,7 +130,7 @@ func (r Runner) RunResponseInputsStreamed(ctx context.Context, startingAgent *Ag
 //  3. If there's a handoff, we run the loop again, with the new agent.
 //  4. Else, we run tool calls (if any), and re-run the loop.
 //
-// In two cases, the agent may raise an exception:
+// In two cases, the agent run may return an error:
 //  1. If the maxTurns is exceeded, a MaxTurnsExceededError is returned.
 //  2. If a guardrail tripwire is triggered, a *GuardrailTripwireTriggeredError is returned.
 //
@@ -324,8 +324,8 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 //  3. If there's a handoff, we run the loop again, with the new agent.
 //  4. Else, we run tool calls (if any), and re-run the loop.
 //
-// In two cases, the agent may raise an exception:
-//  1. If the max_turns is exceeded, a MaxTurnsExceededError is raised.
+// In two cases, the agent run may return an error:
+//  1. If the max_turns is exceeded, a MaxTurnsExceededError is returned.
 //  2. If a guardrail tripwire is triggered, a *GuardrailTripwireTriggeredError is returned.
 //
 // Note that only the first agent's input guardrails are run.

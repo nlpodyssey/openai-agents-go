@@ -480,7 +480,7 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 				},
 			}
 			result = append(result, msg)
-		} else if itemRef := item.OfItemReference; !param.IsOmitted(itemRef) { // 6) item reference => handle or raise
+		} else if itemRef := item.OfItemReference; !param.IsOmitted(itemRef) { // 6) item reference => handle or return error
 			return nil, UserErrorf("encountered an item_reference, which is not supported: %+v", *itemRef)
 		} else { // 7) If we haven't recognized it => fail or ignore
 			return nil, UserErrorf("unhandled item type or structure: %+v", item)

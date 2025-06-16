@@ -128,16 +128,16 @@ func main() {
 
 	input := "Tell me 3 short jokes."
 
-	// First, let's try with a strict output type. This should raise an exception.
+	// First, let's try with a strict output type. This should return an error.
 	agent.OutputSchema = OutputTypeSchema{isStrictJSONSchema: true}
 	_, err := agents.Run(ctx, agent, input)
 	if err == nil {
-		panic("Should have raised an exception")
+		panic("Should have returned an error")
 	}
 	fmt.Printf("Error (always expected): %s\n", err)
 
 	// Now let's try again with a non-strict output type. This should work.
-	// In some cases, it will raise an error - the schema isn't strict, so the model may
+	// In some cases, it will return an error - the schema isn't strict, so the model may
 	// produce an invalid JSON object.
 	agent.OutputSchema = OutputTypeSchema{isStrictJSONSchema: false}
 	result, err := agents.Run(ctx, agent, input)

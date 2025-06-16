@@ -144,11 +144,11 @@ func TestHandoffInputType(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Invalid JSON should raise an error
+	// Invalid JSON should return an error
 	_, err = obj.OnInvokeHandoff(t.Context(), "not json")
 	require.Error(t, err)
 
-	// Empty JSON should raise an error
+	// Empty JSON should return an error
 	_, err = obj.OnInvokeHandoff(t.Context(), "")
 	require.Error(t, err)
 
