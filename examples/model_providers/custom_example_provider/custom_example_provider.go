@@ -38,11 +38,11 @@ func init() {
 }
 
 /*
-This example uses a custom provider for some calls to Runner().Run(), and direct calls to OpenAI for
+This example uses a custom provider for some calls to Runner.Run(), and direct calls to OpenAI for
 others. Steps:
 1. Create a custom OpenAI client.
 2. Create a ModelProvider that uses the custom client.
-3. Use the ModelProvider in calls to Runner().Run(), only when we want to use the custom LLM provider.
+3. Use the ModelProvider in calls to Runner.Run(), only when we want to use the custom LLM provider.
 */
 
 var Client = agents.NewOpenaiClient(

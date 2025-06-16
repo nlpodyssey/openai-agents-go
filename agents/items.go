@@ -48,7 +48,7 @@ type ModelResponse struct {
 	ResponseID string
 }
 
-// ToInputItems convert the output into a list of input items suitable for passing to the model.
+// ToInputItems converts the output into a list of input items suitable for passing to the model.
 func (mr ModelResponse) ToInputItems() []TResponseInputItem {
 	inputItems := make([]TResponseInputItem, len(mr.Output))
 	for i, outputItem := range mr.Output {
