@@ -62,19 +62,19 @@ type itemHelpers struct{}
 func ItemHelpers() itemHelpers { return itemHelpers{} }
 
 // ExtractLastContent extracts the last text content or refusal from a message.
-func (itemHelpers) ExtractLastContent(message TResponseOutputItem) string {
+func (itemHelpers) ExtractLastContent(message TResponseOutputItem) (string, error) {
 	if message.Type != "message" {
-		return ""
+		return "", nil
 	}
 
 	lastContent := message.Content[len(message.Content)-1]
 	switch lastContent.Type {
 	case "output_text":
-		return lastContent.Text
+		return lastContent.Text, nil
 	case "refusal":
-		return lastContent.Refusal
+		return lastContent.Refusal, nil
 	default:
-		panic(fmt.Errorf("unexpected responses.ResponseOutputMessageContentUnion type %T", lastContent))
+		return "", ModelBehaviorErrorf("unexpected content type %q", lastContent.Type)
 	}
 }
 

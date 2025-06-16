@@ -24,6 +24,7 @@ import (
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // makeMessage is a helper to construct a TResponseOutputItem (responses.ResponseOutputMessage)
@@ -54,7 +55,8 @@ func TestExtractLastContentOfTextMessage(t *testing.T) {
 	)
 
 	// Helpers should yield the last segment's text.
-	v := agents.ItemHelpers().ExtractLastContent(message)
+	v, err := agents.ItemHelpers().ExtractLastContent(message)
+	require.NoError(t, err)
 	assert.Equal(t, "world!", v)
 }
 
@@ -73,7 +75,8 @@ func TestExtractLastContentOfRefusalMessage(t *testing.T) {
 	)
 
 	// Helpers should extract the refusal string when last content is a refusal.
-	v := agents.ItemHelpers().ExtractLastContent(message)
+	v, err := agents.ItemHelpers().ExtractLastContent(message)
+	require.NoError(t, err)
 	assert.Equal(t, "I cannot do that", v)
 }
 
@@ -87,7 +90,8 @@ func TestExtractLastContentNonMessageReturnsEmpty(t *testing.T) {
 		Type:      "function_call",
 	}
 
-	v := agents.ItemHelpers().ExtractLastContent(toolCall)
+	v, err := agents.ItemHelpers().ExtractLastContent(toolCall)
+	require.NoError(t, err)
 	assert.Equal(t, "", v)
 }
 
