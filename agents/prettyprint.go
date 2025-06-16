@@ -92,6 +92,20 @@ func PrettyPrintRunResultStreaming(result RunResultStreaming) string {
 	return sb.String()
 }
 
+func PrettyPrintRunErrorDetails(d RunErrorDetails) string {
+	var sb strings.Builder
+
+	sb.WriteString("RunErrorDetails:")
+	_, _ = fmt.Fprintf(&sb, "\n- Last agent: Agent(name=%q, ...)", d.LastAgent.Name)
+	_, _ = fmt.Fprintf(&sb, "\n- %d new item(s)", len(d.NewItems))
+	_, _ = fmt.Fprintf(&sb, "\n- %d raw response(s)", len(d.RawResponses))
+	_, _ = fmt.Fprintf(&sb, "\n- %d input guardrail result(s)", len(d.InputGuardrailResults))
+	_, _ = fmt.Fprintf(&sb, "\n- %d output guardrail result(s)", len(d.OutputGuardrailResults))
+	sb.WriteString("\n(See `RunErrorDetails` for more details)")
+
+	return sb.String()
+}
+
 func SimplePrettyJSONMarshal(v any) string {
 	s, err := PrettyJSONMarshal(v)
 	if err != nil {
