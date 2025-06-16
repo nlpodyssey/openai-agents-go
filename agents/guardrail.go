@@ -19,16 +19,17 @@ import (
 )
 
 // An InputGuardrail is a check that runs in parallel to the agent's execution.
-// Input guardrails can be used to do things like:
-// - Check if input messages are off-topic
-// - Take over control of the agent's execution if an unexpected input is detected
 //
-// Guardrails return a `GuardrailResult`. If `result.TripwireTriggered` is `true`, the agent
-// execution will immediately stop and a `InputGuardrailTripwireTriggered` error will be returned.
+// Input guardrails can be used to do things like:
+//   - Check if input messages are off-topic
+//   - Take over control of the agent's execution if an unexpected input is detected
+//
+// Guardrails return a InputGuardrailResult. If GuardrailFunctionOutput.TripwireTriggered is true,
+// the agent execution will immediately stop and an InputGuardrailTripwireTriggeredError will be returned.
 type InputGuardrail struct {
 	// A function that receives the agent input and the context, and returns a
-	// `GuardrailResult`. The result marks whether the tripwire was triggered, and can optionally
-	// include information about the guardrail's output.
+	// GuardrailFunctionOutput. The result marks whether the tripwire was
+	// triggered, and can optionally include information about the guardrail's output.
 	GuardrailFunction InputGuardrailFunction
 
 	// The name of the guardrail, used for error reporting and debugging.
@@ -68,11 +69,11 @@ type GuardrailFunctionOutput struct {
 // An OutputGuardrail is a check that runs on the final output of an agent.
 // Output guardrails can be used to do check if the output passes certain validation criteria.
 //
-// Guardrails return a `GuardrailResult`. If `result.TripwireTriggered` is `true`, an
-// `OutputGuardrailTripwireTriggered` error will be returned.
+// Guardrails return an OutputGuardrailResult. If GuardrailFunctionOutput.TripwireTriggered is true,
+// an OutputGuardrailTripwireTriggeredError will be returned.
 type OutputGuardrail struct {
 	// A function that receives the final agent, its output, and the context, and returns a
-	// `GuardrailResult`. The result marks whether the tripwire was triggered, and can optionally
+	// GuardrailFunctionOutput. The result marks whether the tripwire was triggered, and can optionally
 	// include information about the guardrail's output.
 	GuardrailFunction OutputGuardrailFunction
 
@@ -80,7 +81,7 @@ type OutputGuardrail struct {
 	Name string
 }
 
-type OutputGuardrailFunction = func(context.Context, *Agent, any) (GuardrailFunctionOutput, error)
+type OutputGuardrailFunction = func(ctx context.Context, agent *Agent, agentOutput any) (GuardrailFunctionOutput, error)
 
 func (og OutputGuardrail) Run(ctx context.Context, agent *Agent, agentOutput any) (OutputGuardrailResult, error) {
 	output, err := og.GuardrailFunction(ctx, agent, agentOutput)
