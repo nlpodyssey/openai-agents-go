@@ -49,7 +49,7 @@ func TestCancelCleansUpResources(t *testing.T) {
 	require.ErrorIs(t, err, stopErr)
 
 	// After cancel, queues should be empty and is_complete True
-	assert.True(t, result.IsComplete.Load())
+	assert.True(t, result.IsComplete())
 	assert.True(t, result.eventQueue.IsEmpty())
 	assert.True(t, result.inputGuardrailQueue.IsEmpty())
 }

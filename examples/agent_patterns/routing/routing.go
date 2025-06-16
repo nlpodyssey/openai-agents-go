@@ -114,6 +114,6 @@ func main() {
 				Type: responses.EasyInputMessageTypeMessage,
 			},
 		})
-		agent = result.CurrentAgent
+		agent = result.CurrentAgent()
 	}
 }
