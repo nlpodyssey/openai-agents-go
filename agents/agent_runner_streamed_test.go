@@ -46,13 +46,13 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Equal(t, agents.InputString("test"), result.Input)
-	assert.Len(t, result.NewItems, 1)
-	assert.Equal(t, "first", result.FinalOutput)
-	require.Len(t, result.RawResponses, 1)
+	assert.Equal(t, agents.InputString("test"), result.Input())
+	assert.Len(t, result.NewItems(), 1)
+	assert.Equal(t, "first", result.FinalOutput())
+	require.Len(t, result.RawResponses(), 1)
 	assert.Equal(t, []agents.TResponseOutputItem{
 		agentstesting.GetTextMessage("first"),
-	}, result.RawResponses[0].Output)
+	}, result.RawResponses()[0].Output)
 	assert.Same(t, agent, result.LastAgent())
 	assert.Len(t, result.ToInputList(), 2, "should have original input and generated item")
 
@@ -70,9 +70,9 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Len(t, result.NewItems, 1)
-	assert.Equal(t, "second", result.FinalOutput)
-	assert.Len(t, result.RawResponses, 1)
+	assert.Len(t, result.NewItems(), 1)
+	assert.Equal(t, "second", result.FinalOutput())
+	assert.Len(t, result.RawResponses(), 1)
 	assert.Len(t, result.ToInputList(), 3, "should have original input and generated item")
 }
 
@@ -94,8 +94,8 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Equal(t, agents.InputString("test"), result.Input)
-	assert.Len(t, result.NewItems, 1)
+	assert.Equal(t, agents.InputString("test"), result.Input())
+	assert.Len(t, result.NewItems(), 1)
 	assert.Len(t, result.ToInputList(), 2, "should have original input and generated item")
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
@@ -109,13 +109,13 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Len(t, result.Input.(agents.InputItems), 2)
-	assert.Len(t, result.NewItems, 1)
-	assert.Equal(t, "fourth", result.FinalOutput)
-	require.Len(t, result.RawResponses, 1)
+	assert.Len(t, result.Input().(agents.InputItems), 2)
+	assert.Len(t, result.NewItems(), 1)
+	assert.Equal(t, "fourth", result.FinalOutput())
+	require.Len(t, result.RawResponses(), 1)
 	assert.Equal(t, []agents.TResponseOutputItem{
 		agentstesting.GetTextMessage("fourth"),
-	}, result.RawResponses[0].Output)
+	}, result.RawResponses()[0].Output)
 	assert.Same(t, agent, result.LastAgent())
 	assert.Len(t, result.ToInputList(), 3, "should have original input and generated items")
 }
@@ -147,9 +147,9 @@ func TestToolCallRunsStreamed(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Equal(t, "done", result.FinalOutput)
+	assert.Equal(t, "done", result.FinalOutput())
 
-	assert.Len(t, result.RawResponses, 2,
+	assert.Len(t, result.RawResponses(), 2,
 		"should have two responses: the first which produces a tool call, "+
 			"and the second which handles the tool result")
 
@@ -198,9 +198,9 @@ func TestHandoffsStreaming(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Equal(t, "done", result.FinalOutput)
+	assert.Equal(t, "done", result.FinalOutput())
 
-	assert.Len(t, result.RawResponses, 3)
+	assert.Len(t, result.RawResponses(), 3)
 	assert.Len(t, result.ToInputList(), 7,
 		"should have 7 inputs: orig input, tool call, tool result, "+
 			"message, handoff, handoff result, and done message")
@@ -251,8 +251,8 @@ func TestStructuredOutputStreamed(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Equal(t, AgentRunnerTestFoo{Bar: "baz"}, result.FinalOutput)
-	assert.Len(t, result.RawResponses, 3)
+	assert.Equal(t, AgentRunnerTestFoo{Bar: "baz"}, result.FinalOutput())
+	assert.Len(t, result.RawResponses(), 3)
 	assert.Len(t, result.ToInputList(), 10,
 		"should have input: 2 orig inputs, function call, function call result, message, "+
 			"handoff, handoff output, tool call, tool call result, final output message")
@@ -292,8 +292,8 @@ func TestHandoffFiltersStreamed(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Equal(t, "last", result.FinalOutput)
-	assert.Len(t, result.RawResponses, 2)
+	assert.Equal(t, "last", result.FinalOutput())
+	assert.Len(t, result.RawResponses(), 2)
 	assert.Len(t, result.ToInputList(), 2, "should only have 2 inputs: orig input and last message")
 }
 
@@ -395,7 +395,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
-	assert.Equal(t, "last", result.FinalOutput)
+	assert.Equal(t, "last", result.FinalOutput())
 	assert.Equal(t, "test_input", callOutput)
 }
 
@@ -587,8 +587,8 @@ func TestStreamingEvents(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, AgentRunnerTestFoo{Bar: "baz"}, result.FinalOutput)
-	assert.Len(t, result.RawResponses, 3)
+	assert.Equal(t, AgentRunnerTestFoo{Bar: "baz"}, result.FinalOutput())
+	assert.Len(t, result.RawResponses(), 3)
 	assert.Len(t, result.ToInputList(), 10,
 		"should have input: 2 orig inputs, function call, function call result, "+
 			"message, handoff, handoff output, tool call, tool call result, final output")

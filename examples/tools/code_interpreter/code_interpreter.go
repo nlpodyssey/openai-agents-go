@@ -66,5 +66,5 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("Final output: %s\n", result.FinalOutput)
+	fmt.Printf("Final output: %s\n", result.FinalOutput())
 }

@@ -24,8 +24,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
-	"github.com/nlpodyssey/openai-agents-go/asynctask"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
@@ -351,28 +349,14 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 	outputSchema := startingAgent.OutputSchema
 	ctx = usage.NewContext(ctx, usage.NewUsage())
 
-	streamedResult := &RunResultStreaming{
-		Input:                    CopyGeneralInput(input),
-		NewItems:                 nil,
-		RawResponses:             nil,
-		FinalOutput:              nil,
-		InputGuardrailResults:    nil,
-		OutputGuardrailResults:   nil,
-		context:                  ctx,
-		CurrentAgent:             startingAgent,
-		CurrentTurn:              new(atomic.Uint64),
-		MaxTurns:                 maxTurns,
-		currentAgentOutputSchema: outputSchema,
-		IsComplete:               new(atomic.Bool),
-		eventQueue:               asyncqueue.New[StreamEvent](),
-		inputGuardrailQueue:      asyncqueue.New[InputGuardrailResult](),
-		runImplTask:              new(atomic.Pointer[asynctask.Task[error]]),
-		inputGuardrailsTask:      new(atomic.Pointer[asynctask.Task[error]]),
-		outputGuardrailsTask:     new(atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]),
-	}
+	streamedResult := newRunResultStreaming(ctx)
+	streamedResult.setInput(CopyGeneralInput(input))
+	streamedResult.setCurrentAgent(startingAgent)
+	streamedResult.setMaxTurns(maxTurns)
+	streamedResult.setCurrentAgentOutputSchema(outputSchema)
 
 	// Kick off the actual agent loop in the background and return the streamed result object.
-	streamedResult.runImplTask.Store(asynctask.CreateTask(ctx, func(ctx context.Context) error {
+	streamedResult.createRunImplTask(ctx, func(ctx context.Context) error {
 		return r.runStreamedImpl(
 			ctx,
 			input,
@@ -383,7 +367,7 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 			r.Config,
 			r.Config.PreviousResponseID,
 		)
-	}))
+	})
 
 	return streamedResult, nil
 }
@@ -427,7 +411,7 @@ func (r Runner) runInputGuardrailsWithQueue(
 		return err
 	}
 
-	streamedResult.InputGuardrailResults = guardrailResults
+	streamedResult.setInputGuardrailResults(guardrailResults)
 	return nil
 }
 
@@ -449,16 +433,16 @@ func (r Runner) runStreamedImpl(
 			if errors.As(err, &agentsErr) {
 				agentsErr.RunData = &RunErrorDetails{
 					Context:                ctx,
-					Input:                  streamedResult.Input,
-					NewItems:               streamedResult.NewItems,
-					RawResponses:           streamedResult.RawResponses,
+					Input:                  streamedResult.Input(),
+					NewItems:               streamedResult.NewItems(),
+					RawResponses:           streamedResult.RawResponses(),
 					LastAgent:              currentAgent,
-					InputGuardrailResults:  streamedResult.InputGuardrailResults,
-					OutputGuardrailResults: streamedResult.OutputGuardrailResults,
+					InputGuardrailResults:  streamedResult.InputGuardrailResults(),
+					OutputGuardrailResults: streamedResult.OutputGuardrailResults(),
 				}
 			}
 
-			streamedResult.IsComplete.Store(true)
+			streamedResult.markAsComplete()
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
 		}
 	}()
@@ -475,11 +459,7 @@ func (r Runner) runStreamedImpl(
 	shouldGetAgentTools := true
 	var allTools []Tool
 
-	for {
-		if streamedResult.IsComplete.Load() {
-			break
-		}
-
+	for !streamedResult.IsComplete() {
 		if shouldGetAgentTools {
 			allTools, err = r.getAllTools(ctx, currentAgent)
 			if err != nil {
@@ -489,7 +469,7 @@ func (r Runner) runStreamedImpl(
 		}
 
 		currentTurn += 1
-		streamedResult.CurrentTurn.Store(currentTurn)
+		streamedResult.setCurrentTurn(currentTurn)
 
 		if currentTurn > maxTurns {
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
@@ -498,7 +478,7 @@ func (r Runner) runStreamedImpl(
 
 		if currentTurn == 1 {
 			// Run the input guardrails in the background and put the results on the queue
-			streamedResult.inputGuardrailsTask.Store(asynctask.CreateTask(ctx, func(ctx context.Context) error {
+			streamedResult.createInputGuardrailsTask(ctx, func(ctx context.Context) error {
 				return r.runInputGuardrailsWithQueue(
 					ctx,
 					startingAgent,
@@ -506,7 +486,7 @@ func (r Runner) runStreamedImpl(
 					InputItems(ItemHelpers().InputToNewInputList(startingInput)),
 					streamedResult,
 				)
-			}))
+			})
 		}
 
 		turnResult, err := r.runSingleTurnStreamed(
@@ -525,13 +505,13 @@ func (r Runner) runStreamedImpl(
 		}
 		shouldRunAgentStartHooks = false
 
-		streamedResult.RawResponses = append(streamedResult.RawResponses, turnResult.ModelResponse)
-		streamedResult.Input = turnResult.OriginalInput
-		streamedResult.NewItems = turnResult.GeneratedItems()
+		streamedResult.appendRawResponses(turnResult.ModelResponse)
+		streamedResult.setInput(turnResult.OriginalInput)
+		streamedResult.setNewItems(turnResult.GeneratedItems())
 
 		switch nextStep := turnResult.NextStep.(type) {
 		case NextStepFinalOutput:
-			streamedResult.outputGuardrailsTask.Store(asynctask.CreateTask(ctx, func(ctx context.Context) outputGuardrailsTaskResult {
+			streamedResult.createOutputGuardrailsTask(ctx, func(ctx context.Context) outputGuardrailsTaskResult {
 				result, err := r.runOutputGuardrails(
 					ctx,
 					slices.Concat(currentAgent.OutputGuardrails, runConfig.OutputGuardrails),
@@ -539,9 +519,9 @@ func (r Runner) runStreamedImpl(
 					nextStep.Output,
 				)
 				return outputGuardrailsTaskResult{Result: result, Err: err}
-			}))
+			})
 
-			taskResult := streamedResult.outputGuardrailsTask.Load().Await()
+			taskResult := streamedResult.getOutputGuardrailsTask().Await()
 
 			var outputGuardrailResults []OutputGuardrailResult
 			if taskResult.Canceled {
@@ -552,9 +532,9 @@ func (r Runner) runStreamedImpl(
 				outputGuardrailResults = taskResult.Result.Result
 			}
 
-			streamedResult.OutputGuardrailResults = outputGuardrailResults
-			streamedResult.FinalOutput = nextStep.Output
-			streamedResult.IsComplete.Store(true)
+			streamedResult.setOutputGuardrailResults(outputGuardrailResults)
+			streamedResult.setFinalOutput(nextStep.Output)
+			streamedResult.markAsComplete()
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
@@ -573,7 +553,7 @@ func (r Runner) runStreamedImpl(
 		}
 	}
 
-	streamedResult.IsComplete.Store(true)
+	streamedResult.markAsComplete()
 	return nil
 }
 
@@ -625,8 +605,8 @@ func (r Runner) runSingleTurnStreamed(
 
 	outputSchema := agent.OutputSchema
 
-	streamedResult.CurrentAgent = agent
-	streamedResult.currentAgentOutputSchema = outputSchema
+	streamedResult.setCurrentAgent(agent)
+	streamedResult.setCurrentAgentOutputSchema(outputSchema)
 
 	systemPrompt, err := agent.GetSystemPrompt(ctx)
 	if err != nil {
@@ -647,8 +627,8 @@ func (r Runner) runSingleTurnStreamed(
 
 	var finalResponse *ModelResponse
 
-	input := ItemHelpers().InputToNewInputList(streamedResult.Input)
-	for _, item := range streamedResult.NewItems {
+	input := ItemHelpers().InputToNewInputList(streamedResult.Input())
+	for _, item := range streamedResult.NewItems() {
 		input = append(input, item.ToInputItem())
 	}
 
@@ -712,8 +692,8 @@ func (r Runner) runSingleTurnStreamed(
 		ctx,
 		agent,
 		allTools,
-		streamedResult.Input,
-		streamedResult.NewItems,
+		streamedResult.Input(),
+		streamedResult.NewItems(),
 		*finalResponse,
 		outputSchema,
 		handoffs,
