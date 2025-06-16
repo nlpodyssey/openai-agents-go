@@ -15,6 +15,8 @@
 package agents
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -88,6 +90,8 @@ func (r RunResult) String() string {
 // - A *GuardrailTripwireTriggeredError error if a guardrail is tripped.
 type RunResultStreaming struct {
 	RunResultBase
+
+	context context.Context
 
 	// The current agent that is running.
 	CurrentAgent *Agent
@@ -198,16 +202,33 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 	return r.storedException
 }
 
+// createErrorDetails returns a RunErrorDetails object considering the current attributes of the class.
+func (r *RunResultStreaming) createErrorDetails() *RunErrorDetails {
+	return &RunErrorDetails{
+		Context:                r.context,
+		Input:                  r.Input,
+		NewItems:               r.NewItems,
+		RawResponses:           r.RawResponses,
+		LastAgent:              r.CurrentAgent,
+		InputGuardrailResults:  r.InputGuardrailResults,
+		OutputGuardrailResults: r.OutputGuardrailResults,
+	}
+}
+
 func (r *RunResultStreaming) checkErrors() error {
 	if r.CurrentTurn.Load() > r.MaxTurns {
-		r.storedException = MaxTurnsExceededErrorf("Max turns (%d) exceeded", r.MaxTurns)
+		maxTurnsErr := MaxTurnsExceededErrorf("Max turns (%d) exceeded", r.MaxTurns)
+		maxTurnsErr.AgentsError.RunData = r.createErrorDetails()
+		r.storedException = maxTurnsErr
 	}
 
 	// Fetch all the completed guardrail results from the queue and raise if needed
 	for !r.inputGuardrailQueue.IsEmpty() {
 		guardrailResult, ok := r.inputGuardrailQueue.GetNoWait()
 		if ok && guardrailResult.Output.TripwireTriggered {
-			r.storedException = NewInputGuardrailTripwireTriggeredError(guardrailResult)
+			tripwireErr := NewInputGuardrailTripwireTriggeredError(guardrailResult)
+			tripwireErr.AgentsError.RunData = r.createErrorDetails()
+			r.storedException = tripwireErr
 		}
 	}
 
@@ -215,9 +236,13 @@ func (r *RunResultStreaming) checkErrors() error {
 	if t := r.runImplTask.Load(); t != nil && t.IsDone() {
 		result := t.Await()
 		if result.Canceled {
-			return NewCanceledError("run task has been canceled")
+			return NewTaskCanceledError("run task has been canceled")
 		}
 		if err := *result.Result; err != nil {
+			var agentsErr *AgentsError
+			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
+				agentsErr.RunData = r.createErrorDetails()
+			}
 			r.storedException = fmt.Errorf("run-impl task error: %w", err)
 		}
 	}
@@ -225,9 +250,13 @@ func (r *RunResultStreaming) checkErrors() error {
 	if t := r.inputGuardrailsTask.Load(); t != nil && t.IsDone() {
 		result := t.Await()
 		if result.Canceled {
-			return NewCanceledError("input guardrails task has been canceled")
+			return NewTaskCanceledError("input guardrails task has been canceled")
 		}
 		if err := *result.Result; err != nil {
+			var agentsErr *AgentsError
+			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
+				agentsErr.RunData = r.createErrorDetails()
+			}
 			r.storedException = fmt.Errorf("input guardrails task error: %w", err)
 		}
 	}
@@ -235,9 +264,13 @@ func (r *RunResultStreaming) checkErrors() error {
 	if t := r.outputGuardrailsTask.Load(); t != nil && t.IsDone() {
 		result := t.Await()
 		if result.Canceled {
-			return NewCanceledError("output guardrails task has been canceled")
+			return NewTaskCanceledError("output guardrails task has been canceled")
 		}
 		if err := result.Result.Err; err != nil {
+			var agentsErr *AgentsError
+			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
+				agentsErr.RunData = r.createErrorDetails()
+			}
 			r.storedException = fmt.Errorf("output guardrails task error: %w", err)
 		}
 	}

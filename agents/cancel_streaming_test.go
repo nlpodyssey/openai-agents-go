@@ -47,7 +47,7 @@ func TestSimpleStreamingWithCancel(t *testing.T) {
 		return nil
 	})
 
-	var target agents.CanceledError
+	var target agents.TaskCanceledError
 	require.ErrorAs(t, err, &target)
 
 	assert.Equal(t, stopAfter, numEvents)
@@ -90,7 +90,7 @@ func TestMultipleEventsStreamingWithCancel(t *testing.T) {
 		return nil
 	})
 
-	var target agents.CanceledError
+	var target agents.TaskCanceledError
 	require.ErrorAs(t, err, &target)
 
 	assert.Equal(t, stopAfter, numEvents)
@@ -126,7 +126,7 @@ func TestCancelPreventsFurtherEvents(t *testing.T) {
 		return nil
 	})
 
-	var target agents.CanceledError
+	var target agents.TaskCanceledError
 	require.ErrorAs(t, err, &target)
 
 	assert.Len(t, events, 1)
@@ -178,7 +178,7 @@ func TestCancelBeforeStreaming(t *testing.T) {
 		return nil
 	})
 
-	var target agents.CanceledError
+	var target agents.TaskCanceledError
 	require.ErrorAs(t, err, &target)
 
 	assert.Empty(t, events)

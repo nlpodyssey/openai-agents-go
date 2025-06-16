@@ -140,7 +140,7 @@ func (r Runner) RunResponseInputsStreamed(ctx context.Context, startingAgent *Ag
 //
 // It returns a run result containing all the inputs, guardrail results and the output of the last
 // agent. Agents may perform handoffs, so we don't know the specific type of the output.
-func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*RunResult, error) {
+func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *RunResult, err error) {
 	hooks := r.Config.Hooks
 	if hooks == nil {
 		hooks = NoOpRunHooks{}
@@ -156,9 +156,10 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*Ru
 	}
 
 	var (
-		generatedItems        []RunItem
-		modelResponses        []ModelResponse
-		inputGuardrailResults []InputGuardrailResult
+		generatedItems         []RunItem
+		modelResponses         []ModelResponse
+		inputGuardrailResults  []InputGuardrailResult
+		outputGuardrailResults []OutputGuardrailResult
 	)
 
 	ctx = usage.NewContext(ctx, usage.NewUsage())
@@ -171,6 +172,23 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*Ru
 
 	shouldGetAgentTools := true
 	var allTools []Tool
+
+	defer func() {
+		if err != nil {
+			var agentsErr *AgentsError
+			if errors.As(err, &agentsErr) {
+				agentsErr.RunData = &RunErrorDetails{
+					Context:                ctx,
+					Input:                  originalInput,
+					NewItems:               generatedItems,
+					RawResponses:           modelResponses,
+					LastAgent:              currentAgent,
+					InputGuardrailResults:  inputGuardrailResults,
+					OutputGuardrailResults: outputGuardrailResults,
+				}
+			}
+		}
+	}()
 
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -266,7 +284,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*Ru
 
 		switch nextStep := turnResult.NextStep.(type) {
 		case NextStepFinalOutput:
-			outputGuardrailResults, err := r.runOutputGuardrails(
+			outputGuardrailResults, err = r.runOutputGuardrails(
 				childCtx,
 				slices.Concat(currentAgent.OutputGuardrails, r.Config.OutputGuardrails),
 				currentAgent,
@@ -344,6 +362,7 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 			InputGuardrailResults:  nil,
 			OutputGuardrailResults: nil,
 		},
+		context:                  ctx,
 		CurrentAgent:             startingAgent,
 		CurrentTurn:              new(atomic.Uint64),
 		MaxTurns:                 maxTurns,
@@ -426,14 +445,28 @@ func (r Runner) runStreamedImpl(
 	runConfig RunConfig,
 	previousResponseID string,
 ) (err error) {
+	currentAgent := startingAgent
+
 	defer func() {
 		if err != nil {
+			var agentsErr *AgentsError
+			if errors.As(err, &agentsErr) {
+				agentsErr.RunData = &RunErrorDetails{
+					Context:                ctx,
+					Input:                  streamedResult.Input,
+					NewItems:               streamedResult.NewItems,
+					RawResponses:           streamedResult.RawResponses,
+					LastAgent:              currentAgent,
+					InputGuardrailResults:  streamedResult.InputGuardrailResults,
+					OutputGuardrailResults: streamedResult.OutputGuardrailResults,
+				}
+			}
+
 			streamedResult.IsComplete.Store(true)
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
 		}
 	}()
 
-	currentAgent := startingAgent
 	currentTurn := uint64(0)
 	shouldRunAgentStartHooks := true
 	toolUseTracker := NewAgentToolUseTracker()
@@ -516,7 +549,7 @@ func (r Runner) runStreamedImpl(
 
 			var outputGuardrailResults []OutputGuardrailResult
 			if taskResult.Canceled {
-				return NewCanceledError("output guardrails task has been canceled")
+				return NewTaskCanceledError("output guardrails task has been canceled")
 			}
 			if taskResult.Result.Err == nil {
 				// Errors will be checked in the stream-events loop
