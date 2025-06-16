@@ -11,7 +11,7 @@ import (
 )
 
 // summaryExtractor is a custom output extractor for sub‑agents that return an AnalysisSummary.
-func summaryExtractor(runResult agents.RunResult) (string, error) {
+func summaryExtractor(_ context.Context, runResult agents.RunResult) (string, error) {
 	// The financial/risk analyst agents emit an AnalysisSummary with a `Summary` field.
 	// We want the tool call to return just that summary text so the writer can drop it inline.
 	return runResult.FinalOutput.(AnalysisSummary).Summary, nil
