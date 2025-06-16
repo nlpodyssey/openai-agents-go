@@ -199,6 +199,6 @@ func main() {
 		}
 
 		inputItems = result.ToInputList()
-		currentAgent = result.LastAgent()
+		currentAgent = result.LastAgent
 	}
 }
