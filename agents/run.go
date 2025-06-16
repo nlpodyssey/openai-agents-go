@@ -205,7 +205,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 		if currentTurn > maxTurns {
 			return nil, MaxTurnsExceededErrorf("max turns %d exceeded", maxTurns)
 		}
-		slog.Debug(
+		Logger().Debug(
 			"Running agent",
 			slog.String("agentName", currentAgent.Name),
 			slog.Uint64("turn", currentTurn),

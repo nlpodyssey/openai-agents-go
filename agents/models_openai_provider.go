@@ -17,7 +17,6 @@ package agents
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 
 	"github.com/openai/openai-go/option"
@@ -101,7 +100,7 @@ func (provider *OpenAIProvider) getClient() OpenaiClient {
 			} else if envKey := os.Getenv("OPENAI_API_KEY"); envKey != "" {
 				apiKey = envKey
 			} else {
-				slog.Warn("OpenAIProvider: an API key is missing")
+				Logger().Warn("OpenAIProvider: an API key is missing")
 			}
 
 			options := make([]option.RequestOption, 0)
