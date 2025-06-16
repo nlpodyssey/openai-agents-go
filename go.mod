@@ -18,7 +18,7 @@ go 1.24.3
 
 require (
 	github.com/invopop/jsonschema v0.13.0
-	github.com/openai/openai-go v1.3.0
+	github.com/openai/openai-go v1.5.0
 	github.com/playwright-community/playwright-go v0.5200.0
 	github.com/stretchr/testify v1.10.0
 	github.com/xeipuuv/gojsonschema v1.2.0
