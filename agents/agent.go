@@ -37,12 +37,9 @@ type ToolsToFinalOutputResult struct {
 
 // An Agent is an AI model configured with instructions, tools, guardrails, handoffs and more.
 //
-// We strongly recommend passing `instructions`, which is the "system prompt" for the agent. In
-// addition, you can pass `handoff_description`, which is a human-readable description of the
+// We strongly recommend passing `Instructions`, which is the "system prompt" for the agent. In
+// addition, you can pass `HandoffDescription`, which is a human-readable description of the
 // agent, used when the agent is used inside tools/handoffs.
-//
-// Agents are generic on the context type. The context is a (mutable) object you create. It is
-// passed to tool functions, handoffs, guardrails, etc.
 type Agent struct {
 	// The name of the agent.
 	Name string
@@ -106,8 +103,9 @@ type Agent struct {
 	// web search, etc. are always processed by the LLM.
 	ToolUseBehavior ToolUseBehavior
 
-	// Whether to reset the tool choice to the default value after a tool has been called. Defaults
-	// to true. This ensures that the agent doesn't enter an infinite loop of tool usage.
+	// Whether to reset the tool choice to the default value after a tool has been called.
+	// Defaults to true.
+	// This ensures that the agent doesn't enter an infinite loop of tool usage.
 	ResetToolChoice param.Opt[bool]
 }
 
