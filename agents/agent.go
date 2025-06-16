@@ -118,7 +118,7 @@ type AgentAsToolParams struct {
 
 	// Optional function that extracts the output from the agent.
 	// If not provided, the last message from the agent will be used.
-	CustomOutputExtractor func(RunResult) (string, error)
+	CustomOutputExtractor func(context.Context, RunResult) (string, error)
 }
 
 // AsTool transforms this agent into a tool, callable by other agents.
@@ -144,7 +144,7 @@ func (a *Agent) AsTool(params AgentAsToolParams) Tool {
 			return "", fmt.Errorf("failed to run agent %s as tool: %w", a.Name, err)
 		}
 		if params.CustomOutputExtractor != nil {
-			return params.CustomOutputExtractor(*output)
+			return params.CustomOutputExtractor(ctx, *output)
 		}
 
 		return ItemHelpers().TextMessageOutputs(output.NewItems), nil
