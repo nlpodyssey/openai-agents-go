@@ -14,31 +14,79 @@
 
 package agents
 
-import "context"
+import (
+	"context"
+	"slices"
+
+	"github.com/openai/openai-go/packages/param"
+)
 
 // ToolUseBehavior lets you configure how tool use is handled.
 // See Agent.ToolUseBehavior.
 type ToolUseBehavior interface {
-	isToolUseBehavior()
+	ToolsToFinalOutput(context.Context, []FunctionToolResult) (ToolsToFinalOutputResult, error)
 }
 
-type RunLLMAgain struct{}
+// RunLLMAgain returns a ToolUseBehavior that ignores any FunctionToolResults
+// and always returns a non-final output result. With this behavior, the LLM
+// receives the tool results and gets to respond.
+func RunLLMAgain() ToolUseBehavior { return runLLMAgain{} }
 
-func (RunLLMAgain) isToolUseBehavior() {}
+type runLLMAgain struct{}
 
-type StopOnFirstTool struct{}
-
-func (StopOnFirstTool) isToolUseBehavior() {}
-
-type StopAtTools struct {
-	// A list of tool names, any of which will stop the agent from running further.
-	StopAtToolNames []string
+func (runLLMAgain) ToolsToFinalOutput(context.Context, []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+	return notFinalOutput, nil
 }
 
-func (StopAtTools) isToolUseBehavior() {}
+// StopOnFirstTool returns a ToolUseBehavior which uses the output of the first
+// tool call as the final output. This means that the LLM does not process the
+// result of the tool call.
+func StopOnFirstTool() ToolUseBehavior { return stopOnFirstTool{} }
 
-// ToolsToFinalOutputFunction is a function that takes a run context and a list
-// of tool results, and returns a `ToolsToFinalOutputResult`.
+type stopOnFirstTool struct{}
+
+func (stopOnFirstTool) ToolsToFinalOutput(_ context.Context, toolResults []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+	if len(toolResults) == 0 {
+		return notFinalOutput, nil
+	}
+	return ToolsToFinalOutputResult{
+		IsFinalOutput: true,
+		FinalOutput:   param.NewOpt(toolResults[0].Output),
+	}, nil
+}
+
+// StopAtTools returns a ToolUseBehavior which causes the agent to stop running
+// if any of the tools in the given list are called. The final output will be
+// the output of the first matching tool call. The LLM does not process the
+// result of the tool call.
+func StopAtTools(toolNames ...string) ToolUseBehavior {
+	return stopAtTools{names: toolNames}
+}
+
+type stopAtTools struct {
+	names []string
+}
+
+func (sat stopAtTools) ToolsToFinalOutput(_ context.Context, toolResults []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+	for _, toolResult := range toolResults {
+		if slices.Contains(sat.names, toolResult.Tool.Name) {
+			return ToolsToFinalOutputResult{
+				IsFinalOutput: true,
+				FinalOutput:   param.NewOpt(toolResult.Output),
+			}, nil
+		}
+	}
+	return notFinalOutput, nil
+}
+
+// ToolsToFinalOutputFunction lets you implement a custom ToolUseBehavior.
 type ToolsToFinalOutputFunction func(context.Context, []FunctionToolResult) (ToolsToFinalOutputResult, error)
 
-func (ToolsToFinalOutputFunction) isToolUseBehavior() {}
+func (f ToolsToFinalOutputFunction) ToolsToFinalOutput(ctx context.Context, toolResults []FunctionToolResult) (ToolsToFinalOutputResult, error) {
+	return f(ctx, toolResults)
+}
+
+var notFinalOutput = ToolsToFinalOutputResult{
+	IsFinalOutput: false,
+	FinalOutput:   param.Null[any](),
+}
