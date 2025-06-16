@@ -46,7 +46,7 @@ func TestExtraHeadersPassedToOpenaiResponsesModel(t *testing.T) {
 	extraHeaders := map[string]string{"X-Test-Header": "test-value"}
 
 	model := agents.NewOpenAIResponsesModel("gpt-4", dummyClient)
-	_, _ = model.GetResponse(t.Context(), agents.ModelGetResponseParams{
+	_, _ = model.GetResponse(t.Context(), agents.ModelResponseParams{
 		Input: agents.InputString("hi"),
 		ModelSettings: modelsettings.ModelSettings{
 			ExtraHeaders: extraHeaders,
@@ -75,7 +75,7 @@ func TestExtraHeadersPassedToOpenaiChatCompletionsClient(t *testing.T) {
 	extraHeaders := map[string]string{"X-Test-Header": "test-value"}
 
 	model := agents.NewOpenAIChatCompletionsModel("gpt-4", dummyClient)
-	_, _ = model.GetResponse(t.Context(), agents.ModelGetResponseParams{
+	_, _ = model.GetResponse(t.Context(), agents.ModelResponseParams{
 		Input: agents.InputString("hi"),
 		ModelSettings: modelsettings.ModelSettings{
 			ExtraHeaders: extraHeaders,

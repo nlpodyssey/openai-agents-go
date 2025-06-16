@@ -84,7 +84,7 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
+	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
@@ -138,7 +138,7 @@ func TestGetResponseWithRefusal(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
+	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
@@ -196,7 +196,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
+	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},

@@ -99,7 +99,7 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	stream, err := model.StreamResponse(t.Context(), agents.ModelStreamResponseParams{
+	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
@@ -190,7 +190,7 @@ func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	stream, err := model.StreamResponse(t.Context(), agents.ModelStreamResponseParams{
+	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
@@ -272,7 +272,7 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	stream, err := model.StreamResponse(t.Context(), agents.ModelStreamResponseParams{
+	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},

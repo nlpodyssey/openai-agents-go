@@ -47,7 +47,7 @@ func NewOpenAIChatCompletionsModel(model openai.ChatModel, client OpenaiClient) 
 
 func (m OpenAIChatCompletionsModel) GetResponse(
 	ctx context.Context,
-	params ModelGetResponseParams,
+	params ModelResponseParams,
 ) (*ModelResponse, error) {
 	body, opts, err := m.prepareRequest(
 		ctx,
@@ -105,7 +105,7 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 // StreamResponse yields a partial message as it is generated, as well as the usage information.
 func (m OpenAIChatCompletionsModel) StreamResponse(
 	ctx context.Context,
-	params ModelStreamResponseParams,
+	params ModelResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
 	body, opts, err := m.prepareRequest(
 		ctx,
