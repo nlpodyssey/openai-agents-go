@@ -45,7 +45,7 @@ type Runner struct {
 // RunConfig configures settings for the entire agent run.
 type RunConfig struct {
 	// The model to use for the entire agent run. If set, will override the model set on every
-	// agent. The model_provider passed in below must be able to resolve this model name.
+	// agent. The ModelProvider passed in below must be able to resolve this model name.
 	Model param.Opt[AgentModel]
 
 	// Optional model provider to use when looking up string model names. Defaults to OpenAI (MultiProvider).
@@ -131,7 +131,7 @@ func (r Runner) RunResponseInputsStreamed(ctx context.Context, startingAgent *Ag
 //  4. Else, we run tool calls (if any), and re-run the loop.
 //
 // In two cases, the agent run may return an error:
-//  1. If the maxTurns is exceeded, a MaxTurnsExceededError is returned.
+//  1. If the MaxTurns is exceeded, a MaxTurnsExceededError is returned.
 //  2. If a guardrail tripwire is triggered, a *GuardrailTripwireTriggeredError is returned.
 //
 // Note that only the first agent's input guardrails are run.
@@ -314,7 +314,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 	}
 }
 
-// RunStreamed run a workflow starting at the given agent in streaming mode.
+// RunStreamed runs a workflow starting at the given agent in streaming mode.
 // The returned result object contains a method you can use to stream semantic
 // events as they are generated.
 //
@@ -325,7 +325,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 //  4. Else, we run tool calls (if any), and re-run the loop.
 //
 // In two cases, the agent run may return an error:
-//  1. If the max_turns is exceeded, a MaxTurnsExceededError is returned.
+//  1. If the MaxTurns is exceeded, a MaxTurnsExceededError is returned.
 //  2. If a guardrail tripwire is triggered, a *GuardrailTripwireTriggeredError is returned.
 //
 // Note that only the first agent's input guardrails are run.
