@@ -16,6 +16,7 @@ package agents
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -74,7 +75,11 @@ type Handoff struct {
 }
 
 func (h Handoff) GetTransferMessage(agent *Agent) string {
-	return fmt.Sprintf(`{{'assistant': '%s'}}`, agent.Name)
+	b, err := json.Marshal(map[string]any{"assistant": agent.Name})
+	if err != nil {
+		panic(err) // this should never happen
+	}
+	return string(b)
 }
 
 func DefaultHandoffToolName(agent *Agent) string {
