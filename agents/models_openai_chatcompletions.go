@@ -69,10 +69,18 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 		return nil, err
 	}
 
-	if DontLogModelData {
+	firstChoice := response.Choices[0]
+	message := firstChoice.Message
+
+	switch {
+	case DontLogModelData:
 		Logger().Debug("LLM responded")
-	} else {
-		Logger().Debug("LLM responded", slog.String("message", SimplePrettyJSONMarshal(response.Choices[0].Message)))
+	case reflect.ValueOf(message).IsZero():
+		Logger().Debug("LLM response had no message",
+			slog.String("finish_reasons", firstChoice.FinishReason))
+	default:
+		Logger().Debug("LLM response",
+			slog.String("message", SimplePrettyJSONMarshal(message)))
 	}
 
 	u := usage.NewUsage()
@@ -91,7 +99,7 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 		}
 	}
 
-	items, err := ChatCmplConverter().MessageToOutputItems(response.Choices[0].Message)
+	items, err := ChatCmplConverter().MessageToOutputItems(message)
 	if err != nil {
 		return nil, err
 	}
