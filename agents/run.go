@@ -446,16 +446,10 @@ func (r Runner) runStreamedImpl(
 		Type:     "agent_updated_stream_event",
 	})
 
-	shouldGetAgentTools := true
-	var allTools []Tool
-
 	for !streamedResult.IsComplete() {
-		if shouldGetAgentTools {
-			allTools, err = r.getAllTools(ctx, currentAgent)
-			if err != nil {
-				return err
-			}
-			shouldGetAgentTools = false
+		allTools, err := r.getAllTools(ctx, currentAgent)
+		if err != nil {
+			return err
 		}
 
 		currentTurn += 1
@@ -528,8 +522,6 @@ func (r Runner) runStreamedImpl(
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
-			allTools = nil
-			shouldGetAgentTools = true
 			shouldRunAgentStartHooks = true
 			streamedResult.eventQueue.Put(AgentUpdatedStreamEvent{
 				NewAgent: currentAgent,
