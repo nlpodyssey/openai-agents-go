@@ -168,9 +168,6 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 	currentAgent := startingAgent
 	shouldRunAgentStartHooks := true
 
-	shouldGetAgentTools := true
-	var allTools []Tool
-
 	defer func() {
 		if err != nil {
 			var agentsErr *AgentsError
@@ -192,13 +189,9 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 	defer cancel()
 
 	for {
-		if shouldGetAgentTools {
-			var err error
-			allTools, err = r.getAllTools(childCtx, currentAgent)
-			if err != nil {
-				return nil, err
-			}
-			shouldGetAgentTools = false
+		allTools, err := r.getAllTools(childCtx, currentAgent)
+		if err != nil {
+			return nil, err
 		}
 
 		currentTurn += 1
@@ -252,11 +245,10 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 			}()
 
 			wg.Wait()
-			if err := errors.Join(turnError, guardrailsError); err != nil {
+			if err = errors.Join(turnError, guardrailsError); err != nil {
 				return nil, err
 			}
 		} else {
-			var err error
 			turnResult, err = r.runSingleTurn(
 				childCtx,
 				currentAgent,
@@ -302,8 +294,6 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 			}, nil
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
-			allTools = nil
-			shouldGetAgentTools = true
 			shouldRunAgentStartHooks = true
 		case NextStepRunAgain:
 			// Nothing to do
