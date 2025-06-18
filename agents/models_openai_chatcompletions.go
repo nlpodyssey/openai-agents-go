@@ -50,14 +50,12 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 	params ModelResponseParams,
 ) (*ModelResponse, error) {
 	body, opts, err := m.prepareRequest(
-		ctx,
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
 		params.Tools,
 		params.OutputSchema,
 		params.Handoffs,
-		params.PreviousResponseID,
 		false,
 	)
 	if err != nil {
@@ -116,15 +114,13 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 	params ModelResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
 	body, opts, err := m.prepareRequest(
-		ctx,
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
 		params.Tools,
 		params.OutputSchema,
 		params.Handoffs,
-		params.PreviousResponseID,
-		false,
+		true,
 	)
 	if err != nil {
 		return nil, err
@@ -155,14 +151,12 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 }
 
 func (m OpenAIChatCompletionsModel) prepareRequest(
-	ctx context.Context,
 	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
 	tools []Tool,
 	outputSchema AgentOutputSchemaInterface,
 	handoffs []Handoff,
-	previousResponseID string,
 	stream bool,
 ) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
 	convertedMessages, err := ChatCmplConverter().ItemsToMessages(input)
@@ -216,7 +210,6 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 			slog.Bool("Stream", stream),
 			slog.String("Tool choice", SimplePrettyJSONMarshal(toolChoice)),
 			slog.String("Response format", SimplePrettyJSONMarshal(responseFormat)),
-			slog.String("Previous response ID", previousResponseID),
 		)
 	}
 
