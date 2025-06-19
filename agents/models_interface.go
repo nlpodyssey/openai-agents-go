@@ -20,6 +20,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 )
 
 // Model is the base interface for calling an LLM.
@@ -53,6 +54,9 @@ type ModelResponseParams struct {
 	// Optional ID of the previous response. Generally not used by the model,
 	// except for the OpenAI Responses API.
 	PreviousResponseID string
+
+	// Optional prompt config to use for the model.
+	Prompt responses.ResponsePromptParam
 }
 
 // ModelProvider is the base interface for a model provider.

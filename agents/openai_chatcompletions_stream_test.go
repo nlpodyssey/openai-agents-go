@@ -26,6 +26,7 @@ import (
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -107,6 +108,7 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 		OutputSchema:       nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 
@@ -198,6 +200,7 @@ func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {
 		OutputSchema:       nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 
@@ -279,6 +282,7 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 		Tools:              nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 

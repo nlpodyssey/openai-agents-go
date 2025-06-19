@@ -17,6 +17,7 @@ package agentstesting
 import (
 	"context"
 	"iter"
+	"reflect"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
@@ -48,7 +49,7 @@ type FakeModelLastTurnArgs struct {
 
 func NewFakeModel(initialOutput *FakeModelTurnOutput) *FakeModel {
 	m := &FakeModel{}
-	if initialOutput != nil && (len(initialOutput.Value) > 0 || initialOutput.Error != nil) {
+	if initialOutput != nil && !reflect.ValueOf(*initialOutput).IsZero() {
 		m.TurnOutputs = []FakeModelTurnOutput{*initialOutput}
 	}
 	return m
