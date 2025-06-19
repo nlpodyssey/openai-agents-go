@@ -57,6 +57,7 @@ func (m OpenAIResponsesModel) GetResponse(
 		params.Handoffs,
 		params.PreviousResponseID,
 		false,
+		params.Prompt,
 	)
 	if err != nil {
 		return nil, err
@@ -108,6 +109,7 @@ func (m OpenAIResponsesModel) StreamResponse(
 		params.Handoffs,
 		params.PreviousResponseID,
 		true,
+		params.Prompt,
 	)
 	if err != nil {
 		return nil, err
@@ -144,6 +146,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 	handoffs []Handoff,
 	previousResponseID string,
 	stream bool,
+	prompt responses.ResponsePromptParam,
 ) (*responses.ResponseNewParams, []option.RequestOption, error) {
 	listInput := ItemHelpers().InputToNewInputList(input)
 
@@ -189,6 +192,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 		Input:              responses.ResponseNewParamsInputUnion{OfInputItemList: listInput},
 		Include:            convertedTools.Includes,
 		Tools:              convertedTools.Tools,
+		Prompt:             prompt,
 		Temperature:        modelSettings.Temperature,
 		TopP:               modelSettings.TopP,
 		Truncation:         responses.ResponseNewParamsTruncation(modelSettings.Truncation.Or("")),

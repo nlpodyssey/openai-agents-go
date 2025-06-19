@@ -25,6 +25,7 @@ import (
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -92,6 +93,7 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 		OutputSchema:       nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -146,6 +148,7 @@ func TestGetResponseWithRefusal(t *testing.T) {
 		OutputSchema:       nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -204,6 +207,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 		OutputSchema:       nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)

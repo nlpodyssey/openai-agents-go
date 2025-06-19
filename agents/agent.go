@@ -23,6 +23,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 )
 
 type ToolsToFinalOutputResult struct {
@@ -47,6 +48,11 @@ type Agent struct {
 	// Optional instructions for the agent. Will be used as the "system prompt" when this agent is
 	// invoked. Describes what the agent should do, and how it responds.
 	Instructions InstructionsGetter
+
+	// Optional Prompter object. Prompts allow you to dynamically configure the instructions,
+	// tools and other config for an agent outside your code.
+	// Only usable with OpenAI models, using the Responses API.
+	Prompt Prompter
 
 	// Optional description of the agent. This is used when the agent is used as a handoff, so that an
 	// LLM knows what it does and when to invoke it.
@@ -156,13 +162,18 @@ func (a *Agent) AsTool(params AgentAsToolParams) Tool {
 // GetSystemPrompt returns the system prompt for the agent.
 func (a *Agent) GetSystemPrompt(ctx context.Context) (param.Opt[string], error) {
 	if a.Instructions == nil {
-		return param.Null[string](), nil
+		return param.Opt[string]{}, nil
 	}
 	v, err := a.Instructions.GetInstructions(ctx, a)
 	if err != nil {
-		return param.Null[string](), err
+		return param.Opt[string]{}, err
 	}
 	return param.NewOpt(v), nil
+}
+
+// GetPrompt returns the prompt for the agent.
+func (a *Agent) GetPrompt(ctx context.Context) (responses.ResponsePromptParam, bool, error) {
+	return PromptUtil().ToModelInput(ctx, a.Prompt, a)
 }
 
 // GetAllTools returns all agent tools.

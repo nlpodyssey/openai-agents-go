@@ -27,6 +27,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 )
 
 const DefaultMaxTurns = 10
@@ -590,9 +591,9 @@ func (r Runner) runSingleTurnStreamed(
 	streamedResult.setCurrentAgent(agent)
 	streamedResult.setCurrentAgentOutputSchema(outputSchema)
 
-	systemPrompt, err := agent.GetSystemPrompt(ctx)
+	systemPrompt, promptConfig, err := getAgentSystemPromptAndPromptConfig(ctx, agent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get system prompt: %w", err)
+		return nil, err
 	}
 
 	handoffs, err := r.getHandoffs(agent)
@@ -623,6 +624,7 @@ func (r Runner) runSingleTurnStreamed(
 		OutputSchema:       outputSchema,
 		Handoffs:           handoffs,
 		PreviousResponseID: previousResponseID,
+		Prompt:             promptConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("stream response error: %w", err)
@@ -739,9 +741,9 @@ func (r Runner) runSingleTurn(
 		}
 	}
 
-	systemPrompt, err := agent.GetSystemPrompt(ctx)
+	systemPrompt, promptConfig, err := getAgentSystemPromptAndPromptConfig(ctx, agent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get system prompt: %w", err)
+		return nil, err
 	}
 
 	handoffs, err := r.getHandoffs(agent)
@@ -765,6 +767,7 @@ func (r Runner) runSingleTurn(
 		runConfig,
 		toolUseTracker,
 		previousResponseID,
+		promptConfig,
 	)
 	if err != nil {
 		return nil, err
@@ -783,6 +786,43 @@ func (r Runner) runSingleTurn(
 		runConfig,
 		toolUseTracker,
 	)
+}
+
+func getAgentSystemPromptAndPromptConfig(
+	ctx context.Context,
+	agent *Agent,
+) (
+	systemPrompt param.Opt[string],
+	promptConfig responses.ResponsePromptParam,
+	err error,
+) {
+	var promptErrors [2]error
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		systemPrompt, promptErrors[0] = agent.GetSystemPrompt(ctx)
+		if promptErrors[0] != nil {
+			cancel()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		promptConfig, _, promptErrors[1] = agent.GetPrompt(ctx)
+		if promptErrors[1] != nil {
+			cancel()
+		}
+	}()
+
+	wg.Wait()
+	err = errors.Join(promptErrors[:]...)
+	return
 }
 
 func (Runner) getSingleStepResultFromResponse(
@@ -934,6 +974,7 @@ func (r Runner) getNewResponse(
 	runConfig RunConfig,
 	toolUseTracker *AgentToolUseTracker,
 	previousResponseID string,
+	promptConfig responses.ResponsePromptParam,
 ) (*ModelResponse, error) {
 	model, err := r.getModel(agent, runConfig)
 	if err != nil {
@@ -951,6 +992,7 @@ func (r Runner) getNewResponse(
 		OutputSchema:       outputSchema,
 		Handoffs:           handoffs,
 		PreviousResponseID: previousResponseID,
+		Prompt:             promptConfig,
 	})
 	if err != nil {
 		return nil, err
