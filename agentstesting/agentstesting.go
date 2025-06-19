@@ -30,6 +30,7 @@ func GetTextInputItem(content string) agents.TResponseInputItem {
 				OfString: param.NewOpt(content),
 			},
 			Role: responses.EasyInputMessageRoleUser,
+			Type: responses.EasyInputMessageTypeMessage,
 		},
 	}
 }
