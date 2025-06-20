@@ -146,7 +146,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 	}
 
 	toolUseTracker := NewAgentToolUseTracker()
-	originalInput := CopyGeneralInput(input)
+	originalInput := CopyInput(input)
 	currentTurn := uint64(0)
 
 	maxTurns := r.Config.MaxTurns
@@ -218,7 +218,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 					childCtx,
 					startingAgent,
 					slices.Concat(startingAgent.InputGuardrails, r.Config.InputGuardrails),
-					CopyGeneralInput(input),
+					CopyInput(input),
 				)
 				if guardrailsError != nil {
 					cancel()
@@ -341,7 +341,7 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 	ctx = usage.NewContext(ctx, usage.NewUsage())
 
 	streamedResult := newRunResultStreaming(ctx)
-	streamedResult.setInput(CopyGeneralInput(input))
+	streamedResult.setInput(CopyInput(input))
 	streamedResult.setCurrentAgent(startingAgent)
 	streamedResult.setMaxTurns(maxTurns)
 	streamedResult.setCurrentAgentOutputSchema(outputSchema)
