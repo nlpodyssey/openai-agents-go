@@ -101,7 +101,7 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 	require.NoError(t, err)
 
 	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
-		SystemInstructions: param.Null[string](),
+		SystemInstructions: param.Opt[string]{},
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -193,7 +193,7 @@ func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {
 	require.NoError(t, err)
 
 	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
-		SystemInstructions: param.Null[string](),
+		SystemInstructions: param.Opt[string]{},
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -276,7 +276,7 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 	require.NoError(t, err)
 
 	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
-		SystemInstructions: param.Null[string](),
+		SystemInstructions: param.Opt[string]{},
 		Input:              agents.InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
