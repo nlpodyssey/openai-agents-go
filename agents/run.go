@@ -102,26 +102,6 @@ func RunResponseInputsStreamed(ctx context.Context, startingAgent *Agent, input 
 	return DefaultRunner.RunResponseInputsStreamed(ctx, startingAgent, input)
 }
 
-// Run executes startingAgent with the provided input string using the Runner configuration.
-func (r Runner) Run(ctx context.Context, startingAgent *Agent, input string) (*RunResult, error) {
-	return r.run(ctx, startingAgent, InputString(input))
-}
-
-// RunStreamed executes startingAgent with the provided input string using the Runner configuration and returns a streaming result.
-func (r Runner) RunStreamed(ctx context.Context, startingAgent *Agent, input string) (*RunResultStreaming, error) {
-	return r.runStreamed(ctx, startingAgent, InputString(input))
-}
-
-// RunResponseInputs executes startingAgent with the provided list of input items using the Runner configuration.
-func (r Runner) RunResponseInputs(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResult, error) {
-	return r.run(ctx, startingAgent, InputItems(input))
-}
-
-// RunResponseInputsStreamed executes startingAgent with the provided list of input items using the Runner configuration and returns a streaming result.
-func (r Runner) RunResponseInputsStreamed(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResultStreaming, error) {
-	return r.runStreamed(ctx, startingAgent, InputItems(input))
-}
-
 // Run a workflow starting at the given agent. The agent will run in a loop until a final
 // output is generated.
 //
@@ -139,6 +119,41 @@ func (r Runner) RunResponseInputsStreamed(ctx context.Context, startingAgent *Ag
 //
 // It returns a run result containing all the inputs, guardrail results and the output of the last
 // agent. Agents may perform handoffs, so we don't know the specific type of the output.
+func (r Runner) Run(ctx context.Context, startingAgent *Agent, input string) (*RunResult, error) {
+	return r.run(ctx, startingAgent, InputString(input))
+}
+
+// RunStreamed runs a workflow starting at the given agent in streaming mode.
+// The returned result object contains a method you can use to stream semantic
+// events as they are generated.
+//
+// The agent will run in a loop until a final output is generated. The loop runs like so:
+//  1. The agent is invoked with the given input.
+//  2. If there is a final output, the loop terminates.
+//  3. If there's a handoff, we run the loop again, with the new agent.
+//  4. Else, we run tool calls (if any), and re-run the loop.
+//
+// In two cases, the agent run may return an error:
+//  1. If the MaxTurns is exceeded, a MaxTurnsExceededError is returned.
+//  2. If a guardrail tripwire is triggered, a *GuardrailTripwireTriggeredError is returned.
+//
+// Note that only the first agent's input guardrails are run.
+//
+// It returns a result object that contains data about the run, as well as a method to stream events.
+func (r Runner) RunStreamed(ctx context.Context, startingAgent *Agent, input string) (*RunResultStreaming, error) {
+	return r.runStreamed(ctx, startingAgent, InputString(input))
+}
+
+// RunResponseInputs executes startingAgent with the provided list of input items using the Runner configuration.
+func (r Runner) RunResponseInputs(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResult, error) {
+	return r.run(ctx, startingAgent, InputItems(input))
+}
+
+// RunResponseInputsStreamed executes startingAgent with the provided list of input items using the Runner configuration and returns a streaming result.
+func (r Runner) RunResponseInputsStreamed(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResultStreaming, error) {
+	return r.runStreamed(ctx, startingAgent, InputItems(input))
+}
+
 func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *RunResult, err error) {
 	hooks := r.Config.Hooks
 	if hooks == nil {
@@ -305,23 +320,6 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 	}
 }
 
-// RunStreamed runs a workflow starting at the given agent in streaming mode.
-// The returned result object contains a method you can use to stream semantic
-// events as they are generated.
-//
-// The agent will run in a loop until a final output is generated. The loop runs like so:
-//  1. The agent is invoked with the given input.
-//  2. If there is a final output, the loop terminates.
-//  3. If there's a handoff, we run the loop again, with the new agent.
-//  4. Else, we run tool calls (if any), and re-run the loop.
-//
-// In two cases, the agent run may return an error:
-//  1. If the MaxTurns is exceeded, a MaxTurnsExceededError is returned.
-//  2. If a guardrail tripwire is triggered, a *GuardrailTripwireTriggeredError is returned.
-//
-// Note that only the first agent's input guardrails are run.
-//
-// It returns a result object that contains data about the run, as well as a method to stream events.
 func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Input) (*RunResultStreaming, error) {
 	hooks := r.Config.Hooks
 	if hooks == nil {
