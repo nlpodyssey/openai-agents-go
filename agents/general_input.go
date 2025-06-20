@@ -37,7 +37,7 @@ func (items InputItems) Copy() InputItems {
 	return slices.Clone(items)
 }
 
-func CopyGeneralInput(input Input) Input {
+func CopyInput(input Input) Input {
 	switch v := input.(type) {
 	case InputString:
 		return v

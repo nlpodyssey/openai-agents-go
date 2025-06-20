@@ -830,7 +830,7 @@ func (runImpl) ExecuteHandoffs(
 	if inputFilter != nil {
 		Logger().Debug("Filtering inputs for handoff")
 		handoffInputData := HandoffInputData{
-			InputHistory:    CopyGeneralInput(originalInput),
+			InputHistory:    CopyInput(originalInput),
 			PreHandoffItems: slices.Clone(preStepItems),
 			NewItems:        slices.Clone(newStepItems),
 		}
@@ -839,7 +839,7 @@ func (runImpl) ExecuteHandoffs(
 			return nil, fmt.Errorf("handoff input filter error: %w", err)
 		}
 
-		originalInput = CopyGeneralInput(filtered.InputHistory)
+		originalInput = CopyInput(filtered.InputHistory)
 		preStepItems = slices.Clone(filtered.PreHandoffItems)
 		newStepItems = slices.Clone(filtered.NewItems)
 	}
