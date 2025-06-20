@@ -47,6 +47,14 @@ type RunItemStreamEvent struct {
 
 func (RunItemStreamEvent) isStreamEvent() {}
 
+func NewRunItemStreamEvent(name RunItemStreamEventName, item RunItem) RunItemStreamEvent {
+	return RunItemStreamEvent{
+		Name: name,
+		Item: item,
+		Type: "run_item_stream_event",
+	}
+}
+
 type RunItemStreamEventName string
 
 const (

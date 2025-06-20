@@ -941,41 +941,17 @@ func (runImpl) StreamStepResultToQueue(stepResult SingleStepResult, queue *async
 
 		switch item.(type) {
 		case MessageOutputItem:
-			event = RunItemStreamEvent{
-				Name: StreamEventMessageOutputCreated,
-				Item: item,
-				Type: "run_item_stream_event",
-			}
+			event = NewRunItemStreamEvent(StreamEventMessageOutputCreated, item)
 		case HandoffCallItem:
-			event = RunItemStreamEvent{
-				Name: StreamEventHandoffRequested,
-				Item: item,
-				Type: "run_item_stream_event",
-			}
+			event = NewRunItemStreamEvent(StreamEventHandoffRequested, item)
 		case HandoffOutputItem:
-			event = RunItemStreamEvent{
-				Name: StreamEventHandoffOccurred,
-				Item: item,
-				Type: "run_item_stream_event",
-			}
+			event = NewRunItemStreamEvent(StreamEventHandoffOccurred, item)
 		case ToolCallItem:
-			event = RunItemStreamEvent{
-				Name: StreamEventToolCalled,
-				Item: item,
-				Type: "run_item_stream_event",
-			}
+			event = NewRunItemStreamEvent(StreamEventToolCalled, item)
 		case ToolCallOutputItem:
-			event = RunItemStreamEvent{
-				Name: StreamEventToolOutput,
-				Item: item,
-				Type: "run_item_stream_event",
-			}
+			event = NewRunItemStreamEvent(StreamEventToolOutput, item)
 		case ReasoningItem:
-			event = RunItemStreamEvent{
-				Name: StreamEventReasoningItemCreated,
-				Item: item,
-				Type: "run_item_stream_event",
-			}
+			event = NewRunItemStreamEvent(StreamEventReasoningItemCreated, item)
 		default:
 			// This would be an unrecoverable implementation bug, so a panic is appropriate.
 			panic(fmt.Errorf("unexpected RunItem type %T", item))
