@@ -310,8 +310,8 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	}
 }
 
-// MaybeResetToolChoice resets tool choice to None if the agent has used tools and the agent's reset_tool_choice
-// flag is True.
+// MaybeResetToolChoice resets tool choice to "" if the agent has used tools
+// and the agent's ResetToolChoice flag is true.
 func (runImpl) MaybeResetToolChoice(
 	agent *Agent,
 	toolUseTracker *AgentToolUseTracker,
