@@ -323,7 +323,7 @@ func TestConvertResponseFormatReturnsNotGivenForPlainTextAndObjectForSchemas(t *
 			JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:        "final_output",
 				Strict:      param.NewOpt(true),
-				Description: param.Null[string](),
+				Description: param.Opt[string]{},
 				Schema:      IntResponseSchema{}.JSONSchema(),
 			},
 			Type: constant.ValueOf[constant.JSONSchema](),
@@ -417,7 +417,7 @@ func TestExtractAllAndTextContentForStringsAndLists(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, param.Null[string](), s)
+	assert.Equal(t, param.Opt[string]{}, s)
 	assert.Equal(t, []openai.ChatCompletionContentPartTextParam{
 		{Text: "one", Type: constant.ValueOf[constant.Text]()},
 		{Text: "two", Type: constant.ValueOf[constant.Text]()},
@@ -428,7 +428,7 @@ func TestExtractAllAndTextContentForStringsAndLists(t *testing.T) {
 		{OfInputText: &text2},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, param.Null[string](), s)
+	assert.Equal(t, param.Opt[string]{}, s)
 	assert.Equal(t, []openai.ChatCompletionContentPartTextParam{
 		{Text: "one", Type: constant.ValueOf[constant.Text]()},
 		{Text: "two", Type: constant.ValueOf[constant.Text]()},

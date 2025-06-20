@@ -88,5 +88,5 @@ func (f ToolsToFinalOutputFunction) ToolsToFinalOutput(ctx context.Context, tool
 
 var notFinalOutput = ToolsToFinalOutputResult{
 	IsFinalOutput: false,
-	FinalOutput:   param.Null[any](),
+	FinalOutput:   param.Opt[any]{},
 }

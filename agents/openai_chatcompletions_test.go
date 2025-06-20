@@ -86,7 +86,7 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
-		SystemInstructions: param.Null[string](),
+		SystemInstructions: param.Opt[string]{},
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -141,7 +141,7 @@ func TestGetResponseWithRefusal(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
-		SystemInstructions: param.Null[string](),
+		SystemInstructions: param.Opt[string]{},
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -200,7 +200,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
-		SystemInstructions: param.Null[string](),
+		SystemInstructions: param.Opt[string]{},
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
@@ -249,8 +249,8 @@ func TestPrepareRequestNonStream(t *testing.T) {
 	assert.Nil(t, opts)
 	assert.NotNil(t, params)
 
-	assert.Equal(t, param.Null[bool](), params.Store)
 	assert.Equal(t, "gpt-4", params.Model)
+	assert.Equal(t, param.Opt[bool]{}, params.Store)
 	assert.Equal(t, "system", *params.Messages[0].GetRole())
 	assert.Equal(t, "sys", params.Messages[0].OfSystem.Content.OfString.Value)
 	assert.Equal(t, "user", *params.Messages[1].GetRole())
@@ -264,8 +264,8 @@ func TestPrepareRequestNonStream(t *testing.T) {
 func TestStoreParam(t *testing.T) {
 	t.Run("should default to Null with no base URL", func(t *testing.T) {
 		modelSettings := modelsettings.ModelSettings{}
-		client := NewOpenaiClient(param.Null[string]())
-		assert.Equal(t, param.Null[bool](), ChatCmplHelpers().GetStoreParam(client, modelSettings))
+		client := NewOpenaiClient(param.Opt[string]{})
+		assert.Equal(t, param.Opt[bool]{}, ChatCmplHelpers().GetStoreParam(client, modelSettings))
 	})
 
 	t.Run("for OpenAI API calls", func(t *testing.T) {
@@ -292,7 +292,7 @@ func TestStoreParam(t *testing.T) {
 
 		t.Run("should default to Null", func(t *testing.T) {
 			modelSettings := modelsettings.ModelSettings{}
-			assert.Equal(t, param.Null[bool](), ChatCmplHelpers().GetStoreParam(client, modelSettings))
+			assert.Equal(t, param.Opt[bool]{}, ChatCmplHelpers().GetStoreParam(client, modelSettings))
 		})
 
 		t.Run("should respect explicitly set Store=false", func(t *testing.T) {

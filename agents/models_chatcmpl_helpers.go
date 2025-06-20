@@ -42,7 +42,7 @@ func (h chatCmplHelpers) GetStoreParam(
 	case h.IsOpenAI(client):
 		return param.NewOpt(true)
 	default:
-		return param.Null[bool]()
+		return param.Opt[bool]{}
 	}
 }
 

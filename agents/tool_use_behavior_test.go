@@ -72,7 +72,7 @@ func TestNoToolResultsReturnsNotFinalOutput(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
-		FinalOutput:   param.Null[any](),
+		FinalOutput:   param.Opt[any]{},
 	}, result)
 }
 
@@ -89,7 +89,7 @@ func TestRunLlmAgainBehavior(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
-		FinalOutput:   param.Null[any](),
+		FinalOutput:   param.Opt[any]{},
 	}, result)
 }
 
@@ -173,7 +173,7 @@ func TestToolNamesToStopAtBehavior(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ToolsToFinalOutputResult{
 		IsFinalOutput: false,
-		FinalOutput:   param.Null[any](),
+		FinalOutput:   param.Opt[any]{},
 	}, result)
 
 	// Now test with a tool that matches the list
