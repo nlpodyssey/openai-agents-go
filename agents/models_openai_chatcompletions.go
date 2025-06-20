@@ -47,17 +47,15 @@ func NewOpenAIChatCompletionsModel(model openai.ChatModel, client OpenaiClient) 
 
 func (m OpenAIChatCompletionsModel) GetResponse(
 	ctx context.Context,
-	params ModelGetResponseParams,
+	params ModelResponseParams,
 ) (*ModelResponse, error) {
 	body, opts, err := m.prepareRequest(
-		ctx,
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
 		params.Tools,
 		params.OutputSchema,
 		params.Handoffs,
-		params.PreviousResponseID,
 		false,
 	)
 	if err != nil {
@@ -69,10 +67,18 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 		return nil, err
 	}
 
-	if DontLogModelData {
-		slog.Debug("LLM responded")
-	} else {
-		slog.Debug("LLM responded", slog.String("message", SimplePrettyJSONMarshal(response.Choices[0].Message)))
+	firstChoice := response.Choices[0]
+	message := firstChoice.Message
+
+	switch {
+	case DontLogModelData:
+		Logger().Debug("LLM responded")
+	case reflect.ValueOf(message).IsZero():
+		Logger().Debug("LLM response had no message",
+			slog.String("finish_reasons", firstChoice.FinishReason))
+	default:
+		Logger().Debug("LLM response",
+			slog.String("message", SimplePrettyJSONMarshal(message)))
 	}
 
 	u := usage.NewUsage()
@@ -91,7 +97,7 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 		}
 	}
 
-	items, err := ChatCmplConverter().MessageToOutputItems(response.Choices[0].Message)
+	items, err := ChatCmplConverter().MessageToOutputItems(message)
 	if err != nil {
 		return nil, err
 	}
@@ -105,18 +111,16 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 // StreamResponse yields a partial message as it is generated, as well as the usage information.
 func (m OpenAIChatCompletionsModel) StreamResponse(
 	ctx context.Context,
-	params ModelStreamResponseParams,
+	params ModelResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
 	body, opts, err := m.prepareRequest(
-		ctx,
 		params.SystemInstructions,
 		params.Input,
 		params.ModelSettings,
 		params.Tools,
 		params.OutputSchema,
 		params.Handoffs,
-		params.PreviousResponseID,
-		false,
+		true,
 	)
 	if err != nil {
 		return nil, err
@@ -147,14 +151,12 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 }
 
 func (m OpenAIChatCompletionsModel) prepareRequest(
-	ctx context.Context,
 	systemInstructions param.Opt[string],
 	input Input,
 	modelSettings modelsettings.ModelSettings,
 	tools []Tool,
 	outputSchema AgentOutputSchemaInterface,
 	handoffs []Handoff,
-	previousResponseID string,
 	stream bool,
 ) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
 	convertedMessages, err := ChatCmplConverter().ItemsToMessages(input)
@@ -199,16 +201,15 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 	}
 
 	if DontLogModelData {
-		slog.Debug("Calling LLM")
+		Logger().Debug("Calling LLM")
 	} else {
-		slog.Debug(
+		Logger().Debug(
 			"Calling LLM",
 			slog.String("Messages", SimplePrettyJSONMarshal(convertedMessages)),
 			slog.String("Tools", SimplePrettyJSONMarshal(convertedTools)),
 			slog.Bool("Stream", stream),
 			slog.String("Tool choice", SimplePrettyJSONMarshal(toolChoice)),
 			slog.String("Response format", SimplePrettyJSONMarshal(responseFormat)),
-			slog.String("Previous response ID", previousResponseID),
 		)
 	}
 

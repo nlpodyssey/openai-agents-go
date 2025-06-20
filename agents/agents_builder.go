@@ -44,6 +44,12 @@ func (a *Agent) WithInstructionsGetter(g InstructionsGetter) *Agent {
 	return a
 }
 
+// WithPrompt sets the agent's static or dynamic prompt.
+func (a *Agent) WithPrompt(prompt Prompter) *Agent {
+	a.Prompt = prompt
+	return a
+}
+
 // WithHandoffDescription sets the handoff description.
 func (a *Agent) WithHandoffDescription(desc string) *Agent {
 	a.HandoffDescription = desc

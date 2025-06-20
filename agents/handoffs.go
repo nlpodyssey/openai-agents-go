@@ -16,6 +16,7 @@ package agents
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -37,28 +38,31 @@ type Handoff struct {
 	// The description of the tool that represents the handoff.
 	ToolDescription string
 
-	// The JSON schema for the handoff input. Can be empty if the handoff does not take an input.
+	// The JSON schema for the handoff input. Can be empty/nil if the handoff does not take an input.
 	InputJSONSchema map[string]any
 
-	// The function that invokes the handoff. The parameters passed are:
-	// 1. The handoff run context
-	// 2. The arguments from the LLM, as a JSON string. Empty string if InputJSONSchema is empty.
+	// The function that invokes the handoff.
 	//
-	//Must return an agent.
+	// The parameters passed are:
+	// 	1. The handoff run context
+	// 	2. The arguments from the LLM, as a JSON string. Empty string if InputJSONSchema is empty/nil.
+	//
+	// Must return an agent.
 	OnInvokeHandoff func(context.Context, string) (*Agent, error)
 
 	// The name of the agent that is being handed off to.
 	AgentName string
 
-	// Optional function that filters the inputs that are passed to the next agent. By default, the new
-	// agent sees the entire conversation history. In some cases, you may want to filter inputs e.g.
-	// to remove older inputs, or remove tools from existing inputs.
+	// Optional function that filters the inputs that are passed to the next agent.
+	//
+	// By default, the new agent sees the entire conversation history. In some cases,you may want
+	// to filter inputs e.g. to remove older inputs, or remove tools from existing inputs.
 	//
 	// The function will receive the entire conversation history so far, including the input item
 	// that triggered the handoff and a tool call output item representing the handoff tool's output.
 	//
 	// You are free to modify the input history or new items as you see fit. The next agent that
-	// runs will receive `handoff_input_data.all_items`.
+	// runs will receive all items from HandoffInputData.
 	//
 	// IMPORTANT: in streaming mode, we will not stream anything as a result of this function. The
 	// items generated before will already have been streamed.
@@ -71,7 +75,11 @@ type Handoff struct {
 }
 
 func (h Handoff) GetTransferMessage(agent *Agent) string {
-	return fmt.Sprintf(`{{'assistant': '%s'}}`, agent.Name)
+	b, err := json.Marshal(map[string]any{"assistant": agent.Name})
+	if err != nil {
+		panic(err) // this should never happen
+	}
+	return string(b)
 }
 
 func DefaultHandoffToolName(agent *Agent) string {
@@ -90,7 +98,7 @@ func DefaultHandoffToolDescription(agent *Agent) string {
 type HandoffInputFilter = func(context.Context, HandoffInputData) (HandoffInputData, error)
 
 type HandoffInputData struct {
-	// The input history before `Runner().Run()` was called.
+	// The input history before `Runner.Run()` was called.
 	InputHistory Input
 
 	// The items generated before the agent turn where the handoff was invoked.
@@ -136,6 +144,9 @@ type HandoffFromAgentParams struct {
 }
 
 // HandoffFromAgent creates a Handoff from an Agent. It panics in case of problems.
+//
+// This function can be useful for tests and examples. for a safer version that
+// returns an error, use SafeHandoffFromAgent instead.
 func HandoffFromAgent(params HandoffFromAgentParams) Handoff {
 	h, err := SafeHandoffFromAgent(params)
 	if err != nil {
@@ -145,6 +156,9 @@ func HandoffFromAgent(params HandoffFromAgentParams) Handoff {
 }
 
 // SafeHandoffFromAgent creates a Handoff from an Agent. It returns an error in case of problems.
+//
+// In situations where you don't want to handle the error and panicking is acceptable,
+// you can use HandoffFromAgent instead (recommended for tests and examples only).
 func SafeHandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 	var rawInputJSONSchema map[string]any
 

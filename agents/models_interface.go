@@ -20,18 +20,19 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 )
 
 // Model is the base interface for calling an LLM.
 type Model interface {
 	// GetResponse returns the full model response from the model.
-	GetResponse(context.Context, ModelGetResponseParams) (*ModelResponse, error)
+	GetResponse(context.Context, ModelResponseParams) (*ModelResponse, error)
 
 	// StreamResponse streams a response from the model.
-	StreamResponse(context.Context, ModelStreamResponseParams) (iter.Seq2[*TResponseStreamEvent, error], error)
+	StreamResponse(context.Context, ModelResponseParams) (iter.Seq2[*TResponseStreamEvent, error], error)
 }
 
-type ModelGetResponseParams struct {
+type ModelResponseParams struct {
 	// The system instructions to use.
 	SystemInstructions param.Opt[string]
 
@@ -53,29 +54,9 @@ type ModelGetResponseParams struct {
 	// Optional ID of the previous response. Generally not used by the model,
 	// except for the OpenAI Responses API.
 	PreviousResponseID string
-}
 
-type ModelStreamResponseParams struct {
-	// The system instructions to use.
-	SystemInstructions param.Opt[string]
-
-	// The input items to the model, in OpenAI Responses format.
-	Input Input
-
-	// The model settings to use.
-	ModelSettings modelsettings.ModelSettings
-
-	// The tools available to the model.
-	Tools []Tool
-
-	// Optional output schema to use.
-	OutputSchema AgentOutputSchemaInterface
-
-	// The handoffs available to the model.
-	Handoffs []Handoff
-
-	// Optional ID of the previous response. Generally not used by the model, except for the OpenAI Responses API.
-	PreviousResponseID string
+	// Optional prompt config to use for the model.
+	Prompt responses.ResponsePromptParam
 }
 
 // ModelProvider is the base interface for a model provider.

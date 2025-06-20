@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"slices"
 	"sync"
 
@@ -239,7 +238,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 
 	if checkToolUse.IsFinalOutput {
 		if !checkToolUse.FinalOutput.Valid() {
-			slog.Error("Model returned a final output of None. Not raising an error because we assume you know what you're doing.")
+			Logger().Error("Model returned a final output of None. Not raising an error because we assume you know what you're doing.")
 		}
 
 		return ri.ExecuteFinalOutput(
@@ -526,7 +525,7 @@ func (runImpl) ProcessModelResponse(
 				})
 			}
 		default:
-			slog.Warn(fmt.Sprintf("unexpected output type, ignoring %q", outputUnion.Type))
+			Logger().Warn(fmt.Sprintf("unexpected output type, ignoring %q", outputUnion.Type))
 		}
 	}
 
@@ -829,7 +828,7 @@ func (runImpl) ExecuteHandoffs(
 		inputFilter = runConfig.HandoffInputFilter
 	}
 	if inputFilter != nil {
-		slog.Debug("Filtering inputs for handoff")
+		Logger().Debug("Filtering inputs for handoff")
 		handoffInputData := HandoffInputData{
 			InputHistory:    CopyGeneralInput(originalInput),
 			PreHandoffItems: slices.Clone(preStepItems),

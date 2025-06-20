@@ -27,6 +27,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 )
 
 const DefaultMaxTurns = 10
@@ -45,7 +46,7 @@ type Runner struct {
 // RunConfig configures settings for the entire agent run.
 type RunConfig struct {
 	// The model to use for the entire agent run. If set, will override the model set on every
-	// agent. The model_provider passed in below must be able to resolve this model name.
+	// agent. The ModelProvider passed in below must be able to resolve this model name.
 	Model param.Opt[AgentModel]
 
 	// Optional model provider to use when looking up string model names. Defaults to OpenAI (MultiProvider).
@@ -131,7 +132,7 @@ func (r Runner) RunResponseInputsStreamed(ctx context.Context, startingAgent *Ag
 //  4. Else, we run tool calls (if any), and re-run the loop.
 //
 // In two cases, the agent run may return an error:
-//  1. If the maxTurns is exceeded, a MaxTurnsExceededError is returned.
+//  1. If the MaxTurns is exceeded, a MaxTurnsExceededError is returned.
 //  2. If a guardrail tripwire is triggered, a *GuardrailTripwireTriggeredError is returned.
 //
 // Note that only the first agent's input guardrails are run.
@@ -168,9 +169,6 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 	currentAgent := startingAgent
 	shouldRunAgentStartHooks := true
 
-	shouldGetAgentTools := true
-	var allTools []Tool
-
 	defer func() {
 		if err != nil {
 			var agentsErr *AgentsError
@@ -192,20 +190,16 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 	defer cancel()
 
 	for {
-		if shouldGetAgentTools {
-			var err error
-			allTools, err = r.getAllTools(childCtx, currentAgent)
-			if err != nil {
-				return nil, err
-			}
-			shouldGetAgentTools = false
+		allTools, err := r.getAllTools(childCtx, currentAgent)
+		if err != nil {
+			return nil, err
 		}
 
 		currentTurn += 1
 		if currentTurn > maxTurns {
 			return nil, MaxTurnsExceededErrorf("max turns %d exceeded", maxTurns)
 		}
-		slog.Debug(
+		Logger().Debug(
 			"Running agent",
 			slog.String("agentName", currentAgent.Name),
 			slog.Uint64("turn", currentTurn),
@@ -252,11 +246,10 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 			}()
 
 			wg.Wait()
-			if err := errors.Join(turnError, guardrailsError); err != nil {
+			if err = errors.Join(turnError, guardrailsError); err != nil {
 				return nil, err
 			}
 		} else {
-			var err error
 			turnResult, err = r.runSingleTurn(
 				childCtx,
 				currentAgent,
@@ -302,8 +295,6 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 			}, nil
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
-			allTools = nil
-			shouldGetAgentTools = true
 			shouldRunAgentStartHooks = true
 		case NextStepRunAgain:
 			// Nothing to do
@@ -314,7 +305,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 	}
 }
 
-// RunStreamed run a workflow starting at the given agent in streaming mode.
+// RunStreamed runs a workflow starting at the given agent in streaming mode.
 // The returned result object contains a method you can use to stream semantic
 // events as they are generated.
 //
@@ -325,7 +316,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (_ *
 //  4. Else, we run tool calls (if any), and re-run the loop.
 //
 // In two cases, the agent run may return an error:
-//  1. If the max_turns is exceeded, a MaxTurnsExceededError is returned.
+//  1. If the MaxTurns is exceeded, a MaxTurnsExceededError is returned.
 //  2. If a guardrail tripwire is triggered, a *GuardrailTripwireTriggeredError is returned.
 //
 // Note that only the first agent's input guardrails are run.
@@ -456,16 +447,10 @@ func (r Runner) runStreamedImpl(
 		Type:     "agent_updated_stream_event",
 	})
 
-	shouldGetAgentTools := true
-	var allTools []Tool
-
 	for !streamedResult.IsComplete() {
-		if shouldGetAgentTools {
-			allTools, err = r.getAllTools(ctx, currentAgent)
-			if err != nil {
-				return err
-			}
-			shouldGetAgentTools = false
+		allTools, err := r.getAllTools(ctx, currentAgent)
+		if err != nil {
+			return err
 		}
 
 		currentTurn += 1
@@ -538,8 +523,6 @@ func (r Runner) runStreamedImpl(
 			streamedResult.eventQueue.Put(queueCompleteSentinel{})
 		case NextStepHandoff:
 			currentAgent = nextStep.NewAgent
-			allTools = nil
-			shouldGetAgentTools = true
 			shouldRunAgentStartHooks = true
 			streamedResult.eventQueue.Put(AgentUpdatedStreamEvent{
 				NewAgent: currentAgent,
@@ -608,9 +591,9 @@ func (r Runner) runSingleTurnStreamed(
 	streamedResult.setCurrentAgent(agent)
 	streamedResult.setCurrentAgentOutputSchema(outputSchema)
 
-	systemPrompt, err := agent.GetSystemPrompt(ctx)
+	systemPrompt, promptConfig, err := getAgentSystemPromptAndPromptConfig(ctx, agent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get system prompt: %w", err)
+		return nil, err
 	}
 
 	handoffs, err := r.getHandoffs(agent)
@@ -633,7 +616,7 @@ func (r Runner) runSingleTurnStreamed(
 	}
 
 	// 1. Stream the output events
-	stream, err := model.StreamResponse(ctx, ModelStreamResponseParams{
+	stream, err := model.StreamResponse(ctx, ModelResponseParams{
 		SystemInstructions: systemPrompt,
 		Input:              InputItems(input),
 		ModelSettings:      modelSettings,
@@ -641,6 +624,7 @@ func (r Runner) runSingleTurnStreamed(
 		OutputSchema:       outputSchema,
 		Handoffs:           handoffs,
 		PreviousResponseID: previousResponseID,
+		Prompt:             promptConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("stream response error: %w", err)
@@ -757,9 +741,9 @@ func (r Runner) runSingleTurn(
 		}
 	}
 
-	systemPrompt, err := agent.GetSystemPrompt(ctx)
+	systemPrompt, promptConfig, err := getAgentSystemPromptAndPromptConfig(ctx, agent)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get system prompt: %w", err)
+		return nil, err
 	}
 
 	handoffs, err := r.getHandoffs(agent)
@@ -783,6 +767,7 @@ func (r Runner) runSingleTurn(
 		runConfig,
 		toolUseTracker,
 		previousResponseID,
+		promptConfig,
 	)
 	if err != nil {
 		return nil, err
@@ -801,6 +786,43 @@ func (r Runner) runSingleTurn(
 		runConfig,
 		toolUseTracker,
 	)
+}
+
+func getAgentSystemPromptAndPromptConfig(
+	ctx context.Context,
+	agent *Agent,
+) (
+	systemPrompt param.Opt[string],
+	promptConfig responses.ResponsePromptParam,
+	err error,
+) {
+	var promptErrors [2]error
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		systemPrompt, promptErrors[0] = agent.GetSystemPrompt(ctx)
+		if promptErrors[0] != nil {
+			cancel()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		promptConfig, _, promptErrors[1] = agent.GetPrompt(ctx)
+		if promptErrors[1] != nil {
+			cancel()
+		}
+	}()
+
+	wg.Wait()
+	err = errors.Join(promptErrors[:]...)
+	return
 }
 
 func (Runner) getSingleStepResultFromResponse(
@@ -952,6 +974,7 @@ func (r Runner) getNewResponse(
 	runConfig RunConfig,
 	toolUseTracker *AgentToolUseTracker,
 	previousResponseID string,
+	promptConfig responses.ResponsePromptParam,
 ) (*ModelResponse, error) {
 	model, err := r.getModel(agent, runConfig)
 	if err != nil {
@@ -961,7 +984,7 @@ func (r Runner) getNewResponse(
 	modelSettings := agent.ModelSettings.Resolve(runConfig.ModelSettings)
 	modelSettings = RunImpl().MaybeResetToolChoice(agent, toolUseTracker, modelSettings)
 
-	newResponse, err := model.GetResponse(ctx, ModelGetResponseParams{
+	newResponse, err := model.GetResponse(ctx, ModelResponseParams{
 		SystemInstructions: systemPrompt,
 		Input:              InputItems(input),
 		ModelSettings:      modelSettings,
@@ -969,6 +992,7 @@ func (r Runner) getNewResponse(
 		OutputSchema:       outputSchema,
 		Handoffs:           handoffs,
 		PreviousResponseID: previousResponseID,
+		Prompt:             promptConfig,
 	})
 	if err != nil {
 		return nil, err

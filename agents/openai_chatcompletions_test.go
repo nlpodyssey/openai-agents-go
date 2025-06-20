@@ -25,6 +25,7 @@ import (
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -84,7 +85,7 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
+	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
@@ -92,6 +93,7 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 		OutputSchema:       nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -138,7 +140,7 @@ func TestGetResponseWithRefusal(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
+	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
@@ -146,6 +148,7 @@ func TestGetResponseWithRefusal(t *testing.T) {
 		OutputSchema:       nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -196,7 +199,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	resp, err := model.GetResponse(t.Context(), ModelGetResponseParams{
+	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
 		SystemInstructions: param.Null[string](),
 		Input:              InputString(""),
 		ModelSettings:      modelsettings.ModelSettings{},
@@ -204,6 +207,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 		OutputSchema:       nil,
 		Handoffs:           nil,
 		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -233,14 +237,12 @@ func TestPrepareRequestNonStream(t *testing.T) {
 
 	// Execute the private prepareRequest with a system instruction and simple string input.
 	params, opts, err := model.(OpenAIChatCompletionsModel).prepareRequest(
-		t.Context(),
 		param.NewOpt("sys"),
 		InputString("hi"),
 		modelsettings.ModelSettings{},
 		nil,
 		nil,
 		nil,
-		"",
 		false,
 	)
 	require.NoError(t, err)

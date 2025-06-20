@@ -45,7 +45,7 @@ func NewOpenAIResponsesModel(model openai.ChatModel, client OpenaiClient) OpenAI
 
 func (m OpenAIResponsesModel) GetResponse(
 	ctx context.Context,
-	params ModelGetResponseParams,
+	params ModelResponseParams,
 ) (*ModelResponse, error) {
 	body, opts, err := m.prepareRequest(
 		ctx,
@@ -57,6 +57,7 @@ func (m OpenAIResponsesModel) GetResponse(
 		params.Handoffs,
 		params.PreviousResponseID,
 		false,
+		params.Prompt,
 	)
 	if err != nil {
 		return nil, err
@@ -64,14 +65,14 @@ func (m OpenAIResponsesModel) GetResponse(
 
 	response, err := m.client.Responses.New(ctx, *body, opts...)
 	if err != nil {
-		slog.Error("error getting response", slog.String("error", err.Error()))
+		Logger().Error("error getting response", slog.String("error", err.Error()))
 		return nil, err
 	}
 
 	if DontLogModelData {
-		slog.Debug("LLM responded")
+		Logger().Debug("LLM responded")
 	} else {
-		slog.Debug("LLM responded", slog.String("output", SimplePrettyJSONMarshal(response.Output)))
+		Logger().Debug("LLM responded", slog.String("output", SimplePrettyJSONMarshal(response.Output)))
 	}
 
 	u := usage.NewUsage()
@@ -96,7 +97,7 @@ func (m OpenAIResponsesModel) GetResponse(
 // StreamResponse yields a partial message as it is generated, as well as the usage information.
 func (m OpenAIResponsesModel) StreamResponse(
 	ctx context.Context,
-	params ModelStreamResponseParams,
+	params ModelResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
 	body, opts, err := m.prepareRequest(
 		ctx,
@@ -108,6 +109,7 @@ func (m OpenAIResponsesModel) StreamResponse(
 		params.Handoffs,
 		params.PreviousResponseID,
 		true,
+		params.Prompt,
 	)
 	if err != nil {
 		return nil, err
@@ -144,6 +146,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 	handoffs []Handoff,
 	previousResponseID string,
 	stream bool,
+	prompt responses.ResponsePromptParam,
 ) (*responses.ResponseNewParams, []option.RequestOption, error) {
 	listInput := ItemHelpers().InputToNewInputList(input)
 
@@ -164,9 +167,9 @@ func (m OpenAIResponsesModel) prepareRequest(
 	responseFormat := ResponsesConverter().GetResponseFormat(outputSchema)
 
 	if DontLogModelData {
-		slog.Debug("Calling LLM")
+		Logger().Debug("Calling LLM")
 	} else {
-		slog.Debug(
+		Logger().Debug(
 			"Calling LLM",
 			slog.String("Input", SimplePrettyJSONMarshal(listInput)),
 			slog.String("Tools", SimplePrettyJSONMarshal(convertedTools.Tools)),
@@ -189,6 +192,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 		Input:              responses.ResponseNewParamsInputUnion{OfInputItemList: listInput},
 		Include:            convertedTools.Includes,
 		Tools:              convertedTools.Tools,
+		Prompt:             prompt,
 		Temperature:        modelSettings.Temperature,
 		TopP:               modelSettings.TopP,
 		Truncation:         responses.ResponseNewParamsTruncation(modelSettings.Truncation.Or("")),
