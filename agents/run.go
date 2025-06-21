@@ -346,7 +346,7 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 
 	// Kick off the actual agent loop in the background and return the streamed result object.
 	streamedResult.createRunImplTask(ctx, func(ctx context.Context) error {
-		return r.runStreamedImpl(
+		return r.startStreaming(
 			ctx,
 			input,
 			streamedResult,
@@ -404,7 +404,7 @@ func (r Runner) runInputGuardrailsWithQueue(
 	return nil
 }
 
-func (r Runner) runStreamedImpl(
+func (r Runner) startStreaming(
 	ctx context.Context,
 	startingInput Input,
 	streamedResult *RunResultStreaming,
