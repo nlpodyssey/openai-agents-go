@@ -212,6 +212,11 @@ func (m OpenAIResponsesModel) prepareRequest(
 	for k, v := range modelSettings.ExtraQuery {
 		opts = append(opts, option.WithQuery(k, v))
 	}
+
+	if modelSettings.CustomizeResponsesRequest != nil {
+		return modelSettings.CustomizeResponsesRequest(ctx, params, opts)
+	}
+
 	return params, opts, nil
 }
 

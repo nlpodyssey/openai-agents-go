@@ -237,6 +237,7 @@ func TestPrepareRequestNonStream(t *testing.T) {
 
 	// Execute the private prepareRequest with a system instruction and simple string input.
 	params, opts, err := model.(OpenAIChatCompletionsModel).prepareRequest(
+		t.Context(),
 		param.NewOpt("sys"),
 		InputString("hi"),
 		modelsettings.ModelSettings{},
