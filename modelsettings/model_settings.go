@@ -15,10 +15,14 @@
 package modelsettings
 
 import (
+	"context"
 	"maps"
+	"reflect"
 
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 )
 
 // ModelSettings holds settings to use when calling an LLM.
@@ -75,6 +79,20 @@ type ModelSettings struct {
 
 	// Optional additional headers to provide with the request.
 	ExtraHeaders map[string]string `json:"extra_headers"`
+
+	// Optional function which allows you to fully customize parameters and options
+	// for a call to the responses API. Pre-built parameters and options are given.
+	// You should return the final parameters and options that will be passed
+	// directly to the underlying model provider's API.
+	// Use with caution as not all models support all parameters.
+	CustomizeResponsesRequest func(context.Context, *responses.ResponseNewParams, []option.RequestOption) (*responses.ResponseNewParams, []option.RequestOption, error) `json:"-"`
+
+	// Optional function which allows you to fully customize parameters and options
+	// for a call to the chat-completion API. Pre-built parameters and options are given.
+	// You should return the final parameters and options that will be passed
+	// directly to the underlying model provider's API.
+	// Use with caution as not all models support all parameters.
+	CustomizeChatCompletionsRequest func(context.Context, *openai.ChatCompletionNewParams, []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) `json:"-"`
 }
 
 type Truncation string
@@ -92,16 +110,18 @@ func (ms ModelSettings) Resolve(override ModelSettings) ModelSettings {
 	resolveOpt(&newSettings.TopP, override.TopP)
 	resolveOpt(&newSettings.FrequencyPenalty, override.FrequencyPenalty)
 	resolveOpt(&newSettings.PresencePenalty, override.PresencePenalty)
-	resolveComparable(&newSettings.ToolChoice, override.ToolChoice)
+	resolveAny(&newSettings.ToolChoice, override.ToolChoice)
 	resolveOpt(&newSettings.ParallelToolCalls, override.ParallelToolCalls)
 	resolveOpt(&newSettings.Truncation, override.Truncation)
 	resolveOpt(&newSettings.MaxTokens, override.MaxTokens)
-	resolveComparable(&newSettings.Reasoning, override.Reasoning)
+	resolveAny(&newSettings.Reasoning, override.Reasoning)
 	resolveMap(&newSettings.Metadata, override.Metadata)
 	resolveOpt(&newSettings.Store, override.Store)
 	resolveOpt(&newSettings.IncludeUsage, override.IncludeUsage)
 	resolveMap(&newSettings.ExtraQuery, override.ExtraQuery)
 	resolveMap(&newSettings.ExtraHeaders, override.ExtraHeaders)
+	resolveAny(&newSettings.CustomizeResponsesRequest, override.CustomizeResponsesRequest)
+	resolveAny(&newSettings.CustomizeChatCompletionsRequest, override.CustomizeChatCompletionsRequest)
 	return newSettings
 }
 
@@ -111,9 +131,8 @@ func resolveOpt[T comparable](base *param.Opt[T], override param.Opt[T]) {
 	}
 }
 
-func resolveComparable[T comparable](base *T, override T) {
-	var zero T
-	if override != zero {
+func resolveAny[T any](base *T, override T) {
+	if !reflect.ValueOf(override).IsZero() {
 		*base = override
 	}
 }

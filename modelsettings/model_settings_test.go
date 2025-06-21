@@ -16,11 +16,14 @@ package modelsettings
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
 
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/responses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -123,11 +126,13 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Effort:  openai.ReasoningEffortLow,
 			Summary: openai.ReasoningSummaryConcise,
 		},
-		Metadata:     map[string]string{"foo": "bar"},
-		Store:        param.NewOpt(false),
-		IncludeUsage: param.NewOpt(false),
-		ExtraQuery:   map[string]string{"foo": "bar"},
-		ExtraHeaders: map[string]string{"foo": "bar"},
+		Metadata:                        map[string]string{"foo": "bar"},
+		Store:                           param.NewOpt(false),
+		IncludeUsage:                    param.NewOpt(false),
+		ExtraQuery:                      map[string]string{"foo": "bar"},
+		ExtraHeaders:                    map[string]string{"foo": "bar"},
+		CustomizeResponsesRequest:       nil,
+		CustomizeChatCompletionsRequest: nil,
 	}
 
 	t.Run("overriding first set of properties", func(t *testing.T) {
@@ -142,31 +147,32 @@ func TestModelSettings_Resolve(t *testing.T) {
 			},
 			Store:      param.NewOpt(true),
 			ExtraQuery: map[string]string{"a": "b"},
+			CustomizeResponsesRequest: func(context.Context, *responses.ResponseNewParams, []option.RequestOption) (*responses.ResponseNewParams, []option.RequestOption, error) {
+				return nil, nil, nil
+			},
 		}
 
 		resolved := base.Resolve(override)
 
-		want := ModelSettings{
-			Temperature:       param.NewOpt(0.4),
-			TopP:              param.NewOpt(0.9),
-			FrequencyPenalty:  param.NewOpt(0.1),
-			PresencePenalty:   param.NewOpt(0.0),
-			ToolChoice:        "required",
-			ParallelToolCalls: param.NewOpt(true),
-			Truncation:        param.NewOpt(TruncationDisabled),
-			MaxTokens:         param.NewOpt[int64](100),
-			Reasoning: openai.ReasoningParam{
-				Effort:  openai.ReasoningEffortMedium,
-				Summary: openai.ReasoningSummaryDetailed,
-			},
-			Metadata:     map[string]string{"foo": "bar"},
-			Store:        param.NewOpt(true),
-			IncludeUsage: param.NewOpt(false),
-			ExtraQuery:   map[string]string{"a": "b"},
-			ExtraHeaders: map[string]string{"foo": "bar"},
-		}
-
-		assert.Equal(t, want, resolved)
+		assert.Equal(t, param.NewOpt(0.4), resolved.Temperature)
+		assert.Equal(t, param.NewOpt(0.9), resolved.TopP)
+		assert.Equal(t, param.NewOpt(0.1), resolved.FrequencyPenalty)
+		assert.Equal(t, param.NewOpt(0.0), resolved.PresencePenalty)
+		assert.Equal(t, "required", resolved.ToolChoice)
+		assert.Equal(t, param.NewOpt(true), resolved.ParallelToolCalls)
+		assert.Equal(t, param.NewOpt(TruncationDisabled), resolved.Truncation)
+		assert.Equal(t, param.NewOpt[int64](100), resolved.MaxTokens)
+		assert.Equal(t, openai.ReasoningParam{
+			Effort:  openai.ReasoningEffortMedium,
+			Summary: openai.ReasoningSummaryDetailed,
+		}, resolved.Reasoning)
+		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.Metadata)
+		assert.Equal(t, param.NewOpt(true), resolved.Store)
+		assert.Equal(t, param.NewOpt(false), resolved.IncludeUsage)
+		assert.Equal(t, map[string]string{"a": "b"}, resolved.ExtraQuery)
+		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.ExtraHeaders)
+		assert.NotNil(t, resolved.CustomizeResponsesRequest)
+		assert.Nil(t, resolved.CustomizeChatCompletionsRequest)
 	})
 
 	t.Run("overriding second set of properties", func(t *testing.T) {
@@ -178,30 +184,31 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Metadata:          map[string]string{"a": "b"},
 			IncludeUsage:      param.NewOpt(true),
 			ExtraHeaders:      map[string]string{"c": "d"},
+			CustomizeChatCompletionsRequest: func(context.Context, *openai.ChatCompletionNewParams, []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
+				return nil, nil, nil
+			},
 		}
 
 		resolved := base.Resolve(override)
 
-		want := ModelSettings{
-			Temperature:       param.NewOpt(0.5),
-			TopP:              param.NewOpt(0.8),
-			FrequencyPenalty:  param.NewOpt(0.0),
-			PresencePenalty:   param.NewOpt(0.2),
-			ToolChoice:        "auto",
-			ParallelToolCalls: param.NewOpt(false),
-			Truncation:        param.NewOpt(TruncationAuto),
-			MaxTokens:         param.NewOpt[int64](42),
-			Reasoning: openai.ReasoningParam{
-				Effort:  openai.ReasoningEffortLow,
-				Summary: openai.ReasoningSummaryConcise,
-			},
-			Metadata:     map[string]string{"a": "b"},
-			Store:        param.NewOpt(false),
-			IncludeUsage: param.NewOpt(true),
-			ExtraQuery:   map[string]string{"foo": "bar"},
-			ExtraHeaders: map[string]string{"c": "d"},
-		}
-
-		assert.Equal(t, want, resolved)
+		assert.Equal(t, param.NewOpt(0.5), resolved.Temperature)
+		assert.Equal(t, param.NewOpt(0.8), resolved.TopP)
+		assert.Equal(t, param.NewOpt(0.0), resolved.FrequencyPenalty)
+		assert.Equal(t, param.NewOpt(0.2), resolved.PresencePenalty)
+		assert.Equal(t, "auto", resolved.ToolChoice)
+		assert.Equal(t, param.NewOpt(false), resolved.ParallelToolCalls)
+		assert.Equal(t, param.NewOpt(TruncationAuto), resolved.Truncation)
+		assert.Equal(t, param.NewOpt[int64](42), resolved.MaxTokens)
+		assert.Equal(t, openai.ReasoningParam{
+			Effort:  openai.ReasoningEffortLow,
+			Summary: openai.ReasoningSummaryConcise,
+		}, resolved.Reasoning)
+		assert.Equal(t, map[string]string{"a": "b"}, resolved.Metadata)
+		assert.Equal(t, param.NewOpt(false), resolved.Store)
+		assert.Equal(t, param.NewOpt(true), resolved.IncludeUsage)
+		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.ExtraQuery)
+		assert.Equal(t, map[string]string{"c": "d"}, resolved.ExtraHeaders)
+		assert.Nil(t, resolved.CustomizeResponsesRequest)
+		assert.NotNil(t, resolved.CustomizeChatCompletionsRequest)
 	})
 }
