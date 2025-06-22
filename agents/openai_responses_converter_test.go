@@ -221,8 +221,7 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 
 	t.Run("only one computer tool should be allowed", func(t *testing.T) {
 		_, err = agents.ResponsesConverter().ConvertTools(t.Context(), []agents.Tool{compTool, compTool}, nil)
-		var target agents.UserError
-		assert.ErrorAs(t, err, &target)
+		assert.ErrorAs(t, err, &agents.UserError{})
 	})
 }
 

@@ -461,13 +461,11 @@ func TestInvalidHandoffInputJSONCausesError(t *testing.T) {
 		InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
 	})
 
-	var target agents.ModelBehaviorError
-
 	_, err := h.OnInvokeHandoff(t.Context(), "")
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.ModelBehaviorError{})
 
 	_, err = h.OnInvokeHandoff(t.Context(), `{"foo": "y"}`)
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.ModelBehaviorError{})
 }
 
 func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
@@ -494,8 +492,7 @@ func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 	}
 
 	_, err := agents.Runner{}.Run(t.Context(), agent, "user_message")
-	var target agents.InputGuardrailTripwireTriggeredError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.InputGuardrailTripwireTriggeredError{})
 }
 
 func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
@@ -522,8 +519,7 @@ func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 	}
 
 	_, err := agents.Runner{}.Run(t.Context(), agent, "user_message")
-	var target agents.OutputGuardrailTripwireTriggeredError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.OutputGuardrailTripwireTriggeredError{})
 }
 
 var TestToolOne = agents.FunctionTool{

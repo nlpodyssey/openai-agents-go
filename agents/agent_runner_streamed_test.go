@@ -427,9 +427,7 @@ func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
-
-	var target agents.InputGuardrailTripwireTriggeredError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.InputGuardrailTripwireTriggeredError{})
 }
 
 func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
@@ -458,9 +456,7 @@ func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
-
-	var target agents.OutputGuardrailTripwireTriggeredError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.OutputGuardrailTripwireTriggeredError{})
 }
 
 func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
@@ -486,9 +482,7 @@ func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	}}).RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
-
-	var target agents.InputGuardrailTripwireTriggeredError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.InputGuardrailTripwireTriggeredError{})
 }
 
 func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
@@ -518,9 +512,7 @@ func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 	}}).RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
-
-	var target agents.OutputGuardrailTripwireTriggeredError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.OutputGuardrailTripwireTriggeredError{})
 }
 
 func TestStreamingEvents(t *testing.T) {

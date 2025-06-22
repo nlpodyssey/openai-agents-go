@@ -122,8 +122,7 @@ func TestMissingToolCallReturnsError(t *testing.T) {
 		response,
 		nil,
 	)
-	var target ModelBehaviorError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &ModelBehaviorError{})
 }
 
 func TestRunStepProcessingMultipleToolCalls(t *testing.T) {
@@ -248,8 +247,7 @@ func TestMissingHandoffFails(t *testing.T) {
 		response,
 		runnerHandoffs,
 	)
-	var target ModelBehaviorError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &ModelBehaviorError{})
 }
 
 func TestMultipleHandoffsDoesntError(t *testing.T) {
@@ -456,8 +454,7 @@ func TestComputerToolCallWithoutComputerToolReturnsError(t *testing.T) {
 		response,
 		nil,
 	)
-	var target ModelBehaviorError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &ModelBehaviorError{})
 }
 
 func TestComputerToolCallWithComputerToolParsedCorrectly(t *testing.T) {
