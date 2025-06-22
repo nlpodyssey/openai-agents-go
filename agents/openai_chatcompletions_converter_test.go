@@ -622,8 +622,7 @@ func TestItemReferenceErrors(t *testing.T) {
 			},
 		},
 	})
-	var target agents.UserError
-	assert.ErrorAs(t, err, &target)
+	assert.ErrorAs(t, err, &agents.UserError{})
 }
 
 func TestAssistantMessagesInHistory(t *testing.T) {
