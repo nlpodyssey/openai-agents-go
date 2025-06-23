@@ -611,3 +611,45 @@ func TestStreamingEvents(t *testing.T) {
 	assert.Same(t, agent2, agentData[0].NewAgent)
 	assert.Same(t, agent1, agentData[1].NewAgent)
 }
+
+func TestDynamicToolAdditionRunStreamed(t *testing.T) {
+	// Test that tools can be added to an agent during a run.
+	model := agentstesting.NewFakeModel(nil)
+
+	agent := agents.New("test").
+		WithModelInstance(model).
+		WithToolUseBehavior(agents.RunLLMAgain())
+
+	tool2Called := false
+	tool2 := agents.NewFunctionTool("tool2", "", func(ctx context.Context, args struct{}) (string, error) {
+		tool2Called = true
+		return "result2", nil
+	})
+
+	addTool := agents.NewFunctionTool("add_tool", "", func(ctx context.Context, args struct{}) (string, error) {
+		agent.AddTool(tool2)
+		return "added", nil
+	})
+
+	agent.AddTool(addTool)
+
+	model.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{
+		{Value: []agents.TResponseOutputItem{
+			agentstesting.GetFunctionToolCall("add_tool", `{}`),
+		}},
+		{Value: []agents.TResponseOutputItem{
+			agentstesting.GetFunctionToolCall("tool2", `{}`),
+		}},
+		{Value: []agents.TResponseOutputItem{
+			agentstesting.GetTextMessage("done"),
+		}},
+	})
+
+	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "test")
+	require.NoError(t, err)
+	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	require.NoError(t, err)
+
+	assert.Equal(t, "done", result.FinalOutput())
+	assert.True(t, tool2Called)
+}
