@@ -21,6 +21,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -240,4 +241,30 @@ func TestOnHandoffWithoutInputError(t *testing.T) {
 	// Valid JSON should call the OnHandoff function
 	_, err = obj.OnInvokeHandoff(t.Context(), `{"bar": "baz"}`)
 	assert.ErrorIs(t, err, handoffErr)
+}
+
+func TestHandoffInputSchemaIsStrict(t *testing.T) {
+	agent := &Agent{Name: "test"}
+	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
+		Agent:           agent,
+		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
+		OnHandoff: OnHandoffWithInput(func(context.Context, any) error {
+			return nil
+		}),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, param.NewOpt(true), obj.StrictJSONSchema)
+}
+
+func TestGetTransferMessageIsValidJson(t *testing.T) {
+	agent := &Agent{Name: "foo"}
+	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{Agent: agent})
+	require.NoError(t, err)
+	transfer := obj.GetTransferMessage(agent)
+
+	var m map[string]any
+	err = json.Unmarshal([]byte(transfer), &m)
+	require.NoError(t, err)
+
+	assert.Equal(t, map[string]any{"assistant": "foo"}, m)
 }
