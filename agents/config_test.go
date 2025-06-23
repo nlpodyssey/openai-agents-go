@@ -15,11 +15,74 @@
 package agents
 
 import (
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestSetDefaultOpenaiKeyChatCompletions(t *testing.T) {
+	for _, useResponses := range []bool{true, false} {
+		t.Run(fmt.Sprintf("UseResponses: %v", useResponses), func(t *testing.T) {
+			v := defaultOpenaiKey.Load()
+			t.Cleanup(func() { defaultOpenaiKey.Store(v) })
+
+			SetDefaultOpenaiKey("test_key")
+
+			var reqHeader http.Header
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				reqHeader = r.Header
+			}))
+			t.Cleanup(func() { server.Close() })
+
+			model, err := NewOpenAIProvider(OpenAIProviderParams{
+				UseResponses: param.NewOpt(useResponses),
+				BaseURL:      param.NewOpt(server.URL),
+			}).GetModel("gpt-4")
+			require.NoError(t, err)
+
+			_, _ = model.GetResponse(t.Context(), ModelResponseParams{Input: InputString("input")})
+			assert.Equal(t, "Bearer test_key", reqHeader.Get("Authorization"))
+		})
+	}
+}
+
+func TestSetDefaultOpenaiClient(t *testing.T) {
+	for _, useResponses := range []bool{true, false} {
+		t.Run(fmt.Sprintf("UseResponses: %v", useResponses), func(t *testing.T) {
+			v := defaultOpenaiClient.Load()
+			t.Cleanup(func() { defaultOpenaiClient.Store(v) })
+
+			sentinelErr := errors.New("custom client was used")
+
+			dummyClient := OpenaiClient{
+				Client: openai.NewClient(
+					option.WithMiddleware(func(req *http.Request, _ option.MiddlewareNext) (*http.Response, error) {
+						return nil, sentinelErr
+					}),
+				),
+			}
+
+			SetDefaultOpenaiClient(dummyClient)
+
+			model, err := NewOpenAIProvider(OpenAIProviderParams{
+				UseResponses: param.NewOpt(useResponses),
+				OpenaiClient: &dummyClient,
+			}).GetModel("gpt-4")
+			require.NoError(t, err)
+
+			_, err = model.GetResponse(t.Context(), ModelResponseParams{Input: InputString("input")})
+			assert.ErrorIs(t, err, sentinelErr)
+		})
+	}
+}
 
 func TestSetDefaultOpenaiAPI(t *testing.T) {
 	v := useResponsesByDefault.Load()
