@@ -116,6 +116,8 @@ func TestPlaintextAgentWithToolCallIsRunAgain(t *testing.T) {
 		response: response,
 	})
 
+	assert.Equal(t, InputString("hello"), result.OriginalInput)
+
 	// 3 items: new message, tool call, tool result
 	items := result.GeneratedItems()
 	require.Len(t, items, 3)
@@ -370,18 +372,6 @@ func assertItemIsFunctionToolCallOutput(t *testing.T, item RunItem, agent *Agent
 	}, item)
 }
 
-type getExecuteResultParams struct {
-	agent    *Agent
-	response ModelResponse
-	// optional
-	originalInput  Input
-	generatedItems []RunItem
-	// optional
-	hooks RunHooks
-	// optional
-	runConfig RunConfig
-}
-
 func getTextMessage(content string) responses.ResponseOutputItemUnion {
 	return responses.ResponseOutputItemUnion{ // responses.ResponseOutputMessage
 		ID:   "1",
@@ -437,6 +427,18 @@ func getFinalOutputMessage(args string) responses.ResponseOutputItemUnion {
 		}},
 		Status: string(responses.ResponseOutputMessageStatusCompleted),
 	}
+}
+
+type getExecuteResultParams struct {
+	agent    *Agent
+	response ModelResponse
+	// optional
+	originalInput  Input
+	generatedItems []RunItem
+	// optional
+	hooks RunHooks
+	// optional
+	runConfig RunConfig
 }
 
 func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepResult {
