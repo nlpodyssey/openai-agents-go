@@ -222,6 +222,42 @@ func TestGetResponseWithToolCall(t *testing.T) {
 	assert.Equal(t, `{"x":1}`, fnCallItem.Arguments)
 }
 
+func TestGetResponseWithNoMessage(t *testing.T) {
+	// If the model returns no message, get_response should return an empty output.
+
+	type m = map[string]any
+	choice := m{"index": 0, "finish_reason": "content_filter"} // Choice
+	chat := m{                                                 // ChatCompletion
+		"id":      "resp-id",
+		"created": 0,
+		"model":   "fake",
+		"object":  "chat.completion",
+		"choices": []any{choice},
+		"usage":   nil,
+	}
+	dummyClient := makeOpenaiClientWithResponse(t, chat)
+
+	provider := NewOpenAIProvider(OpenAIProviderParams{
+		OpenaiClient: &dummyClient,
+		UseResponses: param.NewOpt(false),
+	})
+	model, err := provider.GetModel("gpt-4")
+	require.NoError(t, err)
+
+	resp, err := model.GetResponse(t.Context(), ModelResponseParams{
+		SystemInstructions: param.Opt[string]{},
+		Input:              InputString(""),
+		ModelSettings:      modelsettings.ModelSettings{},
+		Tools:              nil,
+		OutputSchema:       nil,
+		Handoffs:           nil,
+		PreviousResponseID: "",
+		Prompt:             responses.ResponsePromptParam{},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, resp.Output)
+}
+
 func TestPrepareRequestNonStream(t *testing.T) {
 	// Verify that `prepareRequest` builds the correct OpenAI API call when not
 	// streaming.
