@@ -311,7 +311,7 @@ func TestConvertResponseFormatReturnsNotGivenForPlainTextAndObjectForSchemas(t *
 	// when no output schema is provided or if the output schema indicates
 	// plain text. For structured output schemas, it should return an object
 	// with type `json_schema` and include the generated JSON schema and
-	// strict flag from the provided `AgentOutputSchema`.
+	// strict flag from the provided schema.
 
 	_, ok := agents.ChatCmplConverter().ConvertResponseFormat(nil)
 	assert.False(t, ok)
