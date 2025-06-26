@@ -15,6 +15,7 @@
 package agents
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"testing"
@@ -46,11 +47,8 @@ func getFunctionTool(
 
 func makeFunctionToolResult(agent *Agent, output string, toolName string) FunctionToolResult {
 	// Construct a FunctionToolResult with the given output using a simple function tool.
-	if toolName == "" {
-		toolName = "dummy"
-	}
 	return FunctionToolResult{
-		Tool:   getFunctionTool(toolName, output),
+		Tool:   getFunctionTool(cmp.Or(toolName, "dummy"), output),
 		Output: output,
 		RunItem: ToolCallOutputItem{
 			Agent: agent,
@@ -94,7 +92,7 @@ func TestRunLlmAgainBehavior(t *testing.T) {
 }
 
 func TestStopOnFirstToolBehavior(t *testing.T) {
-	// When tool_use_behavior is stop_on_first_tool, we should surface first tool output as final.
+	// When ToolUseBehavior is StopOnFirstTool, we should surface first tool output as final.
 	agent := &Agent{
 		Name:            "test",
 		ToolUseBehavior: StopOnFirstTool(),

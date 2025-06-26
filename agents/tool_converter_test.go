@@ -80,3 +80,21 @@ func TestConvertHandoffTool(t *testing.T) {
 		Type: constant.ValueOf[constant.Function](),
 	}, result)
 }
+
+func TestToolConverterHostedToolsErrors(t *testing.T) {
+	tools := []agents.Tool{
+		agents.CodeInterpreterTool{},
+		agents.ComputerTool{},
+		agents.FileSearchTool{},
+		agents.ImageGenerationTool{},
+		agents.LocalShellTool{},
+		agents.WebSearchTool{},
+	}
+
+	for _, tool := range tools {
+		t.Run(tool.ToolName(), func(t *testing.T) {
+			_, err := agents.ChatCmplConverter().ToolToOpenai(tool)
+			assert.ErrorAs(t, err, &agents.UserError{})
+		})
+	}
+}
