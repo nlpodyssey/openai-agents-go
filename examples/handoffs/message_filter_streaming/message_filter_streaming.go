@@ -56,18 +56,18 @@ func SpanishHandoffMessageFilter(_ context.Context, handoffMessageData agents.Ha
 	}, nil
 }
 
-var (
-	Model = agents.NewAgentModelName("gpt-4o-mini")
+const Model = "gpt-4o-mini"
 
+var (
 	FirstAgent = agents.New("Assistant").
 			WithInstructions("Be extremely concise.").
 			WithTools(RandomNumberTool).
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 
 	SpanishAgent = agents.New("Spanish Assistant").
 			WithInstructions("You only speak Spanish and are extremely concise.").
 			WithHandoffDescription("A Spanish-speaking assistant.").
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 
 	SecondAgent = agents.New("Assistant").
 			WithInstructions("Be a helpful assistant. If the user speaks Spanish, handoff to the Spanish assistant.").
@@ -77,7 +77,7 @@ var (
 				InputFilter: SpanishHandoffMessageFilter,
 			}),
 		).
-		WithModelOpt(param.NewOpt(Model))
+		WithModel(Model)
 )
 
 func main() {
@@ -91,7 +91,8 @@ func main() {
 
 	// 2. Ask it to generate a number
 	result, err = agents.RunResponseInputs(
-		context.Background(), FirstAgent,
+		context.Background(),
+		FirstAgent,
 		append(
 			result.ToInputList(),
 			agents.TResponseInputItem{
@@ -113,7 +114,8 @@ func main() {
 
 	// 3. Call the second agent
 	result, err = agents.RunResponseInputs(
-		context.Background(), SecondAgent,
+		context.Background(),
+		SecondAgent,
 		append(
 			result.ToInputList(),
 			agents.TResponseInputItem{
@@ -135,7 +137,8 @@ func main() {
 
 	// 4. Cause a handoff to occur
 	streamResult, err := agents.RunResponseInputsStreamed(
-		context.Background(), SecondAgent,
+		context.Background(),
+		SecondAgent,
 		append(
 			result.ToInputList(),
 			agents.TResponseInputItem{

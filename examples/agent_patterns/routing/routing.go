@@ -17,7 +17,9 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
@@ -31,21 +33,22 @@ then hands off to the appropriate agent based on the language of the request. Re
 streamed to the user.
 */
 
+const Model = "gpt-4o-mini"
+
 var (
-	Model       = agents.NewAgentModelName("gpt-4o-mini")
 	FrenchAgent = agents.New("french_agent").
 			WithInstructions("You only speak French").
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 	SpanishAgent = agents.New("spanish_agent").
 			WithInstructions("You only speak Spanish").
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 	EnglishAgent = agents.New("english_agent").
 			WithInstructions("You only speak English").
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 	TriageAgent = agents.New("triage_agent").
 			WithInstructions("Handoff to the appropriate agent based on the language of the request.").
 			WithAgentHandoffs(FrenchAgent, SpanishAgent, EnglishAgent).
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 )
 
 func main() {
@@ -101,6 +104,9 @@ func main() {
 		fmt.Print("Enter a message: ")
 		_ = os.Stdout.Sync()
 		line, _, err = bufio.NewReader(os.Stdin).ReadLine()
+		if errors.Is(err, io.EOF) {
+			break
+		}
 		if err != nil {
 			panic(err)
 		}

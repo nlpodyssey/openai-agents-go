@@ -85,7 +85,10 @@ func (EvaluationFeedbackSchema) ValidateJSON(jsonStr string) (any, error) {
 }
 
 var Evaluator = agents.New("evaluator").
-	WithInstructions("You evaluate a story outline and decide if it's good enough. If it's not good enough, you provide feedback on what needs to be improved. Never give it a pass on the first try.").
+	WithInstructions(
+		"You evaluate a story outline and decide if it's good enough. " +
+			"If it's not good enough, you provide feedback on what needs to be improved. " +
+			"Never give it a pass on the first try.").
 	WithOutputSchema(EvaluationFeedbackSchema{}).
 	WithModel("gpt-4.1-nano")
 

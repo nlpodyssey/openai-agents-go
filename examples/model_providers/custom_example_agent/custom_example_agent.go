@@ -49,7 +49,6 @@ var Client = agents.NewOpenaiClient(
 	option.WithAPIKey(APIKey),
 )
 
-//
 // An alternate approach that would also work:
 //
 // provider := agents.NewOpenAIProvider(agents.OpenAIProviderParams{
@@ -77,7 +76,7 @@ func main() {
 	// This agent will use the custom LLM provider
 	agent := agents.New("Assistant").
 		WithInstructions("You only respond in haikus.").
-		WithModelOpt(param.NewOpt(agents.NewAgentModel(agents.NewOpenAIChatCompletionsModel(ModelName, Client)))).
+		WithModelInstance(agents.NewOpenAIChatCompletionsModel(ModelName, Client)).
 		WithTools(GetWeatherTool)
 
 	result, err := agents.Run(context.Background(), agent, "What's the weather in Tokyo?")

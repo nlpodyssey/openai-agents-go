@@ -24,7 +24,6 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -32,14 +31,15 @@ This example shows the parallelization pattern. We run the agent three times
 in parallel, and pick the best result.
 */
 
+const Model = "gpt-4.1-nano"
+
 var (
-	Model        = agents.NewAgentModelName("gpt-4.1-nano")
 	SpanishAgent = agents.New("spanish_agent").
 			WithInstructions("You translate the user's message to Spanish").
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 	TranslationPicker = agents.New("translation_picker").
 				WithInstructions("You pick the best Spanish translation from the given options.").
-				WithModelOpt(param.NewOpt(Model))
+				WithModel(Model)
 )
 
 func main() {
@@ -78,7 +78,8 @@ func main() {
 	translations := strings.Join(outputs[:], "\n\n")
 	fmt.Printf("\n\nTranslations:\n\n%s\n", translations)
 
-	bestTranslation, err := agents.Run(context.Background(), TranslationPicker, fmt.Sprintf("Input: %s\n\nTranslations:\n%s", msg, translations))
+	input := fmt.Sprintf("Input: %s\n\nTranslations:\n%s", msg, translations)
+	bestTranslation, err := agents.Run(context.Background(), TranslationPicker, input)
 	if err != nil {
 		panic(err)
 	}

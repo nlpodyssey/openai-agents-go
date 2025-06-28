@@ -31,8 +31,8 @@ var HowManyJokesTool = agents.NewFunctionTool[struct{}, int64]("how_many_jokes",
 func main() {
 	agent := agents.New("Joker").
 		WithInstructions("First call the `how_many_jokes` tool, then tell that many jokes.").
-		WithModel("gpt-4.1-nano").
-		WithTools(HowManyJokesTool)
+		WithTools(HowManyJokesTool).
+		WithModel("gpt-4o")
 
 	ctx := context.Background()
 
