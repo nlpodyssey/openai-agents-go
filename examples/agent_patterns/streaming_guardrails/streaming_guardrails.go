@@ -24,7 +24,6 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
-	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -36,17 +35,18 @@ The expected output is that you'll see a bunch of tokens stream in, then the gua
 and stop the streaming.
 */
 
-var Model = agents.NewAgentModelName("gpt-4.1-nano")
+const Model = "gpt-4.1-nano"
 
 var Agent = agents.New("Assistant").
-	WithInstructions("You are a helpful assistant. You ALWAYS write long responses, making sure to be verbose and detailed.").
-	WithModelOpt(param.NewOpt(Model))
+	WithInstructions("You are a helpful assistant. " +
+		"You ALWAYS write long responses, making sure to be verbose and detailed.").
+	WithModel(Model)
 
 type GuardrailOutput struct {
-	// Reasoning about whether the response could be understood by a ten year old.
+	// Reasoning about whether the response could be understood by a ten-year-old.
 	Reasoning string `json:"reasoning"`
 
-	// Whether the response is understandable by a ten year old.
+	// Whether the response is understandable by a ten-year-old.
 	IsReadableByTenYearOld bool `json:"is_readable_by_ten_year_old"`
 }
 
@@ -64,12 +64,12 @@ func (s GuardrailOutputSchema) JSONSchema() map[string]any {
 		"properties": map[string]any{
 			"reasoning": map[string]any{
 				"title":       "Reasoning",
-				"description": "Reasoning about whether the response could be understood by a ten year old.",
+				"description": "Reasoning about whether the response could be understood by a ten-year-old.",
 				"type":        "string",
 			},
 			"is_readable_by_ten_year_old": map[string]any{
-				"title":       "Is readable by ten year old",
-				"description": "Whether the response is understandable by a ten year old.",
+				"title":       "Is readable by ten-year-old",
+				"description": "Whether the response is understandable by a ten-year-old.",
 				"type":        "boolean",
 			},
 		},
@@ -86,9 +86,10 @@ func (s GuardrailOutputSchema) ValidateJSON(jsonStr string) (any, error) {
 }
 
 var GuardrailAgent = agents.New("Checker").
-	WithInstructions("You will be given a question and a response. Your goal is to judge whether the response is simple enough to be understood by a ten year old.").
+	WithInstructions("You will be given a question and a response.  " +
+		"Your goal is to judge whether the response is simple enough to be understood by a ten-year-old.").
 	WithOutputSchema(GuardrailOutputSchema{}).
-	WithModelOpt(param.NewOpt(Model))
+	WithModel(Model)
 
 type CheckGuardrailResult struct {
 	Output GuardrailOutput
@@ -105,9 +106,7 @@ func CheckGuardrail(text string) CheckGuardrailResult {
 
 func main() {
 	question := "What is a black hole, and how does it behave?"
-	result, err := agents.RunStreamed(
-		context.Background(), Agent, question,
-	)
+	result, err := agents.RunStreamed(context.Background(), Agent, question)
 	if err != nil {
 		panic(err)
 	}

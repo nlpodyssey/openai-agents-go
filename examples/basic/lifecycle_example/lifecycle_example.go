@@ -100,7 +100,7 @@ type MultiplyByTwoArgs struct {
 	X int64 `json:"x"`
 }
 
-// MultiplyByTwo return x times two.
+// MultiplyByTwo returns x times two.
 func MultiplyByTwo(_ context.Context, args MultiplyByTwoArgs) (int64, error) {
 	return args.X * 2, nil
 }

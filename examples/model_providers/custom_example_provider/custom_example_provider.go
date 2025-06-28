@@ -15,6 +15,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -53,10 +54,7 @@ var Client = agents.NewOpenaiClient(
 type CustomModelProviderType struct{}
 
 func (CustomModelProviderType) GetModel(modelName string) (agents.Model, error) {
-	if modelName == "" {
-		modelName = ModelName
-	}
-	return agents.NewOpenAIChatCompletionsModel(modelName, Client), nil
+	return agents.NewOpenAIChatCompletionsModel(cmp.Or(modelName, ModelName), Client), nil
 }
 
 var CustomModelProvider = CustomModelProviderType{}

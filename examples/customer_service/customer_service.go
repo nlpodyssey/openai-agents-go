@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"strings"
@@ -101,38 +102,38 @@ func OnSeatBookingHandoff(ctx context.Context) error {
 
 ////// AGENTS
 
-var (
-	Model = agents.NewAgentModelName("gpt-4o")
+const Model = "gpt-4o"
 
+var (
 	FAQAgent = agents.New("FAQ Agent").
 			WithHandoffDescription("A helpful agent that can answer questions about the airline.").
-			WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
-You are an FAQ agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
+			WithInstructions(handoff_prompt.PromptWithHandoffInstructions(
+			`You are an FAQ agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
 Use the following routine to support the customer.
 # Routine
 1. Identify the last question asked by the customer.
 2. Use the faq lookup tool to answer the question. Do not rely on your own knowledge.
-3. If you cannot answer the question, transfer back to the triage agent.`).
+3. If you cannot answer the question, transfer back to the triage agent.`)).
 		WithTools(FAQLookupTool).
-		WithModelOpt(param.NewOpt(Model))
+		WithModel(Model)
 
 	SeatBookingAgent = agents.New("Seat Booking Agent").
 				WithHandoffDescription("A helpful agent that can update a seat on a flight.").
-				WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
-You are a seat booking agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
+				WithInstructions(handoff_prompt.PromptWithHandoffInstructions(
+			`You are a seat booking agent. If you are speaking to a customer, you probably were transferred to from the triage agent.
 Use the following routine to support the customer.
 # Routine
 1. Ask for their confirmation number.
 2. Ask the customer what their desired seat number is.
 3. Use the update seat tool to update the seat on the flight.
-If the customer asks a question that is not related to the routine, transfer back to the triage agent.`).
+If the customer asks a question that is not related to the routine, transfer back to the triage agent.`)).
 		WithTools(UpdateSeatTool).
-		WithModelOpt(param.NewOpt(Model))
+		WithModel(Model)
 
 	TriageAgent = agents.New("Triage Agent").
 			WithHandoffDescription("A triage agent that can delegate a customer's request to the appropriate agent.").
-			WithInstructions(handoff_prompt.RecommendedPromptPrefix + `
-You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents.`).
+			WithInstructions(handoff_prompt.PromptWithHandoffInstructions(
+			`You are a helpful triaging agent. You can use your tools to delegate questions to other appropriate agents.`)).
 		WithAgentHandoffs(FAQAgent).
 		WithHandoffs(
 			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
@@ -140,7 +141,7 @@ You are a helpful triaging agent. You can use your tools to delegate questions t
 				OnHandoff: agents.OnHandoffWithoutInput(OnSeatBookingHandoff),
 			}),
 		).
-		WithModelOpt(param.NewOpt(Model))
+		WithModel(Model)
 )
 
 func init() {
@@ -159,6 +160,9 @@ func main() {
 		fmt.Print("Enter your message: ")
 		_ = os.Stdout.Sync()
 		line, _, err := bufio.NewReader(os.Stdin).ReadLine()
+		if errors.Is(err, io.EOF) {
+			break
+		}
 		if err != nil {
 			panic(err)
 		}

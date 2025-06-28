@@ -21,7 +21,6 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/packages/param"
 )
 
 /*
@@ -30,23 +29,23 @@ then picks which agents to call, as tools. In this case, it picks from a set of 
 agents.
 */
 
-var (
-	Model = agents.NewAgentModelName("gpt-4o-mini")
+const Model = "gpt-4o-mini"
 
+var (
 	SpanishAgent = agents.New("spanish_agent").
 			WithInstructions("You translate the user's message to Spanish").
 			WithHandoffDescription("An English to Spanish translator").
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 
 	FrenchAgent = agents.New("french_agent").
 			WithInstructions("You translate the user's message to French").
 			WithHandoffDescription("An English to French translator").
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 
 	ItalianAgent = agents.New("italian_agent").
 			WithInstructions("You translate the user's message to Italian").
 			WithHandoffDescription("An English to Italian translator").
-			WithModelOpt(param.NewOpt(Model))
+			WithModel(Model)
 
 	OrchestratorAgent = agents.New("orchestrator_agent").
 				WithInstructions(
@@ -68,11 +67,11 @@ var (
 				ToolDescription: "Translate the user's message to Italian",
 			}),
 		).
-		WithModelOpt(param.NewOpt(Model))
+		WithModel(Model)
 
 	SynthesizerAgent = agents.New("synthesizer_agent").
 				WithInstructions("You inspect translations, correct them if needed, and produce a final concatenated response.").
-				WithModelOpt(param.NewOpt(Model))
+				WithModel(Model)
 )
 
 func main() {
