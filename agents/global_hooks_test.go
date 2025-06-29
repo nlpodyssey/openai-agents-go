@@ -16,8 +16,6 @@ package agents_test
 
 import (
 	"context"
-	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
@@ -278,39 +276,11 @@ func TestStreamedRuntHooks(t *testing.T) {
 	}, hooks.Events)
 }
 
-type GlobalHooksTestFoo struct {
-	A string `json:"a"`
-}
-
-type GlobalHooksTestFooSchema struct{}
-
-func (GlobalHooksTestFooSchema) Name() string             { return "Foo" }
-func (GlobalHooksTestFooSchema) IsPlainText() bool        { return false }
-func (GlobalHooksTestFooSchema) IsStrictJSONSchema() bool { return true }
-func (GlobalHooksTestFooSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "Foo",
-		"type":                 "object",
-		"required":             []string{"a"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"a": map[string]any{
-				"title": "A",
-				"type":  "string",
-			},
-		},
-	}
-}
-func (GlobalHooksTestFooSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-	var v GlobalHooksTestFoo
-	err := dec.Decode(&v)
-	return v, err
-}
-
 func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
+	type Foo struct {
+		A string `json:"a"`
+	}
+
 	hooks := NewRunHooksForTests()
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
@@ -328,7 +298,7 @@ func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
-		OutputSchema: GlobalHooksTestFooSchema{},
+		OutputType: agents.OutputType[Foo](),
 	}
 
 	agent1.AgentHandoffs = append(agent1.AgentHandoffs, agent3)
@@ -408,6 +378,10 @@ func TestStructuredOutputNonStreamedRunHooks(t *testing.T) {
 }
 
 func TestStructuredOutputStreamedRunHooks(t *testing.T) {
+	type Foo struct {
+		A string `json:"a"`
+	}
+
 	hooks := NewRunHooksForTests()
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
@@ -425,7 +399,7 @@ func TestStructuredOutputStreamedRunHooks(t *testing.T) {
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("some_function", "result"),
 		},
-		OutputSchema: GlobalHooksTestFooSchema{},
+		OutputType: agents.OutputType[Foo](),
 	}
 
 	agent1.AgentHandoffs = append(agent1.AgentHandoffs, agent3)

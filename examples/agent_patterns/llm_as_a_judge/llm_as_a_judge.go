@@ -17,10 +17,8 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/openai/openai-go/packages/param"
@@ -39,7 +37,7 @@ var StoryOutlineGenerator = agents.New("story_outline_generator").
 
 type EvaluationFeedback struct {
 	Feedback string        `json:"feedback"`
-	Score    FeedbackScore `json:"score"`
+	Score    FeedbackScore `json:"score" jsonschema:"enum=pass,enum=needs_improvement,enum=fail"`
 }
 
 type FeedbackScore string
@@ -50,46 +48,12 @@ const (
 	FeedbackScoreFail             FeedbackScore = "fail"
 )
 
-type EvaluationFeedbackSchema struct{}
-
-func (EvaluationFeedbackSchema) Name() string             { return "EvaluationFeedback" }
-func (EvaluationFeedbackSchema) IsPlainText() bool        { return false }
-func (EvaluationFeedbackSchema) IsStrictJSONSchema() bool { return true }
-func (EvaluationFeedbackSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "EvaluationFeedback",
-		"type":                 "object",
-		"required":             []string{"feedback", "score"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"feedback": map[string]any{
-				"title": "Feedback",
-				"type":  "string",
-			},
-			"score": map[string]any{
-				"enum":  []any{"pass", "needs_improvement", "fail"},
-				"title": "Score",
-				"type":  "string",
-			},
-		},
-	}
-}
-func (EvaluationFeedbackSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var v EvaluationFeedback
-	err := dec.Decode(&v)
-	return v, err
-}
-
 var Evaluator = agents.New("evaluator").
 	WithInstructions(
 		"You evaluate a story outline and decide if it's good enough. " +
 			"If it's not good enough, you provide feedback on what needs to be improved. " +
 			"Never give it a pass on the first try.").
-	WithOutputSchema(EvaluationFeedbackSchema{}).
+	WithOutputType(agents.OutputType[EvaluationFeedback]()).
 	WithModel("gpt-4.1-nano")
 
 func main() {

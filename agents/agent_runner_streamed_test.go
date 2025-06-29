@@ -215,7 +215,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
-		OutputSchema: AgentRunnerTestFooSchema{},
+		OutputType: agents.OutputType[AgentRunnerTestFoo](),
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
@@ -367,6 +367,9 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
+	schema, err := agents.OutputType[AgentRunnerTestFoo]().JSONSchema()
+	require.NoError(t, err)
+
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -374,7 +377,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
-				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
+				InputJSONSchema: schema,
 			}),
 		},
 	}
@@ -523,7 +526,7 @@ func TestStreamingEvents(t *testing.T) {
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
-		OutputSchema: AgentRunnerTestFooSchema{},
+		OutputType: agents.OutputType[AgentRunnerTestFoo](),
 	}
 
 	agent2 := &agents.Agent{

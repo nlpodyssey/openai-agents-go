@@ -54,22 +54,27 @@ func (chatCmplConverter) ConvertToolChoice(toolChoice string) (openai.ChatComple
 }
 
 func (chatCmplConverter) ConvertResponseFormat(
-	finalOutputSchema AgentOutputSchemaInterface,
-) (openai.ChatCompletionNewParamsResponseFormatUnion, bool) {
-	if finalOutputSchema == nil || finalOutputSchema.IsPlainText() {
-		return openai.ChatCompletionNewParamsResponseFormatUnion{}, false
+	finalOutputType OutputTypeInterface,
+) (openai.ChatCompletionNewParamsResponseFormatUnion, bool, error) {
+	if finalOutputType == nil || finalOutputType.IsPlainText() {
+		return openai.ChatCompletionNewParamsResponseFormatUnion{}, false, nil
 	}
+	schema, err := finalOutputType.JSONSchema()
+	if err != nil {
+		return openai.ChatCompletionNewParamsResponseFormatUnion{}, false, err
+	}
+
 	return openai.ChatCompletionNewParamsResponseFormatUnion{
 		OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
 			JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:        "final_output",
-				Strict:      param.NewOpt(finalOutputSchema.IsStrictJSONSchema()),
+				Strict:      param.NewOpt(finalOutputType.IsStrictJSONSchema()),
 				Description: param.Opt[string]{},
-				Schema:      finalOutputSchema.JSONSchema(),
+				Schema:      schema,
 			},
 			Type: constant.ValueOf[constant.JSONSchema](),
 		},
-	}, true
+	}, true, nil
 }
 
 func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessage) ([]TResponseOutputItem, error) {

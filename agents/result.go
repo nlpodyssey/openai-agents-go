@@ -71,24 +71,24 @@ func (r RunResult) LastResponseID() string {
 // - A MaxTurnsExceededError if the agent exceeds the max_turns limit.
 // - A *GuardrailTripwireTriggeredError error if a guardrail is tripped.
 type RunResultStreaming struct {
-	context                  context.Context
-	input                    *atomic.Pointer[Input]
-	newItems                 *atomic.Pointer[[]RunItem]
-	rawResponses             *atomic.Pointer[[]ModelResponse]
-	finalOutput              *atomic.Value
-	inputGuardrailResults    *atomic.Pointer[[]InputGuardrailResult]
-	outputGuardrailResults   *atomic.Pointer[[]OutputGuardrailResult]
-	currentAgent             *atomic.Pointer[Agent]
-	currentTurn              *atomic.Uint64
-	maxTurns                 *atomic.Uint64
-	currentAgentOutputSchema *atomic.Pointer[AgentOutputSchemaInterface]
-	isComplete               *atomic.Bool
-	eventQueue               *asyncqueue.Queue[StreamEvent]
-	inputGuardrailQueue      *asyncqueue.Queue[InputGuardrailResult]
-	runImplTask              *atomic.Pointer[asynctask.Task[error]]
-	inputGuardrailsTask      *atomic.Pointer[asynctask.Task[error]]
-	outputGuardrailsTask     *atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]
-	storedError              *atomic.Pointer[error]
+	context                context.Context
+	input                  *atomic.Pointer[Input]
+	newItems               *atomic.Pointer[[]RunItem]
+	rawResponses           *atomic.Pointer[[]ModelResponse]
+	finalOutput            *atomic.Value
+	inputGuardrailResults  *atomic.Pointer[[]InputGuardrailResult]
+	outputGuardrailResults *atomic.Pointer[[]OutputGuardrailResult]
+	currentAgent           *atomic.Pointer[Agent]
+	currentTurn            *atomic.Uint64
+	maxTurns               *atomic.Uint64
+	currentAgentOutputType *atomic.Pointer[OutputTypeInterface]
+	isComplete             *atomic.Bool
+	eventQueue             *asyncqueue.Queue[StreamEvent]
+	inputGuardrailQueue    *asyncqueue.Queue[InputGuardrailResult]
+	runImplTask            *atomic.Pointer[asynctask.Task[error]]
+	inputGuardrailsTask    *atomic.Pointer[asynctask.Task[error]]
+	outputGuardrailsTask   *atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]
+	storedError            *atomic.Pointer[error]
 }
 
 type outputGuardrailsTaskResult struct {
@@ -98,24 +98,24 @@ type outputGuardrailsTaskResult struct {
 
 func newRunResultStreaming(ctx context.Context) *RunResultStreaming {
 	return &RunResultStreaming{
-		context:                  ctx,
-		input:                    newZeroValAtomicPointer[Input](),
-		newItems:                 newZeroValAtomicPointer[[]RunItem](),
-		rawResponses:             newZeroValAtomicPointer[[]ModelResponse](),
-		finalOutput:              new(atomic.Value),
-		inputGuardrailResults:    newZeroValAtomicPointer[[]InputGuardrailResult](),
-		outputGuardrailResults:   newZeroValAtomicPointer[[]OutputGuardrailResult](),
-		currentAgent:             new(atomic.Pointer[Agent]),
-		currentTurn:              new(atomic.Uint64),
-		maxTurns:                 new(atomic.Uint64),
-		currentAgentOutputSchema: newZeroValAtomicPointer[AgentOutputSchemaInterface](),
-		isComplete:               new(atomic.Bool),
-		eventQueue:               asyncqueue.New[StreamEvent](),
-		inputGuardrailQueue:      asyncqueue.New[InputGuardrailResult](),
-		runImplTask:              new(atomic.Pointer[asynctask.Task[error]]),
-		inputGuardrailsTask:      new(atomic.Pointer[asynctask.Task[error]]),
-		outputGuardrailsTask:     new(atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]),
-		storedError:              newZeroValAtomicPointer[error](),
+		context:                ctx,
+		input:                  newZeroValAtomicPointer[Input](),
+		newItems:               newZeroValAtomicPointer[[]RunItem](),
+		rawResponses:           newZeroValAtomicPointer[[]ModelResponse](),
+		finalOutput:            new(atomic.Value),
+		inputGuardrailResults:  newZeroValAtomicPointer[[]InputGuardrailResult](),
+		outputGuardrailResults: newZeroValAtomicPointer[[]OutputGuardrailResult](),
+		currentAgent:           new(atomic.Pointer[Agent]),
+		currentTurn:            new(atomic.Uint64),
+		maxTurns:               new(atomic.Uint64),
+		currentAgentOutputType: newZeroValAtomicPointer[OutputTypeInterface](),
+		isComplete:             new(atomic.Bool),
+		eventQueue:             asyncqueue.New[StreamEvent](),
+		inputGuardrailQueue:    asyncqueue.New[InputGuardrailResult](),
+		runImplTask:            new(atomic.Pointer[asynctask.Task[error]]),
+		inputGuardrailsTask:    new(atomic.Pointer[asynctask.Task[error]]),
+		outputGuardrailsTask:   new(atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]),
+		storedError:            newZeroValAtomicPointer[error](),
 	}
 }
 
@@ -176,11 +176,11 @@ func (r *RunResultStreaming) setCurrentTurn(v uint64) { r.currentTurn.Store(v) }
 func (r *RunResultStreaming) MaxTurns() uint64     { return r.maxTurns.Load() }
 func (r *RunResultStreaming) setMaxTurns(v uint64) { r.maxTurns.Store(v) }
 
-func (r *RunResultStreaming) getCurrentAgentOutputSchema() AgentOutputSchemaInterface {
-	return *r.currentAgentOutputSchema.Load()
+func (r *RunResultStreaming) getCurrentAgentOutputType() OutputTypeInterface {
+	return *r.currentAgentOutputType.Load()
 }
-func (r *RunResultStreaming) setCurrentAgentOutputSchema(v AgentOutputSchemaInterface) {
-	r.currentAgentOutputSchema.Store(&v)
+func (r *RunResultStreaming) setCurrentAgentOutputType(v OutputTypeInterface) {
+	r.currentAgentOutputType.Store(&v)
 }
 
 // IsComplete reports whether the agent has finished running.

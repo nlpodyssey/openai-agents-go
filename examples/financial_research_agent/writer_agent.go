@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-
-	"github.com/invopop/jsonschema"
 	"github.com/nlpodyssey/openai-agents-go/agents"
 )
 
@@ -22,35 +19,10 @@ type FinancialReportData struct {
 	FollowUpQuestions []string `json:"follow_up_questions" jsonschema_description:"Suggested follow‑up questions for further research."`
 }
 
-type FinancialReportDataSchema struct{}
-
-func (FinancialReportDataSchema) Name() string             { return "FinancialReportData" }
-func (FinancialReportDataSchema) IsPlainText() bool        { return false }
-func (FinancialReportDataSchema) IsStrictJSONSchema() bool { return true }
-func (FinancialReportDataSchema) JSONSchema() map[string]any {
-	reflector := &jsonschema.Reflector{ExpandedStruct: true}
-	schema := reflector.Reflect(FinancialReportData{})
-	b, err := json.Marshal(schema)
-	if err != nil {
-		panic(err) // This should never happen
-	}
-	var result map[string]any
-	err = json.Unmarshal(b, &result)
-	if err != nil {
-		panic(err) // This should never happen
-	}
-	return result
-}
-func (FinancialReportDataSchema) ValidateJSON(jsonStr string) (any, error) {
-	var v FinancialReportData
-	err := json.Unmarshal([]byte(jsonStr), &v)
-	return v, err
-}
-
 // Note: We will attach handoffs to specialist analyst agents at runtime in the manager.
 // This shows how an agent can use handoffs to delegate to specialized subagents.
 
 var WriterAgent = agents.New("FinancialWriterAgent").
 	WithInstructions(WriterPrompt).
-	WithOutputSchema(FinancialReportDataSchema{}).
+	WithOutputType(agents.OutputType[FinancialReportData]()).
 	WithModel("gpt-4.5-preview-2025-02-27")

@@ -17,10 +17,8 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 )
@@ -46,45 +44,14 @@ type OutlineCheckerOutput struct {
 	IsSciFi     bool `json:"is_scifi"`
 }
 
-type OutlineCheckerOutputSchema struct{}
-
-func (s OutlineCheckerOutputSchema) Name() string             { return "OutlineCheckerOutput" }
-func (s OutlineCheckerOutputSchema) IsPlainText() bool        { return false }
-func (s OutlineCheckerOutputSchema) IsStrictJSONSchema() bool { return true }
-func (s OutlineCheckerOutputSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "OutlineCheckerOutput",
-		"type":                 "object",
-		"required":             []string{"good_quality", "is_scifi"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"good_quality": map[string]any{
-				"title": "Good Quality",
-				"type":  "boolean",
-			},
-			"is_scifi": map[string]any{
-				"title": "Is Scifi",
-				"type":  "boolean",
-			},
-		},
-	}
-}
-func (s OutlineCheckerOutputSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-	var v OutlineCheckerOutput
-	err := dec.Decode(&v)
-	return v, err
-}
-
 var OutlineCheckerAgent = agents.New("outline_checker_agent").
 	WithInstructions("Read the given story outline, and judge the quality. Also, determine if it is a scifi story.").
-	WithOutputSchema(OutlineCheckerOutputSchema{}).
+	WithOutputType(agents.OutputType[OutlineCheckerOutput]()).
 	WithModel(Model)
 
 var StoryAgent = agents.New("story_agent").
 	WithInstructions("Write a short story based on the given outline.").
+	WithOutputType(agents.OutputType[string]()).
 	WithModel(Model)
 
 func main() {

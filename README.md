@@ -154,13 +154,13 @@ There is a `MaxTurns` parameter that you can use to limit the number of times th
 
 Final output is the last thing the agent produces in the loop.
 
-1.  If you set an `OutputSchema` on the agent, the final output is when the  LLM returns something of that type. We use [structured outputs](https://platform.openai.com/docs/guides/structured-outputs) for this.
-2.  If there's no `OutputSchema` (i.e. plain text responses), then the first LLM response without any tool calls or handoffs is considered as the final output.
+1.  If you set an `OutputType` on the agent, the final output is when the  LLM returns something of that type. We use [structured outputs](https://platform.openai.com/docs/guides/structured-outputs) for this.
+2.  If there's no `OutputType` (i.e. plain text responses), then the first LLM response without any tool calls or handoffs is considered as the final output.
 
 As a result, the mental model for the agent loop is:
 
-1. If the current agent has an `OutputSchema`, the loop runs until the agent produces structured output matching that type.
-2. If the current agent does not have an `OutputSchema`, the loop runs until the current agent produces a message without any tool calls/handoffs.
+1. If the current agent has an `OutputType`, the loop runs until the agent produces structured output matching that type.
+2. If the current agent does not have an `OutputType`, the loop runs until the current agent produces a message without any tool calls/handoffs.
 
 ## Common agent patterns
 

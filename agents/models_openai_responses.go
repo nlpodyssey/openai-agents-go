@@ -53,7 +53,7 @@ func (m OpenAIResponsesModel) GetResponse(
 		params.Input,
 		params.ModelSettings,
 		params.Tools,
-		params.OutputSchema,
+		params.OutputType,
 		params.Handoffs,
 		params.PreviousResponseID,
 		false,
@@ -105,7 +105,7 @@ func (m OpenAIResponsesModel) StreamResponse(
 		params.Input,
 		params.ModelSettings,
 		params.Tools,
-		params.OutputSchema,
+		params.OutputType,
 		params.Handoffs,
 		params.PreviousResponseID,
 		true,
@@ -142,7 +142,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 	input Input,
 	modelSettings modelsettings.ModelSettings,
 	tools []Tool,
-	outputSchema AgentOutputSchemaInterface,
+	outputType OutputTypeInterface,
 	handoffs []Handoff,
 	previousResponseID string,
 	stream bool,
@@ -164,7 +164,10 @@ func (m OpenAIResponsesModel) prepareRequest(
 	if err != nil {
 		return nil, nil, err
 	}
-	responseFormat := ResponsesConverter().GetResponseFormat(outputSchema)
+	responseFormat, err := ResponsesConverter().GetResponseFormat(outputType)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	if DontLogModelData {
 		Logger().Debug("Calling LLM")
@@ -255,21 +258,25 @@ func (responsesConverter) ConvertToolChoice(toolChoice string) responses.Respons
 }
 
 func (responsesConverter) GetResponseFormat(
-	outputSchema AgentOutputSchemaInterface,
-) responses.ResponseTextConfigParam {
-	if outputSchema == nil || outputSchema.IsPlainText() {
-		return responses.ResponseTextConfigParam{}
+	outputType OutputTypeInterface,
+) (responses.ResponseTextConfigParam, error) {
+	if outputType == nil || outputType.IsPlainText() {
+		return responses.ResponseTextConfigParam{}, nil
+	}
+	schema, err := outputType.JSONSchema()
+	if err != nil {
+		return responses.ResponseTextConfigParam{}, err
 	}
 	return responses.ResponseTextConfigParam{
 		Format: responses.ResponseFormatTextConfigUnionParam{
 			OfJSONSchema: &responses.ResponseFormatTextJSONSchemaConfigParam{
 				Name:   "final_output",
-				Schema: outputSchema.JSONSchema(),
-				Strict: param.NewOpt(outputSchema.IsStrictJSONSchema()),
+				Schema: schema,
+				Strict: param.NewOpt(outputType.IsStrictJSONSchema()),
 				Type:   constant.ValueOf[constant.JSONSchema](),
 			},
 		},
-	}
+	}, nil
 }
 
 func (conv responsesConverter) ConvertTools(ctx context.Context, ts []Tool, handoffs []Handoff) (*ConvertedTools, error) {

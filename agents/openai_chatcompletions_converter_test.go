@@ -15,7 +15,6 @@
 package agents_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
@@ -283,40 +282,28 @@ func TestConvertToolChoiceHandlesStandardAndNamedOptions(t *testing.T) {
 	}, v)
 }
 
-type IntResponseSchema struct{}
-
-func (IntResponseSchema) Name() string             { return "int" }
-func (IntResponseSchema) IsPlainText() bool        { return false }
-func (IntResponseSchema) IsStrictJSONSchema() bool { return true }
-func (IntResponseSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "OutputType",
-		"type":                 "object",
-		"required":             []string{"response"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"a": map[string]any{
-				"title": "Response",
-				"type":  "integer",
-			},
-		},
-	}
-}
-func (IntResponseSchema) ValidateJSON(string) (any, error) {
-	return nil, errors.New("not implemented")
-}
-
 func TestConvertResponseFormatReturnsNotGivenForPlainTextAndObjectForSchemas(t *testing.T) {
 	// The `ConvertResponseFormat` method should return false (not given)
-	// when no output schema is provided or if the output schema indicates
-	// plain text. For structured output schemas, it should return an object
+	// when no output type is provided or if the output type indicates
+	// plain text. For structured output types, it should return an object
 	// with type `json_schema` and include the generated JSON schema and
 	// strict flag from the provided schema.
 
-	_, ok := agents.ChatCmplConverter().ConvertResponseFormat(nil)
+	// when output is plain text (omitted or string OutputType), do not include response_format
+	_, ok, err := agents.ChatCmplConverter().ConvertResponseFormat(nil)
+	require.NoError(t, err)
 	assert.False(t, ok)
 
-	v, ok := agents.ChatCmplConverter().ConvertResponseFormat(IntResponseSchema{})
+	_, ok, err = agents.ChatCmplConverter().ConvertResponseFormat(agents.OutputType[string]())
+	require.NoError(t, err)
+	assert.False(t, ok)
+
+	// For e.g. integer output, we expect a response_format dict
+	outputType := agents.OutputType[int]()
+	schema, err := outputType.JSONSchema()
+	require.NoError(t, err)
+	v, ok, err := agents.ChatCmplConverter().ConvertResponseFormat(outputType)
+	require.NoError(t, err)
 	assert.True(t, ok)
 	assert.Equal(t, openai.ChatCompletionNewParamsResponseFormatUnion{
 		OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
@@ -324,7 +311,7 @@ func TestConvertResponseFormatReturnsNotGivenForPlainTextAndObjectForSchemas(t *
 				Name:        "final_output",
 				Strict:      param.NewOpt(true),
 				Description: param.Opt[string]{},
-				Schema:      IntResponseSchema{}.JSONSchema(),
+				Schema:      schema,
 			},
 			Type: constant.ValueOf[constant.JSONSchema](),
 		},

@@ -12,5 +12,5 @@ const RiskPrompt = "You are a risk analyst looking for potential red flags in a 
 
 var RiskAgent = agents.New("RiskAnalystAgent").
 	WithInstructions(RiskPrompt).
-	WithOutputSchema(AnalysisSummarySchema{}).
+	WithOutputType(agents.OutputType[AnalysisSummary]()).
 	WithModel("gpt-4o")

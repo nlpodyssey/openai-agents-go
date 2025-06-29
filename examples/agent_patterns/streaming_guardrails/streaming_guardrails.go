@@ -16,11 +16,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
@@ -44,51 +42,16 @@ var Agent = agents.New("Assistant").
 
 type GuardrailOutput struct {
 	// Reasoning about whether the response could be understood by a ten-year-old.
-	Reasoning string `json:"reasoning"`
+	Reasoning string `json:"reasoning" jsonschema_description:"Reasoning about whether the response could be understood by a ten-year-old."`
 
 	// Whether the response is understandable by a ten-year-old.
-	IsReadableByTenYearOld bool `json:"is_readable_by_ten_year_old"`
-}
-
-type GuardrailOutputSchema struct{}
-
-func (s GuardrailOutputSchema) Name() string             { return "GuardrailOutput" }
-func (s GuardrailOutputSchema) IsPlainText() bool        { return false }
-func (s GuardrailOutputSchema) IsStrictJSONSchema() bool { return true }
-func (s GuardrailOutputSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "GuardrailOutput",
-		"type":                 "object",
-		"required":             []string{"reasoning", "is_readable_by_ten_year_old"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"reasoning": map[string]any{
-				"title":       "Reasoning",
-				"description": "Reasoning about whether the response could be understood by a ten-year-old.",
-				"type":        "string",
-			},
-			"is_readable_by_ten_year_old": map[string]any{
-				"title":       "Is readable by ten-year-old",
-				"description": "Whether the response is understandable by a ten-year-old.",
-				"type":        "boolean",
-			},
-		},
-	}
-}
-func (s GuardrailOutputSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var v GuardrailOutput
-	err := dec.Decode(&v)
-	return v, err
+	IsReadableByTenYearOld bool `json:"is_readable_by_ten_year_old" jsonschema_description:"Whether the response is understandable by a ten-year-old."`
 }
 
 var GuardrailAgent = agents.New("Checker").
-	WithInstructions("You will be given a question and a response.  " +
+	WithInstructions("You will be given a question and a response. " +
 		"Your goal is to judge whether the response is simple enough to be understood by a ten-year-old.").
-	WithOutputSchema(GuardrailOutputSchema{}).
+	WithOutputType(agents.OutputType[GuardrailOutput]()).
 	WithModel(Model)
 
 type CheckGuardrailResult struct {

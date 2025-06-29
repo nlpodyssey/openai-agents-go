@@ -16,7 +16,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -39,54 +38,13 @@ agent's response contains a phone number.
 // MessageOutput is the agent's output type.
 type MessageOutput struct {
 	// Thoughts on how to respond to the user's message
-	Reasoning string `json:"reasoning"`
+	Reasoning string `json:"reasoning" jsonschema_description:"Thoughts on how to respond to the user's message"`
 
 	// The response to the user's message
-	Response string `json:"response"`
+	Response string `json:"response" jsonschema_description:"The response to the user's message"`
 
 	// The name of the user who sent the message, if known
-	UserName *string `json:"user_name"`
-}
-
-type MessageOutputSchema struct{}
-
-func (MessageOutputSchema) Name() string             { return "MessageOutput" }
-func (MessageOutputSchema) IsPlainText() bool        { return false }
-func (MessageOutputSchema) IsStrictJSONSchema() bool { return true }
-func (MessageOutputSchema) JSONSchema() map[string]any {
-	type m = map[string]any
-	return m{
-		"title":                "MessageOutput",
-		"type":                 "object",
-		"additionalProperties": false,
-		"properties": m{
-			"reasoning": m{
-				"title":       "Reasoning",
-				"description": "Thoughts on how to respond to the user's message",
-				"type":        "string",
-			},
-			"response": m{
-				"title":       "Response",
-				"description": "The response to the user's message",
-				"type":        "string",
-			},
-			"user_name": m{
-				"title":       "User Name",
-				"description": "The name of the user who sent the message, if known",
-				"anyOf":       []any{m{"type": "string"}, m{"type": "null"}},
-			},
-		},
-		"required": []string{"reasoning", "response", "user_name"},
-	}
-}
-func (MessageOutputSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var v MessageOutput
-	err := dec.Decode(&v)
-	return v, err
+	UserName *string `json:"user_name" jsonschema_description:"The name of the user who sent the message, if known"`
 }
 
 type SensitiveDataCheckInfo struct {
@@ -119,9 +77,9 @@ var SensitiveDataCheck = agents.OutputGuardrail{
 
 var Agent = agents.New("Assistant").
 	WithInstructions("You are a helpful assistant.").
-	WithOutputSchema(MessageOutputSchema{}).
+	WithOutputType(agents.OutputType[MessageOutput]()).
 	WithOutputGuardrails([]agents.OutputGuardrail{SensitiveDataCheck}).
-	WithModel("gpt-4.1-nano")
+	WithModel("gpt-4o")
 
 func main() {
 	// This should be ok

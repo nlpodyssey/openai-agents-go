@@ -45,8 +45,8 @@ type ModelResponseParams struct {
 	// The tools available to the model.
 	Tools []Tool
 
-	// Optional output schema to use.
-	OutputSchema AgentOutputSchemaInterface
+	// Optional output type to use.
+	OutputType OutputTypeInterface
 
 	// The handoffs available to the model.
 	Handoffs []Handoff

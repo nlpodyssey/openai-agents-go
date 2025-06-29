@@ -33,6 +33,9 @@ type ToolsToFinalOutputResult struct {
 
 	// The final output.
 	// Can be missing if `IsFinalOutput` is false.
+
+	// The final output. Can be Null if `IsFinalOutput` is false, otherwise must match the
+	// `OutputType` of the agent.
 	FinalOutput param.Opt[any]
 }
 
@@ -87,8 +90,8 @@ type Agent struct {
 	// Runs only if the agent produces a final output.
 	OutputGuardrails []OutputGuardrail
 
-	// Optional output schema object describing the output. If not provided, the output will be a simple string.
-	OutputSchema AgentOutputSchemaInterface
+	// Optional output type describing the output. If not provided, the output will be a simple string.
+	OutputType OutputTypeInterface
 
 	// Optional object that receives callbacks on various lifecycle events for this agent.
 	Hooks AgentHooks
