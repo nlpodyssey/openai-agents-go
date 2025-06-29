@@ -55,7 +55,7 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 		params.Input,
 		params.ModelSettings,
 		params.Tools,
-		params.OutputSchema,
+		params.OutputType,
 		params.Handoffs,
 		false,
 	)
@@ -120,7 +120,7 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 		params.Input,
 		params.ModelSettings,
 		params.Tools,
-		params.OutputSchema,
+		params.OutputType,
 		params.Handoffs,
 		true,
 	)
@@ -158,7 +158,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 	input Input,
 	modelSettings modelsettings.ModelSettings,
 	tools []Tool,
-	outputSchema AgentOutputSchemaInterface,
+	outputType OutputTypeInterface,
 	handoffs []Handoff,
 	stream bool,
 ) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
@@ -188,7 +188,10 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 	}
 
 	toolChoice, _ := ChatCmplConverter().ConvertToolChoice(modelSettings.ToolChoice)
-	responseFormat, _ := ChatCmplConverter().ConvertResponseFormat(outputSchema)
+	responseFormat, _, err := ChatCmplConverter().ConvertResponseFormat(outputType)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	var convertedTools []openai.ChatCompletionToolParam
 	for _, tool := range tools {

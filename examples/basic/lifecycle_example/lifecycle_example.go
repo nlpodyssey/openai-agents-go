@@ -16,11 +16,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/usage"
@@ -109,35 +107,6 @@ type FinalResult struct {
 	Number int64 `json:"number"`
 }
 
-type FinalResultOutputSchema struct{}
-
-func (f FinalResultOutputSchema) Name() string             { return "FinalResult" }
-func (f FinalResultOutputSchema) IsPlainText() bool        { return false }
-func (f FinalResultOutputSchema) IsStrictJSONSchema() bool { return true }
-func (f FinalResultOutputSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "FinalResult",
-		"type":                 "object",
-		"required":             []string{"number"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"number": map[string]any{
-				"title": "Number",
-				"type":  "integer",
-			},
-		},
-	}
-}
-func (f FinalResultOutputSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var v FinalResult
-	err := dec.Decode(&v)
-	return v, err
-}
-
 var (
 	Hooks = &ExampleHooks{}
 
@@ -148,13 +117,13 @@ var (
 	MultiplyAgent = agents.New("Multiply Agent").
 			WithInstructions("Multiply the number by 2 and then return the final result.").
 			WithTools(MultiplyByTwoTool).
-			WithOutputSchema(FinalResultOutputSchema{}).
+			WithOutputType(agents.OutputType[FinalResult]()).
 			WithModel("gpt-4o-mini")
 
 	StartAgent = agents.New("Start Agent").
 			WithInstructions("Generate a random number. If it's even, stop. If it's odd, hand off to the multiplier agent.").
 			WithTools(RandomNumberTool).
-			WithOutputSchema(FinalResultOutputSchema{}).
+			WithOutputType(agents.OutputType[FinalResult]()).
 			WithAgentHandoffs(MultiplyAgent).
 			WithModel("gpt-4o-mini")
 )

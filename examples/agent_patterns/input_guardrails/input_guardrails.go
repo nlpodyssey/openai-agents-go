@@ -17,11 +17,9 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/openai/openai-go/packages/param"
@@ -49,42 +47,9 @@ type MathHomeworkOutput struct {
 	IsMathHomework bool   `json:"is_math_homework"`
 }
 
-type MathHomeworkOutputSchema struct{}
-
-func (MathHomeworkOutputSchema) Name() string             { return "MathHomeworkOutput" }
-func (MathHomeworkOutputSchema) IsPlainText() bool        { return false }
-func (MathHomeworkOutputSchema) IsStrictJSONSchema() bool { return true }
-func (MathHomeworkOutputSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "MathHomeworkOutput",
-		"type":                 "object",
-		"required":             []string{"reasoning", "is_math_homework"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"reasoning": map[string]any{
-				"title": "Reasoning",
-				"type":  "string",
-			},
-			"is_math_homework": map[string]any{
-				"title": "Is math homework",
-				"type":  "boolean",
-			},
-		},
-	}
-}
-func (MathHomeworkOutputSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-
-	var v MathHomeworkOutput
-	err := dec.Decode(&v)
-	return v, err
-}
-
 var GuardrailAgent = agents.New("Guardrail check").
 	WithInstructions("Check if the user is asking you to do their math homework.").
-	WithOutputSchema(MathHomeworkOutputSchema{}).
+	WithOutputType(agents.OutputType[MathHomeworkOutput]()).
 	WithModel("gpt-4.1-nano")
 
 // MathGuardrailFunction is an input guardrail function, which happens to call

@@ -42,7 +42,7 @@ type FakeModelLastTurnArgs struct {
 	Input              agents.Input
 	ModelSettings      modelsettings.ModelSettings
 	Tools              []agents.Tool
-	OutputSchema       agents.AgentOutputSchemaInterface
+	OutputType         agents.OutputTypeInterface
 	// optional
 	PreviousResponseID string
 }
@@ -82,7 +82,7 @@ func (m *FakeModel) GetResponse(_ context.Context, params agents.ModelResponsePa
 		Input:              params.Input,
 		ModelSettings:      params.ModelSettings,
 		Tools:              params.Tools,
-		OutputSchema:       params.OutputSchema,
+		OutputType:         params.OutputType,
 		PreviousResponseID: params.PreviousResponseID,
 	}
 
@@ -110,7 +110,7 @@ func (m *FakeModel) StreamResponse(_ context.Context, params agents.ModelRespons
 		Input:              params.Input,
 		ModelSettings:      params.ModelSettings,
 		Tools:              params.Tools,
-		OutputSchema:       params.OutputSchema,
+		OutputType:         params.OutputType,
 		PreviousResponseID: params.PreviousResponseID,
 	}
 

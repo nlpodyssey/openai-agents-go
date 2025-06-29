@@ -38,22 +38,22 @@ To understand which schemas are strict-compatible, see:
 https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#supported-schemas
 */
 
-type OutputType struct {
+type Output struct {
 	// A list of jokes, indexed by joke number.
 	Jokes map[int]string `json:"jokes"`
 }
 
-type OutputTypeSchema struct {
+type OutputType struct {
 	isStrictJSONSchema bool
 }
 
-func (OutputTypeSchema) Name() string               { return "OutputType" }
-func (OutputTypeSchema) IsPlainText() bool          { return false }
-func (s OutputTypeSchema) IsStrictJSONSchema() bool { return s.isStrictJSONSchema }
-func (OutputTypeSchema) JSONSchema() map[string]any {
+func (OutputType) Name() string               { return "Output" }
+func (OutputType) IsPlainText() bool          { return false }
+func (t OutputType) IsStrictJSONSchema() bool { return t.isStrictJSONSchema }
+func (OutputType) JSONSchema() (map[string]any, error) {
 	type m = map[string]any
 	return m{
-		"title":    "OutputType",
+		"title":    "Output",
 		"type":     "object",
 		"required": []string{"jokes"},
 		"properties": m{
@@ -65,32 +65,32 @@ func (OutputTypeSchema) JSONSchema() map[string]any {
 				},
 			},
 		},
-	}
+	}, nil
 }
-func (OutputTypeSchema) ValidateJSON(jsonStr string) (any, error) {
+func (OutputType) ValidateJSON(jsonStr string) (any, error) {
 	r := strings.NewReader(jsonStr)
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var v OutputType
+	var v Output
 	err := dec.Decode(&v)
 	return v, err
 }
 
-// CustomOutputSchema is a demonstration of a custom output schema.
-type CustomOutputSchema struct{}
+// CustomOutputType is a demonstration of a custom output type.
+type CustomOutputType struct{}
 
-type CustomOutputType struct {
+type CustomOutput struct {
 	Jokes map[string]string `json:"jokes"`
 }
 
-func (CustomOutputSchema) Name() string             { return "CustomOutputType" }
-func (CustomOutputSchema) IsPlainText() bool        { return false }
-func (CustomOutputSchema) IsStrictJSONSchema() bool { return false }
-func (CustomOutputSchema) JSONSchema() map[string]any {
+func (CustomOutputType) Name() string             { return "CustomOutput" }
+func (CustomOutputType) IsPlainText() bool        { return false }
+func (CustomOutputType) IsStrictJSONSchema() bool { return false }
+func (CustomOutputType) JSONSchema() (map[string]any, error) {
 	type m = map[string]any
 	return m{
-		"title": "CustomOutputType",
+		"title": "CustomOutput",
 		"type":  "object",
 		"properties": m{
 			"jokes": m{
@@ -102,14 +102,14 @@ func (CustomOutputSchema) JSONSchema() map[string]any {
 				},
 			},
 		},
-	}
+	}, nil
 }
-func (CustomOutputSchema) ValidateJSON(jsonStr string) (any, error) {
+func (CustomOutputType) ValidateJSON(jsonStr string) (any, error) {
 	r := strings.NewReader(jsonStr)
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var v CustomOutputType
+	var v CustomOutput
 	err := dec.Decode(&v)
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func main() {
 	input := "Tell me 3 short jokes."
 
 	// First, let's try with a strict output type. This should return an error.
-	agent.OutputSchema = OutputTypeSchema{isStrictJSONSchema: true}
+	agent.OutputType = OutputType{isStrictJSONSchema: true}
 	_, err := agents.Run(ctx, agent, input)
 	if err == nil {
 		panic("Should have returned an error")
@@ -139,7 +139,7 @@ func main() {
 	// Now let's try again with a non-strict output type. This should work.
 	// In some cases, it will return an error - the schema isn't strict, so the model may
 	// produce an invalid JSON object.
-	agent.OutputSchema = OutputTypeSchema{isStrictJSONSchema: false}
+	agent.OutputType = OutputType{isStrictJSONSchema: false}
 	result, err := agents.Run(ctx, agent, input)
 	if err != nil {
 		fmt.Printf("Error (expected occasionally, try again and you might get a good result): %s\n", err)
@@ -148,7 +148,7 @@ func main() {
 	}
 
 	// Finally, let's try a custom output type.
-	agent.OutputSchema = CustomOutputSchema{}
+	agent.OutputType = CustomOutputType{}
 	result, err = agents.Run(ctx, agent, input)
 	if err != nil {
 		fmt.Printf("Error (expected occasionally, try again and you might get a good result): %s\n", err)

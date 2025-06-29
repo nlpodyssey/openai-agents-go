@@ -167,7 +167,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	preStepItems []RunItem,
 	newResponse ModelResponse,
 	processedResponse ProcessedResponse,
-	outputSchema AgentOutputSchemaInterface,
+	outputType OutputTypeInterface,
 	hooks RunHooks,
 	runConfig RunConfig,
 ) (*SingleStepResult, error) {
@@ -241,6 +241,13 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			Logger().Error("Model returned a final output of None. Not raising an error because we assume you know what you're doing.")
 		}
 
+		// If the output type is string, then let's just stringify the result
+		if agent.OutputType == nil || agent.OutputType.IsPlainText() {
+			if _, ok := checkToolUse.FinalOutput.Value.(string); !ok {
+				checkToolUse.FinalOutput = param.NewOpt[any](fmt.Sprintf("%v", checkToolUse.FinalOutput.Value))
+			}
+		}
+
 		return ri.ExecuteFinalOutput(
 			ctx,
 			agent,
@@ -270,12 +277,12 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	}
 
 	// There are two possibilities that lead to a final output:
-	// 1. Structured output schema => always leads to a final output
-	// 2. Plain text output schema => only leads to a final output if there are no tool calls
-	if outputSchema != nil && !outputSchema.IsPlainText() && potentialFinalOutputText != "" {
-		finalOutput, err := outputSchema.ValidateJSON(potentialFinalOutputText)
+	// 1. Structured output type => always leads to a final output
+	// 2. Plain text output type => only leads to a final output if there are no tool calls
+	if outputType != nil && !outputType.IsPlainText() && potentialFinalOutputText != "" {
+		finalOutput, err := outputType.ValidateJSON(potentialFinalOutputText)
 		if err != nil {
-			return nil, fmt.Errorf("final output schema validation failed: %w", err)
+			return nil, fmt.Errorf("final output type JSON validation failed: %w", err)
 		}
 		return ri.ExecuteFinalOutput(
 			ctx,
@@ -287,7 +294,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			finalOutput,
 			hooks,
 		)
-	} else if (outputSchema == nil || outputSchema.IsPlainText()) && !processedResponse.HasToolsToRun() {
+	} else if (outputType == nil || outputType.IsPlainText()) && !processedResponse.HasToolsToRun() {
 		return ri.ExecuteFinalOutput(
 			ctx,
 			agent,

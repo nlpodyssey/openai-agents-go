@@ -15,9 +15,7 @@
 package agents_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
@@ -77,44 +75,16 @@ func TestStreamedMaxTurns(t *testing.T) {
 	assert.ErrorAs(t, err, &agents.MaxTurnsExceededError{})
 }
 
-type MaxTurnsTestFoo struct {
-	A string `json:"a"`
-}
-
-type MaxTurnsTestFooSchema struct{}
-
-func (MaxTurnsTestFooSchema) Name() string             { return "Foo" }
-func (MaxTurnsTestFooSchema) IsPlainText() bool        { return false }
-func (MaxTurnsTestFooSchema) IsStrictJSONSchema() bool { return true }
-func (MaxTurnsTestFooSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "Foo",
-		"type":                 "object",
-		"required":             []string{"a"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"a": map[string]any{
-				"title": "A",
-				"type":  "string",
-			},
-		},
-	}
-}
-func (MaxTurnsTestFooSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-	var v MaxTurnsTestFoo
-	err := dec.Decode(&v)
-	return v, err
-}
-
 func TestStructuredOutputNonStreamedMaxTurns(t *testing.T) {
+	type Foo struct {
+		A string `json:"a"`
+	}
+
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
-		Name:         "test_1",
-		Model:        param.NewOpt(agents.NewAgentModel(model)),
-		OutputSchema: MaxTurnsTestFooSchema{},
+		Name:       "test_1",
+		Model:      param.NewOpt(agents.NewAgentModel(model)),
+		OutputType: agents.OutputType[Foo](),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("tool_1", "result"),
 		},
@@ -133,11 +103,15 @@ func TestStructuredOutputNonStreamedMaxTurns(t *testing.T) {
 }
 
 func TestStructuredOutputStreamedMaxTurns(t *testing.T) {
+	type Foo struct {
+		A string `json:"a"`
+	}
+
 	model := agentstesting.NewFakeModel(nil)
 	agent := &agents.Agent{
-		Name:         "test_1",
-		Model:        param.NewOpt(agents.NewAgentModel(model)),
-		OutputSchema: MaxTurnsTestFooSchema{},
+		Name:       "test_1",
+		Model:      param.NewOpt(agents.NewAgentModel(model)),
+		OutputType: agents.OutputType[Foo](),
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("tool_1", "result"),
 		},

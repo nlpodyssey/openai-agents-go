@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/openai/openai-go/packages/param"
@@ -104,44 +103,19 @@ type HandoffToolTestFoo struct {
 	Bar string `json:"bar"`
 }
 
-type HandoffToolTestFooSchema struct{}
-
-func (HandoffToolTestFooSchema) Name() string             { return "Foo" }
-func (HandoffToolTestFooSchema) IsPlainText() bool        { return false }
-func (HandoffToolTestFooSchema) IsStrictJSONSchema() bool { return true }
-func (HandoffToolTestFooSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "Foo",
-		"type":                 "object",
-		"required":             []string{"bar"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"bar": map[string]any{
-				"title": "Bar",
-				"type":  "string",
-			},
-		},
-	}
-}
-func (HandoffToolTestFooSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-	var v HandoffToolTestFoo
-	err := dec.Decode(&v)
-	return v, err
-}
-
 func TestHandoffInputType(t *testing.T) {
 	onHandoff := func(context.Context, any) error {
 		return nil
 	}
 
+	schema, err := OutputType[HandoffToolTestFoo]().JSONSchema()
+	require.NoError(t, err)
+
 	agent := &Agent{Name: "test"}
 	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
-		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
+		InputJSONSchema: schema,
 	})
 	require.NoError(t, err)
 
@@ -167,11 +141,14 @@ func TestOnHandoffCalled(t *testing.T) {
 		return nil
 	}
 
+	schema, err := OutputType[HandoffToolTestFoo]().JSONSchema()
+	require.NoError(t, err)
+
 	agent := &Agent{Name: "test"}
 	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
-		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
+		InputJSONSchema: schema,
 	})
 	require.NoError(t, err)
 
@@ -189,11 +166,14 @@ func TestOnHandoffError(t *testing.T) {
 		return handoffErr
 	}
 
+	schema, err := OutputType[HandoffToolTestFoo]().JSONSchema()
+	require.NoError(t, err)
+
 	agent := &Agent{Name: "test"}
 	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
 		OnHandoff:       OnHandoffWithInput(onHandoff),
-		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
+		InputJSONSchema: schema,
 	})
 	require.NoError(t, err)
 
@@ -244,10 +224,13 @@ func TestOnHandoffWithoutInputError(t *testing.T) {
 }
 
 func TestHandoffInputSchemaIsStrict(t *testing.T) {
+	schema, err := OutputType[HandoffToolTestFoo]().JSONSchema()
+	require.NoError(t, err)
+
 	agent := &Agent{Name: "test"}
 	obj, err := SafeHandoffFromAgent(HandoffFromAgentParams{
 		Agent:           agent,
-		InputJSONSchema: HandoffToolTestFooSchema{}.JSONSchema(),
+		InputJSONSchema: schema,
 		OnHandoff: OnHandoffWithInput(func(context.Context, any) error {
 			return nil
 		}),

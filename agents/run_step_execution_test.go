@@ -15,8 +15,6 @@
 package agents
 
 import (
-	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/usage"
@@ -193,42 +191,14 @@ func TestHandoffOutputLeadsToHandoffNextStep(t *testing.T) {
 	assert.Len(t, result.GeneratedItems(), 3)
 }
 
-type RunStepExecTestFoo struct {
-	Bar string `json:"bar"`
-}
-
-type RunStepExecTestFooSchema struct{}
-
-func (RunStepExecTestFooSchema) Name() string             { return "Foo" }
-func (RunStepExecTestFooSchema) IsPlainText() bool        { return false }
-func (RunStepExecTestFooSchema) IsStrictJSONSchema() bool { return true }
-func (RunStepExecTestFooSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "Foo",
-		"type":                 "object",
-		"required":             []string{"bar"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"bar": map[string]any{
-				"title": "Bar",
-				"type":  "string",
-			},
-		},
-	}
-}
-func (RunStepExecTestFooSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-	var v RunStepExecTestFoo
-	err := dec.Decode(&v)
-	return v, err
-}
-
 func TestFinalOutputWithoutToolRunsAgain(t *testing.T) {
+	type Foo struct {
+		Bar string `json:"bar"`
+	}
+
 	agent := &Agent{
-		Name:         "test",
-		OutputSchema: RunStepExecTestFooSchema{},
+		Name:       "test",
+		OutputType: OutputType[Foo](),
 		Tools: []Tool{
 			getFunctionTool("tool_1", "result"),
 		},
@@ -249,9 +219,13 @@ func TestFinalOutputWithoutToolRunsAgain(t *testing.T) {
 }
 
 func TestFinalOutputLeadsToFinalOutputNextStep(t *testing.T) {
+	type Foo struct {
+		Bar string `json:"bar"`
+	}
+
 	agent := &Agent{
-		Name:         "test",
-		OutputSchema: RunStepExecTestFooSchema{},
+		Name:       "test",
+		OutputType: OutputType[Foo](),
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
@@ -266,16 +240,20 @@ func TestFinalOutputLeadsToFinalOutputNextStep(t *testing.T) {
 		response: response,
 	})
 	require.IsType(t, NextStepFinalOutput{}, result.NextStep)
-	assert.Equal(t, RunStepExecTestFoo{Bar: "123"}, result.NextStep.(NextStepFinalOutput).Output)
+	assert.Equal(t, Foo{Bar: "123"}, result.NextStep.(NextStepFinalOutput).Output)
 }
 
 func TestHandoffAndFinalOutputLeadsToHandoffNextStep(t *testing.T) {
+	type Foo struct {
+		Bar string `json:"bar"`
+	}
+
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
 		Name:          "test_3",
 		AgentHandoffs: []*Agent{agent1, agent2},
-		OutputSchema:  RunStepExecTestFooSchema{},
+		OutputType:    OutputType[Foo](),
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
@@ -295,12 +273,16 @@ func TestHandoffAndFinalOutputLeadsToHandoffNextStep(t *testing.T) {
 }
 
 func TestMultipleFinalOutputLeadsToFinalOutputNextStep(t *testing.T) {
+	type Foo struct {
+		Bar string `json:"bar"`
+	}
+
 	agent1 := &Agent{Name: "test_1"}
 	agent2 := &Agent{Name: "test_2"}
 	agent3 := &Agent{
 		Name:          "test_3",
 		AgentHandoffs: []*Agent{agent1, agent2},
-		OutputSchema:  RunStepExecTestFooSchema{},
+		OutputType:    OutputType[Foo](),
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
@@ -316,7 +298,7 @@ func TestMultipleFinalOutputLeadsToFinalOutputNextStep(t *testing.T) {
 	})
 
 	require.IsType(t, NextStepFinalOutput{}, result.NextStep)
-	assert.Equal(t, RunStepExecTestFoo{Bar: "456"}, result.NextStep.(NextStepFinalOutput).Output)
+	assert.Equal(t, Foo{Bar: "456"}, result.NextStep.(NextStepFinalOutput).Output)
 }
 
 func assertItemIsMessage(t *testing.T, item RunItem, agent *Agent, text string) {
@@ -442,7 +424,6 @@ type getExecuteResultParams struct {
 }
 
 func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepResult {
-	outputSchema := params.agent.OutputSchema
 	handoffs, err := Runner{}.getHandoffs(params.agent)
 	require.NoError(t, err)
 
@@ -474,7 +455,7 @@ func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepRes
 		params.generatedItems,
 		params.response,
 		*processedResponse,
-		outputSchema,
+		params.agent.OutputType,
 		hooks,
 		params.runConfig,
 	)

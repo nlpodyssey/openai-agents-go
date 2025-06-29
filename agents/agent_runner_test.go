@@ -194,34 +194,6 @@ type AgentRunnerTestFoo struct {
 	Bar string `json:"bar"`
 }
 
-type AgentRunnerTestFooSchema struct{}
-
-func (AgentRunnerTestFooSchema) Name() string             { return "Foo" }
-func (AgentRunnerTestFooSchema) IsPlainText() bool        { return false }
-func (AgentRunnerTestFooSchema) IsStrictJSONSchema() bool { return true }
-func (AgentRunnerTestFooSchema) JSONSchema() map[string]any {
-	return map[string]any{
-		"title":                "Foo",
-		"type":                 "object",
-		"required":             []string{"bar"},
-		"additionalProperties": false,
-		"properties": map[string]any{
-			"bar": map[string]any{
-				"title": "Bar",
-				"type":  "string",
-			},
-		},
-	}
-}
-func (AgentRunnerTestFooSchema) ValidateJSON(jsonStr string) (any, error) {
-	r := strings.NewReader(jsonStr)
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-	var v AgentRunnerTestFoo
-	err := dec.Decode(&v)
-	return v, err
-}
-
 func TestStructuredOutput(t *testing.T) {
 	model := agentstesting.NewFakeModel(nil)
 	agent1 := &agents.Agent{
@@ -230,7 +202,7 @@ func TestStructuredOutput(t *testing.T) {
 		Tools: []agents.Tool{
 			agentstesting.GetFunctionTool("bar", "bar_result"),
 		},
-		OutputSchema: AgentRunnerTestFooSchema{},
+		OutputType: agents.OutputType[AgentRunnerTestFoo](),
 	}
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
@@ -383,6 +355,9 @@ func TestHandoffOnInput(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
+	schema, err := agents.OutputType[AgentRunnerTestFoo]().JSONSchema()
+	require.NoError(t, err)
+
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -390,7 +365,7 @@ func TestHandoffOnInput(t *testing.T) {
 			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
-				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
+				InputJSONSchema: schema,
 			}),
 		},
 	}
@@ -424,6 +399,9 @@ func TestHandoffOnInputError(t *testing.T) {
 		Model: param.NewOpt(agents.NewAgentModel(model)),
 	}
 
+	schema, err := agents.OutputType[AgentRunnerTestFoo]().JSONSchema()
+	require.NoError(t, err)
+
 	agent2 := &agents.Agent{
 		Name:  "agent_2",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -431,7 +409,7 @@ func TestHandoffOnInputError(t *testing.T) {
 			agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 				Agent:           agent1,
 				OnHandoff:       agents.OnHandoffWithInput(onInput),
-				InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
+				InputJSONSchema: schema,
 			}),
 		},
 	}
@@ -447,21 +425,24 @@ func TestHandoffOnInputError(t *testing.T) {
 		}},
 	})
 
-	_, err := agents.Runner{}.Run(t.Context(), agent2, "user_message")
+	_, err = agents.Runner{}.Run(t.Context(), agent2, "user_message")
 	assert.Error(t, err, onInputError)
 }
 
 func TestInvalidHandoffInputJSONCausesError(t *testing.T) {
+	schema, err := agents.OutputType[AgentRunnerTestFoo]().JSONSchema()
+	require.NoError(t, err)
+
 	agent := &agents.Agent{Name: "test"}
 	h := agents.HandoffFromAgent(agents.HandoffFromAgentParams{
 		Agent: agent,
 		OnHandoff: agents.OnHandoffWithInput(
 			func(context.Context, any) error { return nil },
 		),
-		InputJSONSchema: AgentRunnerTestFooSchema{}.JSONSchema(),
+		InputJSONSchema: schema,
 	})
 
-	_, err := h.OnInvokeHandoff(t.Context(), "")
+	_, err = h.OnInvokeHandoff(t.Context(), "")
 	assert.ErrorAs(t, err, &agents.ModelBehaviorError{})
 
 	_, err = h.OnInvokeHandoff(t.Context(), `{"foo": "y"}`)
@@ -565,7 +546,7 @@ func TestToolUseBehaviorFirstOutput(t *testing.T) {
 			TestToolTwo,
 		},
 		ToolUseBehavior: agents.StopOnFirstTool(),
-		OutputSchema:    AgentRunnerTestFooSchema{},
+		OutputType:      agents.OutputType[AgentRunnerTestFoo](),
 	}
 
 	model.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{

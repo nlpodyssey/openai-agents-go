@@ -107,7 +107,7 @@ func RunResponseInputsStreamed(ctx context.Context, startingAgent *Agent, input 
 //
 // The loop runs like so:
 //  1. The agent is invoked with the given input.
-//  2. If there is a final output, the loop terminates.
+//  2. If there is a final output (i.e. the agent produces something of type Agent.OutputType, the loop terminates.
 //  3. If there's a handoff, we run the loop again, with the new agent.
 //  4. Else, we run tool calls (if any), and re-run the loop.
 //
@@ -129,7 +129,7 @@ func (r Runner) Run(ctx context.Context, startingAgent *Agent, input string) (*R
 //
 // The agent will run in a loop until a final output is generated. The loop runs like so:
 //  1. The agent is invoked with the given input.
-//  2. If there is a final output, the loop terminates.
+//  2. If there is a final output (i.e. the agent produces something of type Agent.OutputType, the loop terminates.
 //  3. If there's a handoff, we run the loop again, with the new agent.
 //  4. Else, we run tool calls (if any), and re-run the loop.
 //
@@ -335,14 +335,13 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 		return nil, fmt.Errorf("StartingAgent must not be nil")
 	}
 
-	outputSchema := startingAgent.OutputSchema
 	ctx = usage.NewContext(ctx, usage.NewUsage())
 
 	streamedResult := newRunResultStreaming(ctx)
 	streamedResult.setInput(CopyInput(input))
 	streamedResult.setCurrentAgent(startingAgent)
 	streamedResult.setMaxTurns(maxTurns)
-	streamedResult.setCurrentAgentOutputSchema(outputSchema)
+	streamedResult.setCurrentAgentOutputType(startingAgent.OutputType)
 
 	// Kick off the actual agent loop in the background and return the streamed result object.
 	streamedResult.createRunImplTask(ctx, func(ctx context.Context) error {
@@ -584,10 +583,8 @@ func (r Runner) runSingleTurnStreamed(
 		}
 	}
 
-	outputSchema := agent.OutputSchema
-
 	streamedResult.setCurrentAgent(agent)
-	streamedResult.setCurrentAgentOutputSchema(outputSchema)
+	streamedResult.setCurrentAgentOutputType(agent.OutputType)
 
 	systemPrompt, promptConfig, err := getAgentSystemPromptAndPromptConfig(ctx, agent)
 	if err != nil {
@@ -619,7 +616,7 @@ func (r Runner) runSingleTurnStreamed(
 		Input:              InputItems(input),
 		ModelSettings:      modelSettings,
 		Tools:              allTools,
-		OutputSchema:       outputSchema,
+		OutputType:         agent.OutputType,
 		Handoffs:           handoffs,
 		PreviousResponseID: previousResponseID,
 		Prompt:             promptConfig,
@@ -677,7 +674,7 @@ func (r Runner) runSingleTurnStreamed(
 		streamedResult.Input(),
 		streamedResult.NewItems(),
 		*finalResponse,
-		outputSchema,
+		agent.OutputType,
 		handoffs,
 		hooks,
 		runConfig,
@@ -759,7 +756,7 @@ func (r Runner) runSingleTurn(
 		agent,
 		systemPrompt,
 		input,
-		agent.OutputSchema,
+		agent.OutputType,
 		allTools,
 		handoffs,
 		runConfig,
@@ -778,7 +775,7 @@ func (r Runner) runSingleTurn(
 		originalInput,
 		generatedItems,
 		*newResponse,
-		agent.OutputSchema,
+		agent.OutputType,
 		handoffs,
 		hooks,
 		runConfig,
@@ -830,7 +827,7 @@ func (Runner) getSingleStepResultFromResponse(
 	originalInput Input,
 	preStepItems []RunItem,
 	newResponse ModelResponse,
-	outputSchema AgentOutputSchemaInterface,
+	outputType OutputTypeInterface,
 	handoffs []Handoff,
 	hooks RunHooks,
 	runConfig RunConfig,
@@ -855,7 +852,7 @@ func (Runner) getSingleStepResultFromResponse(
 		preStepItems,
 		newResponse,
 		*processedResponse,
-		outputSchema,
+		outputType,
 		hooks,
 		runConfig,
 	)
@@ -966,7 +963,7 @@ func (r Runner) getNewResponse(
 	agent *Agent,
 	systemPrompt param.Opt[string],
 	input []TResponseInputItem,
-	outputSchema AgentOutputSchemaInterface,
+	outputType OutputTypeInterface,
 	allTools []Tool,
 	handoffs []Handoff,
 	runConfig RunConfig,
@@ -987,7 +984,7 @@ func (r Runner) getNewResponse(
 		Input:              InputItems(input),
 		ModelSettings:      modelSettings,
 		Tools:              allTools,
-		OutputSchema:       outputSchema,
+		OutputType:         outputType,
 		Handoffs:           handoffs,
 		PreviousResponseID: previousResponseID,
 		Prompt:             promptConfig,

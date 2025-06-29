@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-
-	"github.com/invopop/jsonschema"
 	"github.com/nlpodyssey/openai-agents-go/agents"
 )
 
@@ -26,32 +23,7 @@ type FinancialSearchPlan struct {
 	Searches []FinancialSearchItem `json:"searches" jsonschema_description:"A list of searches to perform."`
 }
 
-type FinancialSearchPlanSchema struct{}
-
-func (FinancialSearchPlanSchema) Name() string             { return "FinancialSearchPlan" }
-func (FinancialSearchPlanSchema) IsPlainText() bool        { return false }
-func (FinancialSearchPlanSchema) IsStrictJSONSchema() bool { return true }
-func (FinancialSearchPlanSchema) JSONSchema() map[string]any {
-	reflector := &jsonschema.Reflector{ExpandedStruct: true}
-	schema := reflector.Reflect(FinancialSearchPlan{})
-	b, err := json.Marshal(schema)
-	if err != nil {
-		panic(err) // This should never happen
-	}
-	var result map[string]any
-	err = json.Unmarshal(b, &result)
-	if err != nil {
-		panic(err) // This should never happen
-	}
-	return result
-}
-func (FinancialSearchPlanSchema) ValidateJSON(jsonStr string) (any, error) {
-	var v FinancialSearchPlan
-	err := json.Unmarshal([]byte(jsonStr), &v)
-	return v, err
-}
-
 var PlannerAgent = agents.New("FinancialPlannerAgent").
 	WithInstructions(PlannerPrompt).
-	WithOutputSchema(FinancialSearchPlanSchema{}).
+	WithOutputType(agents.OutputType[FinancialSearchPlan]()).
 	WithModel("o3-mini")

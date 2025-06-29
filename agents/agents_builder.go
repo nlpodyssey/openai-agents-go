@@ -116,9 +116,9 @@ func (a *Agent) WithOutputGuardrails(gr []OutputGuardrail) *Agent {
 	return a
 }
 
-// WithOutputSchema sets the output schema.
-func (a *Agent) WithOutputSchema(schema AgentOutputSchemaInterface) *Agent {
-	a.OutputSchema = schema
+// WithOutputType sets the output type.
+func (a *Agent) WithOutputType(outputType OutputTypeInterface) *Agent {
+	a.OutputType = outputType
 	return a
 }
 

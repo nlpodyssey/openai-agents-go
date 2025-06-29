@@ -13,5 +13,5 @@ const FinancialsPrompt = "You are a financial analyst focused on company fundame
 
 var FinancialsAgent = agents.New("FundamentalsAnalystAgent").
 	WithInstructions(FinancialsPrompt).
-	WithOutputSchema(AnalysisSummarySchema{}).
+	WithOutputType(agents.OutputType[AnalysisSummary]()).
 	WithModel("gpt-4o")

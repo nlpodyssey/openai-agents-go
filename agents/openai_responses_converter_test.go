@@ -66,45 +66,37 @@ func TestConvertToolChoiceStandardValues(t *testing.T) {
 	}
 }
 
-type PlainTextSchema struct{}
-
-func (p PlainTextSchema) IsPlainText() bool                { return true }
-func (p PlainTextSchema) Name() string                     { return "PlainText" }
-func (p PlainTextSchema) JSONSchema() map[string]any       { return nil }
-func (p PlainTextSchema) IsStrictJSONSchema() bool         { return false }
-func (p PlainTextSchema) ValidateJSON(string) (any, error) { return nil, errors.New("not implemented") }
-
-type FakeSchema struct{}
-
-func (p FakeSchema) IsPlainText() bool { return false }
-func (p FakeSchema) Name() string      { return "Fake" }
-func (p FakeSchema) JSONSchema() map[string]any {
-	return map[string]any{"title": "Fake"}
-}
-func (p FakeSchema) IsStrictJSONSchema() bool         { return true }
-func (p FakeSchema) ValidateJSON(string) (any, error) { return nil, errors.New("not implemented") }
-
 func TestGetResponseFormatPlainTextAndJsonSchema(t *testing.T) {
 	// For plain text output, the converter should return a zero-value,
 	// indicating no special response format constraint.
-	// If an output schema is provided for a structured type, the converter
+	// If an output type is provided for a structured value, the converter
 	// should return a ResponseTextConfigParam with the schema and strictness.
 
 	// Default output (None) should be considered plain text.
-	v := agents.ResponsesConverter().GetResponseFormat(nil)
+	v, err := agents.ResponsesConverter().GetResponseFormat(nil)
+	require.NoError(t, err)
 	assert.Zero(t, v)
 
-	// An explicit plain-text schema should also yield zero-value.
-	v = agents.ResponsesConverter().GetResponseFormat(PlainTextSchema{})
+	// An explicit plain-text schema (string) should also yield zero-value.
+	v, err = agents.ResponsesConverter().GetResponseFormat(agents.OutputType[string]())
+	require.NoError(t, err)
 	assert.Zero(t, v)
 
 	// A model-based schema should produce a format object.
-	v = agents.ResponsesConverter().GetResponseFormat(FakeSchema{})
+	type OutputModel struct {
+		Foo int    `json:"foo"`
+		Bar string `json:"bar"`
+	}
+	outputType := agents.OutputType[OutputModel]()
+	schema, err := outputType.JSONSchema()
+	require.NoError(t, err)
+	v, err = agents.ResponsesConverter().GetResponseFormat(outputType)
+	require.NoError(t, err)
 	assert.Equal(t, responses.ResponseTextConfigParam{
 		Format: responses.ResponseFormatTextConfigUnionParam{
 			OfJSONSchema: &responses.ResponseFormatTextJSONSchemaConfigParam{
 				Name:   "final_output",
-				Schema: FakeSchema{}.JSONSchema(),
+				Schema: schema,
 				Strict: param.NewOpt(true),
 				Type:   constant.ValueOf[constant.JSONSchema](),
 			},
