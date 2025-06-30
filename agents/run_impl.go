@@ -389,7 +389,7 @@ func (runImpl) ProcessModelResponse(
 				Queries: outputUnion.Queries,
 				Status:  responses.ResponseFileSearchToolCallStatus(outputUnion.Status),
 				Type:    constant.ValueOf[constant.FileSearchCall](),
-				Results: outputUnion.Results.OfResponseFileSearchToolCallResults,
+				Results: outputUnion.Results,
 			}
 			items = append(items, ToolCallItem{
 				Agent:   agent,
@@ -461,7 +461,7 @@ func (runImpl) ProcessModelResponse(
 			output := responses.ResponseCodeInterpreterToolCall{
 				ID:          outputUnion.ID,
 				Code:        outputUnion.Code,
-				Results:     outputUnion.Results.OfResponseCodeInterpreterToolCallResults,
+				Outputs:     outputUnion.Outputs,
 				Status:      responses.ResponseCodeInterpreterToolCallStatus(outputUnion.Status),
 				Type:        constant.ValueOf[constant.CodeInterpreterCall](),
 				ContainerID: outputUnion.ContainerID,
