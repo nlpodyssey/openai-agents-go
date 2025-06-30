@@ -55,6 +55,7 @@ func TestModelSettings_BasicSerialization(t *testing.T) {
 		"metadata":            nil,
 		"store":               nil,
 		"include_usage":       nil,
+		"response_include":    nil,
 		"extra_query":         nil,
 		"extra_headers":       nil,
 	}
@@ -76,6 +77,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		Metadata:          map[string]string{"foo": "bar"},
 		Store:             param.NewOpt(false),
 		IncludeUsage:      param.NewOpt(false),
+		ResponseInclude:   []responses.ResponseIncludable{responses.ResponseIncludableFileSearchCallResults},
 		ExtraQuery:        map[string]string{"foo": "bar"},
 		ExtraHeaders:      map[string]string{"foo": "bar"},
 	}
@@ -99,6 +101,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		"metadata":            map[string]any{"foo": "bar"},
 		"store":               false,
 		"include_usage":       false,
+		"response_include":    []any{"file_search_call.results"},
 		"extra_query":         map[string]any{"foo": "bar"},
 		"extra_headers":       map[string]any{"foo": "bar"},
 	}
@@ -129,6 +132,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		Metadata:                        map[string]string{"foo": "bar"},
 		Store:                           param.NewOpt(false),
 		IncludeUsage:                    param.NewOpt(false),
+		ResponseInclude:                 []responses.ResponseIncludable{responses.ResponseIncludableFileSearchCallResults},
 		ExtraQuery:                      map[string]string{"foo": "bar"},
 		ExtraHeaders:                    map[string]string{"foo": "bar"},
 		CustomizeResponsesRequest:       nil,
@@ -169,6 +173,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.Metadata)
 		assert.Equal(t, param.NewOpt(true), resolved.Store)
 		assert.Equal(t, param.NewOpt(false), resolved.IncludeUsage)
+		assert.Equal(t, []responses.ResponseIncludable{responses.ResponseIncludableFileSearchCallResults}, resolved.ResponseInclude)
 		assert.Equal(t, map[string]string{"a": "b"}, resolved.ExtraQuery)
 		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.ExtraHeaders)
 		assert.NotNil(t, resolved.CustomizeResponsesRequest)
@@ -183,6 +188,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 			MaxTokens:         param.NewOpt[int64](42),
 			Metadata:          map[string]string{"a": "b"},
 			IncludeUsage:      param.NewOpt(true),
+			ResponseInclude:   []responses.ResponseIncludable{responses.ResponseIncludableMessageInputImageImageURL},
 			ExtraHeaders:      map[string]string{"c": "d"},
 			CustomizeChatCompletionsRequest: func(context.Context, *openai.ChatCompletionNewParams, []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
 				return nil, nil, nil
@@ -206,6 +212,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		assert.Equal(t, map[string]string{"a": "b"}, resolved.Metadata)
 		assert.Equal(t, param.NewOpt(false), resolved.Store)
 		assert.Equal(t, param.NewOpt(true), resolved.IncludeUsage)
+		assert.Equal(t, []responses.ResponseIncludable{responses.ResponseIncludableMessageInputImageImageURL}, resolved.ResponseInclude)
 		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.ExtraQuery)
 		assert.Equal(t, map[string]string{"c": "d"}, resolved.ExtraHeaders)
 		assert.Nil(t, resolved.CustomizeResponsesRequest)
