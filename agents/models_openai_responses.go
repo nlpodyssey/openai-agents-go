@@ -241,7 +241,7 @@ func (responsesConverter) ConvertToolChoice(toolChoice string) responses.Respons
 			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptions(toolChoice)),
 		}
 	case "file_search", "web_search_preview", "web_search_preview_2025_03_11",
-		"computer_use_preview", "image_generation", "code_interpreter", "mcp":
+		"computer_use_preview", "image_generation", "code_interpreter":
 		return responses.ResponseNewParamsToolChoiceUnion{
 			OfHostedTool: &responses.ToolChoiceTypesParam{
 				Type: responses.ToolChoiceTypesType(toolChoice),

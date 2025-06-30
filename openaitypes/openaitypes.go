@@ -282,7 +282,7 @@ func ResponseInputItemUnionParamFromResponseOutputItemUnion(
 			Queries: input.Queries,
 			Status:  responses.ResponseFileSearchToolCallStatus(input.Status),
 			Type:    constant.ValueOf[constant.FileSearchCall](),
-			Results: input.Results.OfResponseFileSearchToolCallResults,
+			Results: input.Results,
 		})
 	case "function_call":
 		return ResponseInputItemUnionParamFromResponseFunctionToolCall(responses.ResponseFunctionToolCall{

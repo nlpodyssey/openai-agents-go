@@ -49,7 +49,6 @@ func TestConvertToolChoiceStandardValues(t *testing.T) {
 		{"computer_use_preview", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeComputerUsePreview}}},
 		{"image_generation", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeImageGeneration}}},
 		{"code_interpreter", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeCodeInterpreter}}},
-		{"mcp", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeMcp}}},
 		{"my_function", R{ // Arbitrary string should be interpreted as a function name.
 			OfFunctionTool: &responses.ToolChoiceFunctionParam{
 				Name: "my_function",
