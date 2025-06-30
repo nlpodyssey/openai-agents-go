@@ -591,7 +591,7 @@ func (r Runner) runSingleTurnStreamed(
 		return nil, err
 	}
 
-	handoffs, err := r.getHandoffs(agent)
+	handoffs, err := r.getHandoffs(ctx, agent)
 	if err != nil {
 		return nil, err
 	}
@@ -741,7 +741,7 @@ func (r Runner) runSingleTurn(
 		return nil, err
 	}
 
-	handoffs, err := r.getHandoffs(agent)
+	handoffs, err := r.getHandoffs(ctx, agent)
 	if err != nil {
 		return nil, err
 	}
@@ -1000,7 +1000,7 @@ func (r Runner) getNewResponse(
 	return newResponse, err
 }
 
-func (Runner) getHandoffs(agent *Agent) ([]Handoff, error) {
+func (Runner) getHandoffs(ctx context.Context, agent *Agent) ([]Handoff, error) {
 	handoffs := make([]Handoff, 0, len(agent.Handoffs)+len(agent.AgentHandoffs))
 	for _, h := range agent.Handoffs {
 		handoffs = append(handoffs, h)
@@ -1012,7 +1012,45 @@ func (Runner) getHandoffs(agent *Agent) ([]Handoff, error) {
 		}
 		handoffs = append(handoffs, *h)
 	}
-	return handoffs, nil
+
+	isEnabledResults := make([]bool, len(handoffs))
+	isEnabledErrors := make([]error, len(handoffs))
+
+	childCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	wg.Add(len(handoffs))
+
+	for i, handoff := range handoffs {
+		go func() {
+			defer wg.Done()
+
+			if handoff.IsEnabled == nil {
+				isEnabledResults[i] = true
+				return
+			}
+
+			isEnabledResults[i], isEnabledErrors[i] = handoff.IsEnabled.IsEnabled(childCtx, agent)
+			if isEnabledErrors[i] != nil {
+				cancel()
+			}
+		}()
+	}
+
+	wg.Wait()
+	if err := errors.Join(isEnabledErrors...); err != nil {
+		return nil, err
+	}
+
+	var enabledHandoffs []Handoff
+	for i, handoff := range handoffs {
+		if isEnabledResults[i] {
+			enabledHandoffs = append(enabledHandoffs, handoff)
+		}
+	}
+
+	return enabledHandoffs, nil
 }
 
 func (Runner) getAllTools(ctx context.Context, agent *Agent) ([]Tool, error) {

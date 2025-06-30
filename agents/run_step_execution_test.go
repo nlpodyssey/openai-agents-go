@@ -424,7 +424,7 @@ type getExecuteResultParams struct {
 }
 
 func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepResult {
-	handoffs, err := Runner{}.getHandoffs(params.agent)
+	handoffs, err := Runner{}.getHandoffs(t.Context(), params.agent)
 	require.NoError(t, err)
 
 	allTools, err := params.agent.GetAllTools(t.Context())

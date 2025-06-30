@@ -32,11 +32,11 @@ func TestSingleHandoffSetup(t *testing.T) {
 		AgentHandoffs: []*Agent{agent1},
 	}
 
-	handoffs, err := Runner{}.getHandoffs(agent1)
+	handoffs, err := Runner{}.getHandoffs(t.Context(), agent1)
 	require.NoError(t, err)
 	assert.Len(t, handoffs, 0)
 
-	handoffs, err = Runner{}.getHandoffs(agent2)
+	handoffs, err = Runner{}.getHandoffs(t.Context(), agent2)
 	require.NoError(t, err)
 	require.Len(t, handoffs, 1)
 
@@ -54,7 +54,7 @@ func TestMultipleHandoffsSetup(t *testing.T) {
 		AgentHandoffs: []*Agent{agent1, agent2},
 	}
 
-	handoffs, err := Runner{}.getHandoffs(agent3)
+	handoffs, err := Runner{}.getHandoffs(t.Context(), agent3)
 	require.NoError(t, err)
 	require.Len(t, handoffs, 2)
 
@@ -85,7 +85,7 @@ func TestCustomHandoffSetup(t *testing.T) {
 		},
 	}
 
-	handoffs, err := Runner{}.getHandoffs(agent3)
+	handoffs, err := Runner{}.getHandoffs(t.Context(), agent3)
 	require.NoError(t, err)
 	require.Len(t, handoffs, 2)
 
@@ -250,4 +250,104 @@ func TestGetTransferMessageIsValidJson(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]any{"assistant": "foo"}, m)
+}
+
+func TestHandoff_IsEnabled(t *testing.T) {
+	t.Run("enabled by default", func(t *testing.T) {
+		agent := New("test")
+		h := HandoffFromAgent(HandoffFromAgentParams{Agent: agent})
+		isEnabled, err := h.IsEnabled.IsEnabled(t.Context(), agent)
+		require.NoError(t, err)
+		assert.True(t, isEnabled)
+	})
+
+	t.Run("explicitly enabled", func(t *testing.T) {
+		agent := New("test")
+		h := HandoffFromAgent(HandoffFromAgentParams{
+			Agent:     agent,
+			IsEnabled: HandoffEnabled(),
+		})
+		isEnabled, err := h.IsEnabled.IsEnabled(t.Context(), agent)
+		require.NoError(t, err)
+		assert.True(t, isEnabled)
+	})
+
+	t.Run("explicitly disabled", func(t *testing.T) {
+		agent := New("test")
+		h := HandoffFromAgent(HandoffFromAgentParams{
+			Agent:     agent,
+			IsEnabled: HandoffDisabled(),
+		})
+		isEnabled, err := h.IsEnabled.IsEnabled(t.Context(), agent)
+		require.NoError(t, err)
+		assert.False(t, isEnabled)
+	})
+
+	t.Run("enabler function returns true", func(t *testing.T) {
+		agent := New("test")
+		h := HandoffFromAgent(HandoffFromAgentParams{
+			Agent: agent,
+			IsEnabled: HandoffEnablerFunc(func(context.Context, *Agent) (bool, error) {
+				return true, nil
+			}),
+		})
+		isEnabled, err := h.IsEnabled.IsEnabled(t.Context(), agent)
+		require.NoError(t, err)
+		assert.True(t, isEnabled)
+	})
+
+	t.Run("enabler function returns false", func(t *testing.T) {
+		agent := New("test")
+		h := HandoffFromAgent(HandoffFromAgentParams{
+			Agent: agent,
+			IsEnabled: HandoffEnablerFunc(func(context.Context, *Agent) (bool, error) {
+				return false, nil
+			}),
+		})
+		isEnabled, err := h.IsEnabled.IsEnabled(t.Context(), agent)
+		require.NoError(t, err)
+		assert.False(t, isEnabled)
+	})
+
+	t.Run("agent filters handoffs", func(t *testing.T) {
+		// Integration test to make sure that disabled handoffs are filtered out by the runner.
+		agent1 := New("agent_1")
+		agent2 := New("agent_2")
+		agent3 := New("agent_3")
+		agent4 := New("agent_4")
+
+		mainAgent := New("main_agent").WithHandoffs(
+			HandoffFromAgent(HandoffFromAgentParams{
+				Agent:     agent1,
+				IsEnabled: HandoffEnabled(),
+			}),
+			HandoffFromAgent(HandoffFromAgentParams{
+				Agent:     agent2,
+				IsEnabled: HandoffDisabled(),
+			}),
+			HandoffFromAgent(HandoffFromAgentParams{
+				Agent: agent3,
+				IsEnabled: HandoffEnablerFunc(func(context.Context, *Agent) (bool, error) {
+					return true, nil
+				}),
+			}),
+			HandoffFromAgent(HandoffFromAgentParams{
+				Agent: agent4,
+				IsEnabled: HandoffEnablerFunc(func(context.Context, *Agent) (bool, error) {
+					return false, nil
+				}),
+			}),
+		)
+
+		filteredHandoffs, err := Runner{}.getHandoffs(t.Context(), mainAgent)
+		require.NoError(t, err)
+		assert.Len(t, filteredHandoffs, 2)
+
+		agentNames := make(map[string]struct{})
+		for _, h := range filteredHandoffs {
+			agentNames[h.AgentName] = struct{}{}
+		}
+		assert.Contains(t, agentNames, "agent_1")
+		assert.Contains(t, agentNames, "agent_3")
+	})
 }

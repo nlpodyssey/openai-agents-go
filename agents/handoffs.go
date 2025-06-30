@@ -72,6 +72,12 @@ type Handoff struct {
 	// true, as it increases the likelihood of correct JSON input.
 	// Defaults to true if omitted.
 	StrictJSONSchema param.Opt[bool]
+
+	// Optional flag reporting whether the handoff is enabled.
+	// It can be either a boolean or a function which allows you to dynamically
+	// enable/disable a handoff based on your context/state.
+	// Default value, if omitted: true.
+	IsEnabled HandoffEnabler
 }
 
 func (h Handoff) GetTransferMessage(agent *Agent) string {
@@ -80,6 +86,41 @@ func (h Handoff) GetTransferMessage(agent *Agent) string {
 		panic(err) // this should never happen
 	}
 	return string(b)
+}
+
+type HandoffEnabler interface {
+	IsEnabled(ctx context.Context, agent *Agent) (bool, error)
+}
+
+// HandoffEnabledFlag is a static HandoffEnabler which always returns the configured flag value.
+type HandoffEnabledFlag struct {
+	isEnabled bool
+}
+
+func (f HandoffEnabledFlag) IsEnabled(context.Context, *Agent) (bool, error) {
+	return f.isEnabled, nil
+}
+
+// NewHandoffEnabledFlag returns a HandoffEnabledFlag which always returns the configured flag value.
+func NewHandoffEnabledFlag(isEnabled bool) HandoffEnabledFlag {
+	return HandoffEnabledFlag{isEnabled: isEnabled}
+}
+
+// HandoffEnabled returns a static HandoffEnabler which always returns true.
+func HandoffEnabled() HandoffEnabler {
+	return NewHandoffEnabledFlag(true)
+}
+
+// HandoffDisabled returns a static HandoffEnabler which always returns false.
+func HandoffDisabled() HandoffEnabler {
+	return NewHandoffEnabledFlag(false)
+}
+
+// HandoffEnablerFunc can wrap a function to implement HandoffEnabler interface.
+type HandoffEnablerFunc func(ctx context.Context, agent *Agent) (bool, error)
+
+func (f HandoffEnablerFunc) IsEnabled(ctx context.Context, agent *Agent) (bool, error) {
+	return f(ctx, agent)
 }
 
 func DefaultHandoffToolName(agent *Agent) string {
@@ -141,6 +182,13 @@ type HandoffFromAgentParams struct {
 
 	// Optional function that filters the inputs that are passed to the next agent.
 	InputFilter HandoffInputFilter
+
+	// Optional flag reporting whether the tool is enabled.
+	// It can be either a boolean or a function which allows you to dynamically
+	// enable/disable a tool based on your context/state.
+	// Disabled handoffs are hidden from the LLM at runtime.
+	// Default value, if omitted: true.
+	IsEnabled HandoffEnabler
 }
 
 // HandoffFromAgent creates a Handoff from an Agent. It panics in case of problems.
@@ -192,6 +240,9 @@ func SafeHandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 
 	invokeHandoff := func(ctx context.Context, jsonInput string) (*Agent, error) {
 		if len(params.InputJSONSchema) > 0 {
+			if jsonInput == "" {
+				return nil, NewModelBehaviorError(`handoff function expected non-null input, but got ""`)
+			}
 			inputJSONLoader := gojsonschema.NewStringLoader(jsonInput)
 			result, err := inputJSONSchema.Validate(inputJSONLoader)
 			if err != nil {
@@ -232,6 +283,11 @@ func SafeHandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 		toolDescription = DefaultHandoffToolDescription(params.Agent)
 	}
 
+	isEnabled := params.IsEnabled
+	if isEnabled == nil {
+		isEnabled = HandoffEnabled()
+	}
+
 	return &Handoff{
 		ToolName:         toolName,
 		ToolDescription:  toolDescription,
@@ -240,5 +296,6 @@ func SafeHandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 		AgentName:        params.Agent.Name,
 		InputFilter:      params.InputFilter,
 		StrictJSONSchema: param.NewOpt(true),
+		IsEnabled:        isEnabled,
 	}, nil
 }
