@@ -61,7 +61,7 @@ func TestSimpleFirstRun(t *testing.T) {
 		},
 	})
 
-	result, err = agents.Runner{}.RunResponseInputs(t.Context(), agent, []agents.TResponseInputItem{
+	result, err = agents.Runner{}.RunInputs(t.Context(), agent, []agents.TResponseInputItem{
 		agentstesting.GetTextInputItem("message"),
 		agentstesting.GetTextInputItem("another_message"),
 	})
@@ -96,7 +96,7 @@ func TestSubsequentRuns(t *testing.T) {
 		},
 	})
 
-	result, err = agents.Runner{}.RunResponseInputs(t.Context(), agent, result.ToInputList())
+	result, err = agents.Runner{}.RunInputs(t.Context(), agent, result.ToInputList())
 	require.NoError(t, err)
 	assert.Len(t, result.Input.(agents.InputItems), 2)
 	assert.Len(t, result.NewItems, 1)
@@ -230,7 +230,7 @@ func TestStructuredOutput(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.RunResponseInputs(t.Context(), agent2, []agents.TResponseInputItem{
+	result, err := agents.Runner{}.RunInputs(t.Context(), agent2, []agents.TResponseInputItem{
 		agentstesting.GetTextInputItem("user_message"),
 		agentstesting.GetTextInputItem("another_message"),
 	})

@@ -98,7 +98,7 @@ func main() {
 		}
 	}
 
-	synthesizerResult, err := agents.RunResponseInputs(context.Background(), SynthesizerAgent, orchestratorResult.ToInputList())
+	synthesizerResult, err := agents.RunInputs(context.Background(), SynthesizerAgent, orchestratorResult.ToInputList())
 	if err != nil {
 		panic(err)
 	}
