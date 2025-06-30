@@ -78,6 +78,10 @@ type ModelSettings struct {
 	// Defaults to true if not provided.
 	IncludeUsage param.Opt[bool] `json:"include_usage"`
 
+	// Optional additional output data to include in the model response
+	// (see https://platform.openai.com/docs/api-reference/responses/create#responses-create-include).
+	ResponseInclude []responses.ResponseIncludable `json:"response_include"`
+
 	// Optional additional query fields to provide with the request.
 	ExtraQuery map[string]string `json:"extra_query"`
 
@@ -122,6 +126,7 @@ func (ms ModelSettings) Resolve(override ModelSettings) ModelSettings {
 	resolveMap(&newSettings.Metadata, override.Metadata)
 	resolveOpt(&newSettings.Store, override.Store)
 	resolveOpt(&newSettings.IncludeUsage, override.IncludeUsage)
+	resolveAny(&newSettings.ResponseInclude, override.ResponseInclude)
 	resolveMap(&newSettings.ExtraQuery, override.ExtraQuery)
 	resolveMap(&newSettings.ExtraHeaders, override.ExtraHeaders)
 	resolveAny(&newSettings.CustomizeResponsesRequest, override.CustomizeResponsesRequest)

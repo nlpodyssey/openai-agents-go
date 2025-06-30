@@ -20,6 +20,7 @@ import (
 	"iter"
 	"log/slog"
 	"reflect"
+	"slices"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/usage"
@@ -193,7 +194,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 		Instructions:       systemInstructions,
 		Model:              m.Model,
 		Input:              responses.ResponseNewParamsInputUnion{OfInputItemList: listInput},
-		Include:            convertedTools.Includes,
+		Include:            slices.Concat(convertedTools.Includes, modelSettings.ResponseInclude),
 		Tools:              convertedTools.Tools,
 		Prompt:             prompt,
 		Temperature:        modelSettings.Temperature,
