@@ -74,7 +74,7 @@ func RunDemoLoopRW(ctx context.Context, agent *Agent, stream bool, r io.Reader, 
 		})
 
 		if stream {
-			result, err := RunResponseInputsStreamed(ctx, currentAgent, inputItems)
+			result, err := RunInputsStreamed(ctx, currentAgent, inputItems)
 			if err != nil {
 				return err
 			}
@@ -107,7 +107,7 @@ func RunDemoLoopRW(ctx context.Context, agent *Agent, stream bool, r io.Reader, 
 			currentAgent = result.LastAgent()
 			inputItems = result.ToInputList()
 		} else {
-			result, err := RunResponseInputs(ctx, currentAgent, inputItems)
+			result, err := RunInputs(ctx, currentAgent, inputItems)
 			if err != nil {
 				return err
 			}

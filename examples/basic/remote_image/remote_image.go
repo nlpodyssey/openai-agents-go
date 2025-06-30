@@ -32,7 +32,7 @@ func main() {
 
 	ctx := context.Background()
 
-	result, err := agents.RunResponseInputs(ctx, agent, []agents.TResponseInputItem{
+	result, err := agents.RunInputs(ctx, agent, []agents.TResponseInputItem{
 		{OfMessage: &responses.EasyInputMessageParam{
 			Content: responses.EasyInputMessageContentUnionParam{
 				OfInputItemContentList: responses.ResponseInputMessageContentListParam{{

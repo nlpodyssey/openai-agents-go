@@ -62,7 +62,7 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 		},
 	})
 
-	result, err = agents.Runner{}.RunResponseInputsStreamed(t.Context(), agent, []agents.TResponseInputItem{
+	result, err = agents.Runner{}.RunInputsStreamed(t.Context(), agent, []agents.TResponseInputItem{
 		agentstesting.GetTextInputItem("message"),
 		agentstesting.GetTextInputItem("another_message"),
 	})
@@ -104,7 +104,7 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 		},
 	})
 
-	result, err = agents.Runner{}.RunResponseInputsStreamed(t.Context(), agent, result.ToInputList())
+	result, err = agents.Runner{}.RunInputsStreamed(t.Context(), agent, result.ToInputList())
 	require.NoError(t, err)
 	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
@@ -243,7 +243,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 		}},
 	})
 
-	result, err := agents.Runner{}.RunResponseInputsStreamed(t.Context(), agent2, []agents.TResponseInputItem{
+	result, err := agents.Runner{}.RunInputsStreamed(t.Context(), agent2, []agents.TResponseInputItem{
 		agentstesting.GetTextInputItem("user_message"),
 		agentstesting.GetTextInputItem("another_message"),
 	})
@@ -559,7 +559,7 @@ func TestStreamingEvents(t *testing.T) {
 	var itemData []agents.RunItem
 	var agentData []agents.AgentUpdatedStreamEvent
 
-	result, err := agents.Runner{}.RunResponseInputsStreamed(t.Context(), agent2, []agents.TResponseInputItem{
+	result, err := agents.Runner{}.RunInputsStreamed(t.Context(), agent2, []agents.TResponseInputItem{
 		agentstesting.GetTextInputItem("user_message"),
 		agentstesting.GetTextInputItem("another_message"),
 	})

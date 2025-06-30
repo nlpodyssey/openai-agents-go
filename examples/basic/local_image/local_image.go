@@ -35,7 +35,7 @@ func main() {
 		WithInstructions("You are a helpful assistant.").
 		WithModel("gpt-4.1-nano")
 
-	result, err := agents.RunResponseInputs(context.Background(), agent, []agents.TResponseInputItem{
+	result, err := agents.RunInputs(context.Background(), agent, []agents.TResponseInputItem{
 		{OfMessage: &responses.EasyInputMessageParam{
 			Content: responses.EasyInputMessageContentUnionParam{
 				OfInputItemContentList: responses.ResponseInputMessageContentListParam{{

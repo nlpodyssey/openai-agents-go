@@ -91,15 +91,15 @@ func RunStreamed(ctx context.Context, startingAgent *Agent, input string) (*RunR
 	return DefaultRunner.RunStreamed(ctx, startingAgent, input)
 }
 
-// RunResponseInputs executes startingAgent with the provided list of input items using the DefaultRunner.
-func RunResponseInputs(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResult, error) {
-	return DefaultRunner.RunResponseInputs(ctx, startingAgent, input)
+// RunInputs executes startingAgent with the provided list of input items using the DefaultRunner.
+func RunInputs(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResult, error) {
+	return DefaultRunner.RunInputs(ctx, startingAgent, input)
 }
 
-// RunResponseInputsStreamed executes startingAgent with the provided list of input items using the DefaultRunner
+// RunInputsStreamed executes startingAgent with the provided list of input items using the DefaultRunner
 // and returns a streaming result.
-func RunResponseInputsStreamed(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResultStreaming, error) {
-	return DefaultRunner.RunResponseInputsStreamed(ctx, startingAgent, input)
+func RunInputsStreamed(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResultStreaming, error) {
+	return DefaultRunner.RunInputsStreamed(ctx, startingAgent, input)
 }
 
 // Run a workflow starting at the given agent. The agent will run in a loop until a final
@@ -144,13 +144,13 @@ func (r Runner) RunStreamed(ctx context.Context, startingAgent *Agent, input str
 	return r.runStreamed(ctx, startingAgent, InputString(input))
 }
 
-// RunResponseInputs executes startingAgent with the provided list of input items using the Runner configuration.
-func (r Runner) RunResponseInputs(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResult, error) {
+// RunInputs executes startingAgent with the provided list of input items using the Runner configuration.
+func (r Runner) RunInputs(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResult, error) {
 	return r.run(ctx, startingAgent, InputItems(input))
 }
 
-// RunResponseInputsStreamed executes startingAgent with the provided list of input items using the Runner configuration and returns a streaming result.
-func (r Runner) RunResponseInputsStreamed(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResultStreaming, error) {
+// RunInputsStreamed executes startingAgent with the provided list of input items using the Runner configuration and returns a streaming result.
+func (r Runner) RunInputsStreamed(ctx context.Context, startingAgent *Agent, input []TResponseInputItem) (*RunResultStreaming, error) {
 	return r.runStreamed(ctx, startingAgent, InputItems(input))
 }
 

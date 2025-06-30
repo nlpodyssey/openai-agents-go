@@ -73,7 +73,7 @@ func main() {
 	}}
 
 	for {
-		result, err := agents.RunResponseInputsStreamed(
+		result, err := agents.RunInputsStreamed(
 			context.Background(), agent, inputs,
 		)
 		if err != nil {

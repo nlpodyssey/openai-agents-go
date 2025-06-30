@@ -90,7 +90,7 @@ func main() {
 	fmt.Println("Step 1 done")
 
 	// 2. Ask it to generate a number
-	result, err = agents.RunResponseInputs(
+	result, err = agents.RunInputs(
 		context.Background(),
 		FirstAgent,
 		append(
@@ -113,7 +113,7 @@ func main() {
 	fmt.Println("Step 2 done")
 
 	// 3. Call the second agent
-	result, err = agents.RunResponseInputs(
+	result, err = agents.RunInputs(
 		context.Background(),
 		SecondAgent,
 		append(
@@ -136,7 +136,7 @@ func main() {
 	fmt.Println("Step 3 done")
 
 	// 4. Cause a handoff to occur
-	streamResult, err := agents.RunResponseInputsStreamed(
+	streamResult, err := agents.RunInputsStreamed(
 		context.Background(),
 		SecondAgent,
 		append(

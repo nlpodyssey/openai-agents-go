@@ -67,7 +67,7 @@ func MathGuardrailFunction(
 	case agents.InputString:
 		result, err = agents.Run(ctx, GuardrailAgent, v.String())
 	case agents.InputItems:
-		result, err = agents.RunResponseInputs(ctx, GuardrailAgent, v)
+		result, err = agents.RunInputs(ctx, GuardrailAgent, v)
 	default:
 		panic(fmt.Errorf("unexpected input type %T", v))
 	}
@@ -115,7 +115,7 @@ func main() {
 			},
 		})
 
-		result, err := agents.RunResponseInputs(context.Background(), agent, inputData)
+		result, err := agents.RunInputs(context.Background(), agent, inputData)
 		if err != nil {
 			var tripwireError agents.InputGuardrailTripwireTriggeredError
 			if errors.As(err, &tripwireError) {
