@@ -49,8 +49,12 @@ type ModelSettings struct {
 	// Well-known values are: "auto", "required", "none".
 	ToolChoice string `json:"tool_choice"`
 
-	// Whether to use parallel tool calls when calling the model.
-	// Defaults to false if not provided.
+	// Controls whether the model can make multiple parallel tool calls in a single turn.
+	// If not provided, this behavior defers to the underlying model provider's default.
+	// For most current providers (e.g., OpenAI), this typically means parallel tool calls
+	// are enabled (true).
+	// Set to true to explicitly enable parallel tool calls, or false to restrict the
+	// model to at most one tool call per turn.
 	ParallelToolCalls param.Opt[bool] `json:"parallel_tool_calls"`
 
 	// The truncation strategy to use when calling the model.
