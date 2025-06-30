@@ -199,7 +199,7 @@ func TestHandoffsParsedCorrectly(t *testing.T) {
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
 	}
-	runnerHandoffs, err := Runner{}.getHandoffs(agent3)
+	runnerHandoffs, err := Runner{}.getHandoffs(t.Context(), agent3)
 	require.NoError(t, err)
 	allTools, err = agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
@@ -237,7 +237,7 @@ func TestMissingHandoffFails(t *testing.T) {
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
 	}
-	runnerHandoffs, err := Runner{}.getHandoffs(agent3)
+	runnerHandoffs, err := Runner{}.getHandoffs(t.Context(), agent3)
 	require.NoError(t, err)
 	allTools, err := agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
@@ -266,7 +266,7 @@ func TestMultipleHandoffsDoesntError(t *testing.T) {
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
 	}
-	runnerHandoffs, err := Runner{}.getHandoffs(agent3)
+	runnerHandoffs, err := Runner{}.getHandoffs(t.Context(), agent3)
 	require.NoError(t, err)
 	allTools, err := agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
@@ -526,7 +526,7 @@ func TestToolAndHandoffParsedCorrectly(t *testing.T) {
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
 	}
-	runnerHandoffs, err := Runner{}.getHandoffs(agent3)
+	runnerHandoffs, err := Runner{}.getHandoffs(t.Context(), agent3)
 	require.NoError(t, err)
 	allTools, err := agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
