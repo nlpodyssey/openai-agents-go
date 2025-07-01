@@ -736,7 +736,31 @@ func (runImpl) ExecuteComputerActions(
 
 	// Need to run these serially, because each action can affect the computer state
 	for i, action := range actions {
-		result, err := ComputerAction().Execute(ctx, agent, action, hooks)
+		var acknowledged []responses.ResponseInputItemComputerCallOutputAcknowledgedSafetyCheckParam
+		if len(action.ToolCall.PendingSafetyChecks) > 0 && action.ComputerTool.OnSafetyCheck != nil {
+			for _, check := range action.ToolCall.PendingSafetyChecks {
+				data := ComputerToolSafetyCheckData{
+					Agent:       agent,
+					ToolCall:    action.ToolCall,
+					SafetyCheck: check,
+				}
+				ack, err := action.ComputerTool.OnSafetyCheck(ctx, data)
+				if err != nil {
+					return nil, err
+				}
+				if ack {
+					acknowledged = append(acknowledged, responses.ResponseInputItemComputerCallOutputAcknowledgedSafetyCheckParam{
+						ID:      check.ID,
+						Code:    param.NewOpt(check.Code),
+						Message: param.NewOpt(check.Message),
+					})
+				} else {
+					return nil, NewUserError("computer tool safety check was not acknowledged")
+				}
+			}
+		}
+
+		result, err := ComputerAction().Execute(ctx, agent, action, hooks, acknowledged)
 		if err != nil {
 			return nil, err
 		}
@@ -994,6 +1018,7 @@ func (ca computerAction) Execute(
 	agent *Agent,
 	action ToolRunComputerAction,
 	hooks RunHooks,
+	acknowledgedSafetyChecks []responses.ResponseInputItemComputerCallOutputAcknowledgedSafetyCheckParam,
 ) (RunItem, error) {
 	var (
 		hooksErrors [2]error
@@ -1083,7 +1108,8 @@ func (ca computerAction) Execute(
 				ImageURL: param.NewOpt(imageURL),
 				Type:     constant.ValueOf[constant.ComputerScreenshot](),
 			},
-			Type: constant.ValueOf[constant.ComputerCallOutput](),
+			Type:                     constant.ValueOf[constant.ComputerCallOutput](),
+			AcknowledgedSafetyChecks: acknowledgedSafetyChecks,
 		},
 		Output: imageURL,
 		Type:   "tool_call_output_item",

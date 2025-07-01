@@ -239,7 +239,7 @@ func TestExecuteInvokesHooksAndReturnsToolCallOutput(t *testing.T) {
 	agent.Hooks = agentHooks
 	runHooks := &LoggingRunHooks{}
 	// Execute the computer action.
-	result, err := ComputerAction().Execute(t.Context(), agent, toolRun, runHooks)
+	result, err := ComputerAction().Execute(t.Context(), agent, toolRun, runHooks, nil)
 	require.NoError(t, err)
 
 	// Both global and per-agent hooks should have been called once.
@@ -280,4 +280,73 @@ func TestExecuteInvokesHooksAndReturnsToolCallOutput(t *testing.T) {
 		Status:                   "",
 		Type:                     constant.ValueOf[constant.ComputerCallOutput](),
 	}, outputItem.RawItem)
+}
+
+func TestPendingSafetyCheckAcknowledged(t *testing.T) {
+	// Safety checks should be acknowledged via the callback.
+
+	comp := NewLoggingComputer("img")
+	var called []ComputerToolSafetyCheckData
+
+	onSafetyCheck := func(_ context.Context, data ComputerToolSafetyCheckData) (bool, error) {
+		called = append(called, data)
+		return true, nil
+	}
+
+	tool := ComputerTool{
+		Computer:      comp,
+		OnSafetyCheck: onSafetyCheck,
+	}
+	safety := responses.ResponseComputerToolCallPendingSafetyCheck{
+		ID:      "sc",
+		Code:    "c",
+		Message: "m",
+	}
+	toolCall := responses.ResponseComputerToolCall{
+		ID:                  "t1",
+		Action:              responses.ResponseComputerToolCallActionUnion{Type: "click", X: 1, Y: 2, Button: "left"},
+		CallID:              "t1",
+		PendingSafetyChecks: []responses.ResponseComputerToolCallPendingSafetyCheck{safety},
+		Status:              responses.ResponseComputerToolCallStatusCompleted,
+		Type:                responses.ResponseComputerToolCallTypeComputerCall,
+	}
+	runAction := ToolRunComputerAction{
+		ToolCall:     toolCall,
+		ComputerTool: tool,
+	}
+	agent := New("a").WithTools(tool)
+
+	results, err := RunImpl().ExecuteComputerActions(t.Context(), agent, []ToolRunComputerAction{runAction}, NoOpRunHooks{})
+	require.NoError(t, err)
+	assert.Equal(t, []RunItem{
+		ToolCallOutputItem{
+			Agent: agent,
+			RawItem: ResponseInputItemComputerCallOutputParam{
+				CallID: "t1",
+				Output: responses.ResponseComputerToolCallOutputScreenshotParam{
+					ImageURL: param.NewOpt("data:image/png;base64,img"),
+					Type:     constant.ValueOf[constant.ComputerScreenshot](),
+				},
+				ID: param.Opt[string]{},
+				AcknowledgedSafetyChecks: []responses.ResponseInputItemComputerCallOutputAcknowledgedSafetyCheckParam{
+					{
+						ID:      "sc",
+						Code:    param.NewOpt("c"),
+						Message: param.NewOpt("m"),
+					},
+				},
+				Status: "",
+				Type:   constant.ValueOf[constant.ComputerCallOutput](),
+			},
+			Output: "data:image/png;base64,img",
+			Type:   "tool_call_output_item",
+		},
+	}, results)
+	assert.Equal(t, []ComputerToolSafetyCheckData{
+		{
+			Agent:       agent,
+			ToolCall:    toolCall,
+			SafetyCheck: safety,
+		},
+	}, called)
 }
