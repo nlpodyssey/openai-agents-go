@@ -15,7 +15,10 @@
 package agents
 
 import (
+	"context"
+
 	"github.com/nlpodyssey/openai-agents-go/computer"
+	"github.com/openai/openai-go/responses"
 )
 
 // ComputerTool is a hosted tool that lets the LLM control a computer.
@@ -24,6 +27,9 @@ type ComputerTool struct {
 	// dimensions of the computer, as well as implements the computer actions
 	// like click, screenshot, etc.
 	Computer computer.Computer
+
+	// Optional callback to acknowledge computer tool safety checks.
+	OnSafetyCheck func(context.Context, ComputerToolSafetyCheckData) (bool, error)
 }
 
 func (t ComputerTool) ToolName() string {
@@ -31,3 +37,15 @@ func (t ComputerTool) ToolName() string {
 }
 
 func (t ComputerTool) isTool() {}
+
+// ComputerToolSafetyCheckData provides information about a computer tool safety check.
+type ComputerToolSafetyCheckData struct {
+	// The agent performing the computer action.
+	Agent *Agent
+
+	// The computer tool call.
+	ToolCall responses.ResponseComputerToolCall
+
+	// The pending safety check to acknowledge.
+	SafetyCheck responses.ResponseComputerToolCallPendingSafetyCheck
+}
