@@ -17,6 +17,7 @@ module github.com/nlpodyssey/openai-agents-go
 go 1.24.3
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/openai/openai-go v1.8.2
 	github.com/playwright-community/playwright-go v0.5200.0
