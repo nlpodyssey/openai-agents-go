@@ -26,6 +26,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/computer"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -154,6 +155,17 @@ func (result SingleStepResult) GeneratedItems() []RunItem {
 	return slices.Concat(result.PreStepItems, result.NewStepItems)
 }
 
+func GetModelTracingImpl(tracingDisabled, traceIncludeSensitiveData bool) ModelTracing {
+	switch {
+	case tracingDisabled:
+		return ModelTracingDisabled
+	case traceIncludeSensitiveData:
+		return ModelTracingEnabled
+	default:
+		return ModelTracingEnabledWithoutData
+	}
+}
+
 type runImpl struct{}
 
 func RunImpl() runImpl { return runImpl{} }
@@ -194,6 +206,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			agent,
 			processedResponse.Functions,
 			hooks,
+			runConfig,
 		)
 	}()
 	go func() {
@@ -280,7 +293,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	// 1. Structured output type => always leads to a final output
 	// 2. Plain text output type => only leads to a final output if there are no tool calls
 	if outputType != nil && !outputType.IsPlainText() && potentialFinalOutputText != "" {
-		finalOutput, err := outputType.ValidateJSON(potentialFinalOutputText)
+		finalOutput, err := outputType.ValidateJSON(ctx, potentialFinalOutputText)
 		if err != nil {
 			return nil, fmt.Errorf("final output type JSON validation failed: %w", err)
 		}
@@ -334,6 +347,7 @@ func (runImpl) MaybeResetToolChoice(
 }
 
 func (runImpl) ProcessModelResponse(
+	ctx context.Context,
 	agent *Agent,
 	allTools []Tool,
 	response ModelResponse,
@@ -438,6 +452,7 @@ func (runImpl) ProcessModelResponse(
 			})
 			toolsUsed = append(toolsUsed, "computer_use")
 			if computerTool == nil {
+				AttachErrorToCurrentSpan(ctx, tracing.SpanError{Message: "Computer tool not found"})
 				return nil, NewModelBehaviorError("model produced computer action without a computer tool")
 			}
 			computerActions = append(computerActions, ToolRunComputerAction{
@@ -487,6 +502,7 @@ func (runImpl) ProcessModelResponse(
 			})
 			toolsUsed = append(toolsUsed, "local_shell")
 			if localShellTool == nil {
+				AttachErrorToCurrentSpan(ctx, tracing.SpanError{Message: "Local shell tool not found"})
 				return nil, NewModelBehaviorError("model produced local shell call without a local shell tool")
 			}
 			localShellCalls = append(localShellCalls, ToolRunLocalShellCall{
@@ -519,6 +535,10 @@ func (runImpl) ProcessModelResponse(
 			} else { // Regular function tool call
 				functionTool, ok := functionMap[output.Name]
 				if !ok {
+					AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+						Message: "Tool not found",
+						Data:    map[string]any{"tool_name": output.Name},
+					})
 					return nil, ModelBehaviorErrorf("Tool %s not found in agent %s", output.Name, agent.Name)
 				}
 				items = append(items, ToolCallItem{
@@ -562,87 +582,118 @@ func (runImpl) ExecuteFunctionToolCalls(
 	agent *Agent,
 	toolRuns []ToolRunFunction,
 	hooks RunHooks,
+	config RunConfig,
 ) ([]FunctionToolResult, error) {
 	runSingleTool := func(
 		ctx context.Context,
 		funcTool FunctionTool,
 		toolCall ResponseFunctionToolCall,
 	) (any, error) {
-		var (
-			hooksErrors [2]error
-			toolError   error
-			result      any
-		)
+		var result any
 
-		childCtx, cancel := context.WithCancel(ctx)
-		defer cancel()
+		traceIncludeSensitiveData := config.TraceIncludeSensitiveData.Or(true)
 
-		var wg sync.WaitGroup
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := hooks.OnToolStart(childCtx, agent, funcTool)
-			if err != nil {
-				cancel()
-				hooksErrors[0] = fmt.Errorf("RunHooks.OnToolStart failed: %w", err)
-			}
-		}()
-
-		if agent.Hooks != nil {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				err := agent.Hooks.OnToolStart(childCtx, agent, funcTool)
-				if err != nil {
-					cancel()
-					hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolStart failed: %w", err)
+		err := tracing.FunctionSpan(
+			ctx, tracing.FunctionSpanParams{Name: funcTool.Name},
+			func(ctx context.Context, spanFn tracing.Span) (err error) {
+				ctx = ContextWithToolData(ctx, toolCall.CallID)
+				if traceIncludeSensitiveData {
+					spanFn.SpanData().(*tracing.FunctionSpanData).Input = toolCall.Arguments
 				}
-			}()
-		}
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			result, toolError = funcTool.OnInvokeTool(childCtx, toolCall.Arguments)
-			if toolError != nil {
-				cancel()
-			}
-		}()
+				defer func() {
+					if err != nil {
+						AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+							Message: "Error running tool",
+							Data:    map[string]any{"tool_name": funcTool.Name, "error": err.Error()},
+						})
+					}
+				}()
 
-		wg.Wait()
+				var hooksErrors [2]error
+				var toolError error
 
-		if err := errors.Join(hooksErrors[:]...); err != nil {
-			return nil, err
-		}
-		if toolError != nil {
-			return nil, fmt.Errorf("error running tool %s: %w", funcTool.Name, toolError)
-		}
+				var cancel context.CancelFunc
+				ctx, cancel = context.WithCancel(ctx)
+				defer cancel()
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := hooks.OnToolEnd(childCtx, agent, funcTool, result)
-			if err != nil {
-				cancel()
-				hooksErrors[0] = fmt.Errorf("RunHooks.OnToolEnd failed: %w", err)
-			}
-		}()
+				var wg sync.WaitGroup
 
-		if agent.Hooks != nil {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				err := agent.Hooks.OnToolEnd(childCtx, agent, funcTool, result)
-				if err != nil {
-					cancel()
-					hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolEnd failed: %w", err)
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					err := hooks.OnToolStart(ctx, agent, funcTool)
+					if err != nil {
+						cancel()
+						hooksErrors[0] = fmt.Errorf("RunHooks.OnToolStart failed: %w", err)
+					}
+				}()
+
+				if agent.Hooks != nil {
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						err := agent.Hooks.OnToolStart(ctx, agent, funcTool)
+						if err != nil {
+							cancel()
+							hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolStart failed: %w", err)
+						}
+					}()
 				}
-			}()
-		}
 
-		wg.Wait()
-		if err := errors.Join(hooksErrors[:]...); err != nil {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					result, toolError = funcTool.OnInvokeTool(ctx, toolCall.Arguments)
+					if toolError != nil {
+						cancel()
+					}
+				}()
+
+				wg.Wait()
+
+				if err = errors.Join(hooksErrors[:]...); err != nil {
+					return err
+				}
+				if toolError != nil {
+					return fmt.Errorf("error running tool %s: %w", funcTool.Name, toolError)
+				}
+
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					err := hooks.OnToolEnd(ctx, agent, funcTool, result)
+					if err != nil {
+						cancel()
+						hooksErrors[0] = fmt.Errorf("RunHooks.OnToolEnd failed: %w", err)
+					}
+				}()
+
+				if agent.Hooks != nil {
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						err := agent.Hooks.OnToolEnd(ctx, agent, funcTool, result)
+						if err != nil {
+							cancel()
+							hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolEnd failed: %w", err)
+						}
+					}()
+				}
+
+				wg.Wait()
+				if err = errors.Join(hooksErrors[:]...); err != nil {
+					return err
+				}
+
+				if traceIncludeSensitiveData {
+					spanFn.SpanData().(*tracing.FunctionSpanData).Output = result
+				}
+
+				return nil
+			})
+
+		if err != nil {
 			return nil, err
 		}
 		return result, nil
@@ -651,7 +702,8 @@ func (runImpl) ExecuteFunctionToolCalls(
 	results := make([]any, len(toolRuns))
 	resultErrors := make([]error, len(toolRuns))
 
-	childCtx, cancel := context.WithCancel(ctx)
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
 	defer cancel()
 
 	var wg sync.WaitGroup
@@ -660,7 +712,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 	for i, toolRun := range toolRuns {
 		go func() {
 			defer wg.Done()
-			results[i], resultErrors[i] = runSingleTool(childCtx, toolRun.FunctionTool, toolRun.ToolCall)
+			results[i], resultErrors[i] = runSingleTool(ctx, toolRun.FunctionTool, toolRun.ToolCall)
 			if resultErrors[i] != nil {
 				cancel()
 			}
@@ -798,10 +850,35 @@ func (runImpl) ExecuteHandoffs(
 	}
 
 	actualHandoff := runHandoffs[0]
-	handoff := actualHandoff.Handoff
-	newAgent, err := handoff.OnInvokeHandoff(ctx, actualHandoff.ToolCall.Arguments)
+	var handoff Handoff
+	var newAgent *Agent
+
+	err := tracing.HandoffSpan(
+		ctx, tracing.HandoffSpanParams{FromAgent: agent.Name},
+		func(ctx context.Context, spanHandoff tracing.Span) error {
+			handoff = actualHandoff.Handoff
+			var err error
+			newAgent, err = handoff.OnInvokeHandoff(ctx, actualHandoff.ToolCall.Arguments)
+			if err != nil {
+				return fmt.Errorf("failed to invoke handoff: %w", err)
+			}
+
+			spanHandoff.SpanData().(*tracing.HandoffSpanData).ToAgent = newAgent.Name
+			if multipleHandoffs {
+				requestedAgents := make([]string, len(runHandoffs))
+				for i, h := range runHandoffs {
+					requestedAgents[i] = h.Handoff.AgentName
+				}
+				spanHandoff.SetError(tracing.SpanError{
+					Message: "Multiple handoffs requested",
+					Data:    map[string]any{"requested_agents": requestedAgents},
+				})
+			}
+
+			return nil
+		})
 	if err != nil {
-		return nil, fmt.Errorf("failed to invoke handoff: %w", err)
+		return nil, err
 	}
 
 	// Append a tool output item for the handoff
@@ -954,7 +1031,22 @@ func (runImpl) RunSingleInputGuardrail(
 	guardrail InputGuardrail,
 	input Input,
 ) (InputGuardrailResult, error) {
-	return guardrail.Run(ctx, agent, input)
+	var result InputGuardrailResult
+
+	err := tracing.GuardrailSpan(
+		ctx, tracing.GuardrailSpanParams{Name: guardrail.Name},
+		func(ctx context.Context, spanGuardrail tracing.Span) error {
+			var err error
+			result, err = guardrail.Run(ctx, agent, input)
+			if err != nil {
+				return err
+			}
+			spanGuardrail.SpanData().(*tracing.GuardrailSpanData).Triggered = result.Output.TripwireTriggered
+			return nil
+		},
+	)
+
+	return result, err
 }
 
 func (runImpl) RunSingleOutputGuardrail(
@@ -963,7 +1055,22 @@ func (runImpl) RunSingleOutputGuardrail(
 	agent *Agent,
 	agentOutput any,
 ) (OutputGuardrailResult, error) {
-	return guardrail.Run(ctx, agent, agentOutput)
+	var result OutputGuardrailResult
+
+	err := tracing.GuardrailSpan(
+		ctx, tracing.GuardrailSpanParams{Name: guardrail.Name},
+		func(ctx context.Context, spanGuardrail tracing.Span) error {
+			var err error
+			result, err = guardrail.Run(ctx, agent, agentOutput)
+			if err != nil {
+				return err
+			}
+			spanGuardrail.SpanData().(*tracing.GuardrailSpanData).Triggered = result.Output.TripwireTriggered
+			return nil
+		},
+	)
+
+	return result, err
 }
 
 func (runImpl) StreamStepResultToQueue(stepResult SingleStepResult, queue *asyncqueue.Queue[StreamEvent]) {
@@ -1007,6 +1114,16 @@ func (runImpl) checkForFinalOutputFromTools(
 	}
 
 	return toolUseBehavior.ToolsToFinalOutput(ctx, toolResults)
+}
+
+// ManageTraceCtx creates a trace only if there is no current trace, and manages the trace lifecycle around the given function.
+func ManageTraceCtx(ctx context.Context, params tracing.TraceParams, fn func(context.Context) error) error {
+	if ct := tracing.GetCurrentTrace(ctx); ct != nil {
+		return fn(ctx)
+	}
+	return tracing.RunTrace(ctx, params, func(ctx context.Context, _ tracing.Trace) error {
+		return fn(ctx)
+	})
 }
 
 type computerAction struct{}

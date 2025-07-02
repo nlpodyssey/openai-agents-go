@@ -16,17 +16,20 @@ package agentstesting
 
 import (
 	"context"
+	"fmt"
 	"iter"
 	"reflect"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
 
 type FakeModel struct {
+	TracingEnabled bool
 	TurnOutputs    []FakeModelTurnOutput
 	LastTurnArgs   FakeModelLastTurnArgs
 	HardcodedUsage *usage.Usage
@@ -47,12 +50,16 @@ type FakeModelLastTurnArgs struct {
 	PreviousResponseID string
 }
 
-func NewFakeModel(initialOutput *FakeModelTurnOutput) *FakeModel {
-	m := &FakeModel{}
+func NewFakeModel(tracingEnabled bool, initialOutput *FakeModelTurnOutput) *FakeModel {
+	var turnOutputs []FakeModelTurnOutput
 	if initialOutput != nil && !reflect.ValueOf(*initialOutput).IsZero() {
-		m.TurnOutputs = []FakeModelTurnOutput{*initialOutput}
+		turnOutputs = []FakeModelTurnOutput{*initialOutput}
 	}
-	return m
+
+	return &FakeModel{
+		TracingEnabled: tracingEnabled,
+		TurnOutputs:    turnOutputs,
+	}
 }
 
 func (m *FakeModel) SetHardcodedUsage(u usage.Usage) {
@@ -76,7 +83,7 @@ func (m *FakeModel) GetNextOutput() FakeModelTurnOutput {
 	return v
 }
 
-func (m *FakeModel) GetResponse(_ context.Context, params agents.ModelResponseParams) (*agents.ModelResponse, error) {
+func (m *FakeModel) GetResponse(ctx context.Context, params agents.ModelResponseParams) (*agents.ModelResponse, error) {
 	m.LastTurnArgs = FakeModelLastTurnArgs{
 		SystemInstructions: params.SystemInstructions,
 		Input:              params.Input,
@@ -86,25 +93,43 @@ func (m *FakeModel) GetResponse(_ context.Context, params agents.ModelResponsePa
 		PreviousResponseID: params.PreviousResponseID,
 	}
 
-	output := m.GetNextOutput()
+	var modelResponse *agents.ModelResponse
+	err := tracing.GenerationSpan(
+		ctx, tracing.GenerationSpanParams{Disabled: !m.TracingEnabled},
+		func(ctx context.Context, span tracing.Span) error {
+			output := m.GetNextOutput()
 
-	if output.Error != nil {
-		return nil, output.Error
+			if err := output.Error; err != nil {
+				span.SetError(tracing.SpanError{
+					Message: "Error",
+					Data: map[string]any{
+						"name":    fmt.Sprintf("%T", err),
+						"message": err.Error(),
+					},
+				})
+				return err
+			}
+
+			u := m.HardcodedUsage
+			if u == nil {
+				u = usage.NewUsage()
+			}
+
+			modelResponse = &agents.ModelResponse{
+				Output:     output.Value,
+				Usage:      u,
+				ResponseID: "",
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
-
-	u := m.HardcodedUsage
-	if u == nil {
-		u = usage.NewUsage()
-	}
-
-	return &agents.ModelResponse{
-		Output:     output.Value,
-		Usage:      u,
-		ResponseID: "",
-	}, nil
+	return modelResponse, nil
 }
 
-func (m *FakeModel) StreamResponse(_ context.Context, params agents.ModelResponseParams) (iter.Seq2[*agents.TResponseStreamEvent, error], error) {
+func (m *FakeModel) StreamResponse(ctx context.Context, params agents.ModelResponseParams) (iter.Seq2[*agents.TResponseStreamEvent, error], error) {
 	m.LastTurnArgs = FakeModelLastTurnArgs{
 		SystemInstructions: params.SystemInstructions,
 		Input:              params.Input,
@@ -112,13 +137,35 @@ func (m *FakeModel) StreamResponse(_ context.Context, params agents.ModelRespons
 		Tools:              params.Tools,
 		OutputType:         params.OutputType,
 		PreviousResponseID: params.PreviousResponseID,
+	}
+
+	span := tracing.NewGenerationSpan(ctx, tracing.GenerationSpanParams{Disabled: !m.TracingEnabled})
+	ctx = tracing.ContextWithClonedOrNewScope(ctx)
+	err := span.Start(ctx, true)
+	if err != nil {
+		return nil, err
 	}
 
 	output := m.GetNextOutput()
 
 	return func(yield func(*agents.TResponseStreamEvent, error) bool) {
-		if output.Error != nil {
-			yield(nil, output.Error)
+		defer func() {
+			err := span.Finish(ctx, true)
+			if err != nil {
+				yield(nil, err)
+			}
+		}()
+
+		if err := output.Error; err != nil {
+			span.SetError(tracing.SpanError{
+				Message: "Error",
+				Data: map[string]any{
+					"name":    fmt.Sprintf("%T", err),
+					"message": err.Error(),
+				},
+			})
+
+			yield(nil, err)
 			return
 		}
 

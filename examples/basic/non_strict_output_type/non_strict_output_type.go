@@ -67,7 +67,7 @@ func (OutputType) JSONSchema() (map[string]any, error) {
 		},
 	}, nil
 }
-func (OutputType) ValidateJSON(jsonStr string) (any, error) {
+func (OutputType) ValidateJSON(_ context.Context, jsonStr string) (any, error) {
 	r := strings.NewReader(jsonStr)
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
@@ -104,7 +104,7 @@ func (CustomOutputType) JSONSchema() (map[string]any, error) {
 		},
 	}, nil
 }
-func (CustomOutputType) ValidateJSON(jsonStr string) (any, error) {
+func (CustomOutputType) ValidateJSON(_ context.Context, jsonStr string) (any, error) {
 	r := strings.NewReader(jsonStr)
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()

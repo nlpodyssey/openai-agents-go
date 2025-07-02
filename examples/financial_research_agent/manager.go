@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 )
 
 // summaryExtractor is a custom output extractor for sub‑agents that return an AnalysisSummary.
@@ -26,24 +27,39 @@ func NewFinancialResearchManager() *FinancialResearchManager {
 }
 
 func (frm FinancialResearchManager) Run(ctx context.Context, query string) error {
-	fmt.Println("Starting financial research...")
+	var report *FinancialReportData
+	var verification *VerificationResult
 
-	searchPlan, err := frm.planSearches(ctx, query)
-	if err != nil {
-		return err
-	}
+	traceID := tracing.GenTraceID()
+	err := tracing.RunTrace(
+		ctx, tracing.TraceParams{WorkflowName: "Financial research trace", TraceID: traceID},
+		func(ctx context.Context, trace tracing.Trace) error {
+			fmt.Printf("View trace: https://platform.openai.com/traces/trace?trace_id=%s\n", traceID)
+			fmt.Println("Starting financial research...")
 
-	searchResults, err := frm.performSearches(ctx, *searchPlan)
-	if err != nil {
-		return err
-	}
+			searchPlan, err := frm.planSearches(ctx, query)
+			if err != nil {
+				return err
+			}
 
-	report, err := frm.writeReport(ctx, query, searchResults)
-	if err != nil {
-		return err
-	}
+			searchResults, err := frm.performSearches(ctx, *searchPlan)
+			if err != nil {
+				return err
+			}
 
-	verification, err := frm.verifyReport(ctx, *report)
+			report, err = frm.writeReport(ctx, query, searchResults)
+			if err != nil {
+				return err
+			}
+
+			verification, err = frm.verifyReport(ctx, *report)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -71,35 +87,43 @@ func (frm FinancialResearchManager) planSearches(ctx context.Context, query stri
 }
 
 func (frm FinancialResearchManager) performSearches(ctx context.Context, searchPlan FinancialSearchPlan) ([]string, error) {
-	fmt.Println("Searching...")
-
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	numCompleted := 0
 	results := make([]string, len(searchPlan.Searches))
-	searchErrors := make([]error, len(searchPlan.Searches))
 
-	childCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	err := tracing.CustomSpan(
+		ctx, tracing.CustomSpanParams{Name: "Search the web"},
+		func(ctx context.Context, _ tracing.Span) error {
+			fmt.Println("Searching...")
 
-	wg.Add(len(searchPlan.Searches))
-	for i, item := range searchPlan.Searches {
-		go func() {
-			defer wg.Done()
-			results[i], searchErrors[i] = frm.search(childCtx, item)
-			if searchErrors[i] != nil {
-				cancel()
+			var mu sync.Mutex
+			var wg sync.WaitGroup
+			numCompleted := 0
+			searchErrors := make([]error, len(searchPlan.Searches))
+
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithCancel(ctx)
+			defer cancel()
+
+			wg.Add(len(searchPlan.Searches))
+			for i, item := range searchPlan.Searches {
+				go func() {
+					defer wg.Done()
+					results[i], searchErrors[i] = frm.search(ctx, item)
+					if searchErrors[i] != nil {
+						cancel()
+					}
+
+					mu.Lock()
+					defer mu.Unlock()
+					numCompleted += 1
+					fmt.Printf("Searching... %d/%d completed\n", numCompleted, len(searchPlan.Searches))
+				}()
 			}
 
-			mu.Lock()
-			defer mu.Unlock()
-			numCompleted += 1
-			fmt.Printf("Searching... %d/%d completed\n", numCompleted, len(searchPlan.Searches))
-		}()
-	}
-
-	wg.Wait()
-	if err := errors.Join(searchErrors...); err != nil {
+			wg.Wait()
+			return errors.Join(searchErrors...)
+		},
+	)
+	if err != nil {
 		return nil, err
 	}
 	return results, nil

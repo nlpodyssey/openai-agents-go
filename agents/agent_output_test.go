@@ -15,6 +15,7 @@
 package agents_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
@@ -46,7 +47,7 @@ func TestOutputType(t *testing.T) {
 			"properties":           m{"bar": m{"type": "string"}},
 		}, schema)
 
-		validated, err := ot.ValidateJSON(`{"bar": "baz"}`)
+		validated, err := ot.ValidateJSON(t.Context(), `{"bar": "baz"}`)
 		require.NoError(t, err)
 		assert.Equal(t, Foo{Bar: "baz"}, validated)
 	})
@@ -68,7 +69,7 @@ func TestOutputType(t *testing.T) {
 			"properties":           m{"response": m{"type": "array", "items": m{"type": "string"}}},
 		}, schema)
 
-		validated, err := ot.ValidateJSON(`{"response": ["foo", "bar"]}`)
+		validated, err := ot.ValidateJSON(t.Context(), `{"response": ["foo", "bar"]}`)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"foo", "bar"}, validated)
 	})
@@ -84,7 +85,7 @@ func TestOutputType(t *testing.T) {
 			`{"bar": "baz", "x": "y"}`, // no additional props
 		}
 		for _, val := range badValues {
-			_, err := ot.ValidateJSON(val)
+			_, err := ot.ValidateJSON(t.Context(), val)
 			require.ErrorAs(t, err, &agents.ModelBehaviorError{})
 		}
 	})
@@ -99,7 +100,7 @@ func TestOutputType(t *testing.T) {
 		_, err := ot.JSONSchema()
 		require.ErrorAs(t, err, &agents.UserError{})
 
-		_, err = ot.ValidateJSON(`"foo"`)
+		_, err = ot.ValidateJSON(t.Context(), `"foo"`)
 		require.ErrorAs(t, err, &agents.UserError{})
 	})
 
@@ -121,7 +122,7 @@ func TestOutputType(t *testing.T) {
 			"properties": m{"bar": m{"type": "string"}},
 		}, schema)
 
-		validated, err := ot.ValidateJSON(`{"bar": "baz", "x": "y"}`)
+		validated, err := ot.ValidateJSON(t.Context(), `{"bar": "baz", "x": "y"}`)
 		require.NoError(t, err)
 		assert.Equal(t, Foo{Bar: "baz"}, validated)
 	})
@@ -141,7 +142,7 @@ func (CustomOutputType) IsPlainText() bool                   { return false }
 func (CustomOutputType) Name() string                        { return "FooBarBaz" }
 func (CustomOutputType) IsStrictJSONSchema() bool            { return false }
 func (CustomOutputType) JSONSchema() (map[string]any, error) { return CustomOutputTypeJSONSchema, nil }
-func (CustomOutputType) ValidateJSON(jsonStr string) (any, error) {
+func (CustomOutputType) ValidateJSON(context.Context, string) (any, error) {
 	return []string{"some", "output"}, nil
 }
 
@@ -156,7 +157,7 @@ func TestCustomOutputType(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, CustomOutputTypeJSONSchema, schema)
 
-	validated, err := ot.ValidateJSON(`{"foo": "bar"}`)
+	validated, err := ot.ValidateJSON(t.Context(), `{"foo": "bar"}`)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"some", "output"}, validated)
 }

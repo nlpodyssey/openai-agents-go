@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
 )
@@ -40,31 +41,41 @@ func main() {
 		).
 		WithModel("gpt-4.1-nano")
 
-	fmt.Println("Solving math problem...")
-	result, err := agents.RunStreamed(context.Background(), agent, "What is the square root of 273 * 312821 plus 1782?")
-	if err != nil {
-		panic(err)
-	}
-
-	err = result.StreamEvents(func(event agents.StreamEvent) error {
-		runItemStreamEvent, ok := event.(agents.RunItemStreamEvent)
-		if !ok {
-			return nil
-		}
-
-		if toolCallItem, ok := runItemStreamEvent.Item.(agents.ToolCallItem); ok {
-			if codeInterpreterCall, ok := toolCallItem.RawItem.(agents.ResponseCodeInterpreterToolCall); ok {
-				fmt.Printf("Code interpreter code:\n```\n%s\n```\n\n", codeInterpreterCall.Code)
-				return nil
+	err := tracing.RunTrace(
+		context.Background(),
+		tracing.TraceParams{WorkflowName: "Code interpreter example"},
+		func(ctx context.Context, _ tracing.Trace) error {
+			fmt.Println("Solving math problem...")
+			result, err := agents.RunStreamed(ctx, agent, "What is the square root of 273 * 312821 plus 1782?")
+			if err != nil {
+				return err
 			}
-		}
 
-		fmt.Printf("Other event: %T\n", event)
-		return nil
-	})
+			err = result.StreamEvents(func(event agents.StreamEvent) error {
+				runItemStreamEvent, ok := event.(agents.RunItemStreamEvent)
+				if !ok {
+					return nil
+				}
+
+				if toolCallItem, ok := runItemStreamEvent.Item.(agents.ToolCallItem); ok {
+					if codeInterpreterCall, ok := toolCallItem.RawItem.(agents.ResponseCodeInterpreterToolCall); ok {
+						fmt.Printf("Code interpreter code:\n```\n%s\n```\n\n", codeInterpreterCall.Code)
+						return nil
+					}
+				}
+
+				fmt.Printf("Other event: %T\n", event)
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Final output: %s\n", result.FinalOutput())
+			return nil
+		},
+	)
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Printf("Final output: %s\n", result.FinalOutput())
 }

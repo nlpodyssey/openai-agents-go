@@ -25,14 +25,19 @@ import (
 type OpenaiClient struct {
 	openai.Client
 	BaseURL param.Opt[string]
+	APIKey  param.Opt[string]
 }
 
-func NewOpenaiClient(baseURL param.Opt[string], opts ...option.RequestOption) OpenaiClient {
+func NewOpenaiClient(baseURL, apiKey param.Opt[string], opts ...option.RequestOption) OpenaiClient {
 	if baseURL.Valid() {
 		opts = append(slices.Clone(opts), option.WithBaseURL(baseURL.Value))
+	}
+	if apiKey.Valid() {
+		opts = append(slices.Clone(opts), option.WithAPIKey(apiKey.Value))
 	}
 	return OpenaiClient{
 		Client:  openai.NewClient(opts...),
 		BaseURL: baseURL,
+		APIKey:  apiKey,
 	}
 }

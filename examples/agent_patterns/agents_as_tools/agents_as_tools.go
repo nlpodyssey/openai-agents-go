@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 )
 
 /*
@@ -84,24 +85,34 @@ func main() {
 	}
 	msg := string(line)
 
-	orchestratorResult, err := agents.Run(context.Background(), OrchestratorAgent, msg)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, item := range orchestratorResult.NewItems {
-		if item, ok := item.(agents.MessageOutputItem); ok {
-			text := agents.ItemHelpers().TextMessageOutput(item)
-			if text != "" {
-				fmt.Printf("  - Translation step: %s\n", text)
+	// Run the entire orchestration in a single trace
+	err = tracing.RunTrace(
+		context.Background(),
+		tracing.TraceParams{WorkflowName: "Orchestrator evaluator"},
+		func(ctx context.Context, _ tracing.Trace) error {
+			orchestratorResult, err := agents.Run(ctx, OrchestratorAgent, msg)
+			if err != nil {
+				return err
 			}
-		}
-	}
 
-	synthesizerResult, err := agents.RunInputs(context.Background(), SynthesizerAgent, orchestratorResult.ToInputList())
+			for _, item := range orchestratorResult.NewItems {
+				if item, ok := item.(agents.MessageOutputItem); ok {
+					text := agents.ItemHelpers().TextMessageOutput(item)
+					if text != "" {
+						fmt.Printf("  - Translation step: %s\n", text)
+					}
+				}
+			}
+
+			synthesizerResult, err := agents.RunInputs(ctx, SynthesizerAgent, orchestratorResult.ToInputList())
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("\nFinal response:\n%s\n", synthesizerResult.FinalOutput)
+			return nil
+		})
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Printf("\nFinal response:\n%s\n", synthesizerResult.FinalOutput)
 }

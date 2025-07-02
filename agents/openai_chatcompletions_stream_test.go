@@ -107,6 +107,7 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 		Tools:              nil,
 		OutputType:         nil,
 		Handoffs:           nil,
+		Tracing:            agents.ModelTracingDisabled,
 		PreviousResponseID: "",
 		Prompt:             responses.ResponsePromptParam{},
 	})
@@ -199,6 +200,7 @@ func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {
 		Tools:              nil,
 		OutputType:         nil,
 		Handoffs:           nil,
+		Tracing:            agents.ModelTracingDisabled,
 		PreviousResponseID: "",
 		Prompt:             responses.ResponsePromptParam{},
 	})
@@ -281,6 +283,7 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 		ModelSettings:      modelsettings.ModelSettings{},
 		Tools:              nil,
 		Handoffs:           nil,
+		Tracing:            agents.ModelTracingDisabled,
 		PreviousResponseID: "",
 		Prompt:             responses.ResponsePromptParam{},
 	})

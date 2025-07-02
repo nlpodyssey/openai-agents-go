@@ -34,6 +34,7 @@ func TestEmptyResponse(t *testing.T) {
 		ResponseID: "",
 	}
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		nil,
 		response,
@@ -55,6 +56,7 @@ func TestNoToolCalls(t *testing.T) {
 		ResponseID: "",
 	}
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		nil,
 		response,
@@ -84,6 +86,7 @@ func TestSingleToolCall(t *testing.T) {
 	allTools, err := agent.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		allTools,
 		response,
@@ -117,6 +120,7 @@ func TestMissingToolCallReturnsError(t *testing.T) {
 	allTools, err := agent.GetAllTools(t.Context())
 	require.NoError(t, err)
 	_, err = RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		allTools,
 		response,
@@ -146,6 +150,7 @@ func TestRunStepProcessingMultipleToolCalls(t *testing.T) {
 	allTools, err := agent.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		allTools,
 		response,
@@ -183,6 +188,7 @@ func TestHandoffsParsedCorrectly(t *testing.T) {
 	allTools, err := agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent3,
 		allTools,
 		response,
@@ -204,6 +210,7 @@ func TestHandoffsParsedCorrectly(t *testing.T) {
 	allTools, err = agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err = RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent3,
 		allTools,
 		response,
@@ -242,6 +249,7 @@ func TestMissingHandoffFails(t *testing.T) {
 	allTools, err := agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
 	_, err = RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent3,
 		allTools,
 		response,
@@ -271,6 +279,7 @@ func TestMultipleHandoffsDoesntError(t *testing.T) {
 	allTools, err := agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent3,
 		allTools,
 		response,
@@ -302,6 +311,7 @@ func TestFileSearchToolCallParsedCorrectly(t *testing.T) {
 	allTools, err := agent.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		allTools,
 		response,
@@ -343,6 +353,7 @@ func TestFunctionWebSearchToolCallParsedCorrectly(t *testing.T) {
 	allTools, err := agent.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		allTools,
 		response,
@@ -384,6 +395,7 @@ func TestReasoningItemParsedCorrectly(t *testing.T) {
 	allTools, err := agent.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		allTools,
 		response,
@@ -449,6 +461,7 @@ func TestComputerToolCallWithoutComputerToolReturnsError(t *testing.T) {
 	allTools, err := agent.GetAllTools(t.Context())
 	require.NoError(t, err)
 	_, err = RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		allTools,
 		response,
@@ -484,6 +497,7 @@ func TestComputerToolCallWithComputerToolParsedCorrectly(t *testing.T) {
 	allTools, err := agent.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent,
 		allTools,
 		response,
@@ -531,6 +545,7 @@ func TestToolAndHandoffParsedCorrectly(t *testing.T) {
 	allTools, err := agent3.GetAllTools(t.Context())
 	require.NoError(t, err)
 	result, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		agent3,
 		allTools,
 		response,

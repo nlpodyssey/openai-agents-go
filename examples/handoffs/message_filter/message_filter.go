@@ -24,6 +24,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_filters"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -81,82 +82,95 @@ var (
 )
 
 func main() {
-	// 1. Send a regular message to the first agent
-	result, err := agents.Run(context.Background(), FirstAgent, "Hi, my name is Sora.")
-	if err != nil {
-		panic(err)
-	}
+	var result *agents.RunResult
 
-	fmt.Println("Step 1 done")
+	// Trace the entire run as a single workflow
+	err := tracing.RunTrace(
+		context.Background(), tracing.TraceParams{WorkflowName: "Message filtering"},
+		func(ctx context.Context, _ tracing.Trace) error {
+			// 1. Send a regular message to the first agent
+			var err error
+			result, err = agents.Run(ctx, FirstAgent, "Hi, my name is Sora.")
+			if err != nil {
+				return err
+			}
 
-	// 2. Ask it to generate a number
-	result, err = agents.RunInputs(
-		context.Background(),
-		FirstAgent,
-		append(
-			result.ToInputList(),
-			agents.TResponseInputItem{
-				OfMessage: &responses.EasyInputMessageParam{
-					Content: responses.EasyInputMessageContentUnionParam{
-						OfString: param.NewOpt("Can you generate a random number between 0 and 100?"),
+			fmt.Println("Step 1 done")
+
+			// 2. Ask it to generate a number
+			result, err = agents.RunInputs(
+				ctx,
+				FirstAgent,
+				append(
+					result.ToInputList(),
+					agents.TResponseInputItem{
+						OfMessage: &responses.EasyInputMessageParam{
+							Content: responses.EasyInputMessageContentUnionParam{
+								OfString: param.NewOpt("Can you generate a random number between 0 and 100?"),
+							},
+							Role: responses.EasyInputMessageRoleUser,
+							Type: responses.EasyInputMessageTypeMessage,
+						},
 					},
-					Role: responses.EasyInputMessageRoleUser,
-					Type: responses.EasyInputMessageTypeMessage,
-				},
-			},
-		),
+				),
+			)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Step 2 done")
+
+			// 3. Call the second agent
+			result, err = agents.RunInputs(
+				ctx,
+				SecondAgent,
+				append(
+					result.ToInputList(),
+					agents.TResponseInputItem{
+						OfMessage: &responses.EasyInputMessageParam{
+							Content: responses.EasyInputMessageContentUnionParam{
+								OfString: param.NewOpt("I live in New York City. Whats the population of the city?"),
+							},
+							Role: responses.EasyInputMessageRoleUser,
+							Type: responses.EasyInputMessageTypeMessage,
+						},
+					},
+				),
+			)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Step 3 done")
+
+			// 4. Cause a handoff to occur
+			result, err = agents.RunInputs(
+				ctx,
+				SecondAgent,
+				append(
+					result.ToInputList(),
+					agents.TResponseInputItem{
+						OfMessage: &responses.EasyInputMessageParam{
+							Content: responses.EasyInputMessageContentUnionParam{
+								OfString: param.NewOpt("Por favor habla en español. ¿Cuál es mi nombre y dónde vivo?"),
+							},
+							Role: responses.EasyInputMessageRoleUser,
+							Type: responses.EasyInputMessageTypeMessage,
+						},
+					},
+				),
+			)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Step 4 done")
+			return nil
+		},
 	)
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println("Step 2 done")
-
-	// 3. Call the second agent
-	result, err = agents.RunInputs(
-		context.Background(),
-		SecondAgent,
-		append(
-			result.ToInputList(),
-			agents.TResponseInputItem{
-				OfMessage: &responses.EasyInputMessageParam{
-					Content: responses.EasyInputMessageContentUnionParam{
-						OfString: param.NewOpt("I live in New York City. Whats the population of the city?"),
-					},
-					Role: responses.EasyInputMessageRoleUser,
-					Type: responses.EasyInputMessageTypeMessage,
-				},
-			},
-		),
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Step 3 done")
-
-	// 4. Cause a handoff to occur
-	result, err = agents.RunInputs(
-		context.Background(),
-		SecondAgent,
-		append(
-			result.ToInputList(),
-			agents.TResponseInputItem{
-				OfMessage: &responses.EasyInputMessageParam{
-					Content: responses.EasyInputMessageContentUnionParam{
-						OfString: param.NewOpt("Por favor habla en español. ¿Cuál es mi nombre y dónde vivo?"),
-					},
-					Role: responses.EasyInputMessageRoleUser,
-					Type: responses.EasyInputMessageTypeMessage,
-				},
-			},
-		),
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("Step 4 done")
 
 	fmt.Printf("\n===Final messages===\n\n")
 
@@ -168,7 +182,7 @@ func main() {
 		enc := json.NewEncoder(&buf)
 		enc.SetIndent("", "  ")
 		enc.SetEscapeHTML(false)
-		err := enc.Encode(message)
+		err = enc.Encode(message)
 		if err != nil {
 			panic(err)
 		}

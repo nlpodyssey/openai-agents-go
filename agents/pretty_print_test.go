@@ -25,7 +25,7 @@ import (
 )
 
 func TestPrettyResult(t *testing.T) {
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("Hi there"),
 		},
@@ -51,7 +51,7 @@ func TestPrettyResult(t *testing.T) {
 }
 
 func TestPrettyRunResultStreaming(t *testing.T) {
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("Hi there"),
 		},
@@ -86,7 +86,7 @@ func TestPrettyRunResultStructuredOutput(t *testing.T) {
 		Bar string `json:"bar"`
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("Test"),
 			agentstesting.GetFinalOutputMessage(`{"bar": "Hi there"}`),
@@ -120,7 +120,7 @@ func TestPrettyRunResultStreamingStructuredOutput(t *testing.T) {
 		Bar string `json:"bar"`
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("Test"),
 			agentstesting.GetFinalOutputMessage(`{"bar": "Hi there"}`),
@@ -159,7 +159,7 @@ func TestPrettyRunResultSliceStructuredOutput(t *testing.T) {
 		Bar string `json:"bar"`
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("Test"),
 			agentstesting.GetFinalOutputMessage(`{
@@ -203,7 +203,7 @@ func TestPrettyRunResultStreamingListStructuredOutput(t *testing.T) {
 		Bar string `json:"bar"`
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("Test"),
 			agentstesting.GetFinalOutputMessage(`{

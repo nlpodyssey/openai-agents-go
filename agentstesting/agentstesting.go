@@ -65,6 +65,22 @@ func GetFunctionTool(name string, returnValue string) agents.FunctionTool {
 	}
 }
 
+func GetFunctionToolErr(name string, returnErr error) agents.FunctionTool {
+	return agents.FunctionTool{
+		Name: name,
+		ParamsJSONSchema: map[string]any{
+			"title":                name + "_args",
+			"type":                 "object",
+			"required":             []string{},
+			"additionalProperties": false,
+			"properties":           map[string]any{},
+		},
+		OnInvokeTool: func(context.Context, string) (any, error) {
+			return nil, returnErr
+		},
+	}
+}
+
 func GetFunctionToolCall(name string, arguments string) responses.ResponseOutputItemUnion {
 	return responses.ResponseOutputItemUnion{ // responses.ResponseFunctionToolCall
 		ID:        "1",

@@ -12,7 +12,7 @@ import (
 )
 
 func TestRunDemoLoopRW(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	model.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{
 		{Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("hello"),

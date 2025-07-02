@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
@@ -30,19 +31,32 @@ import (
 
 func TestOpenAIChatCompletionsModel_prepareRequest(t *testing.T) {
 	t.Run("with ModelSettings.CustomizeChatCompletionsRequest nil", func(t *testing.T) {
-		m := NewOpenAIChatCompletionsModel("model-name", NewOpenaiClient(param.Opt[string]{}))
-		params, opts, err := m.prepareRequest(
-			t.Context(),
-			param.Opt[string]{},
-			InputString("input"),
-			modelsettings.ModelSettings{
-				CustomizeChatCompletionsRequest: nil,
+		m := NewOpenAIChatCompletionsModel("model-name", NewOpenaiClient(param.Opt[string]{}, param.Opt[string]{}))
+
+		var params *openai.ChatCompletionNewParams
+		var opts []option.RequestOption
+
+		err := tracing.GenerationSpan(
+			t.Context(), tracing.GenerationSpanParams{Disabled: true},
+			func(ctx context.Context, span tracing.Span) (err error) {
+				params, opts, err = m.prepareRequest(
+					t.Context(),
+					param.Opt[string]{},
+					InputString("input"),
+					modelsettings.ModelSettings{
+						CustomizeChatCompletionsRequest: nil,
+					},
+					nil,
+					nil,
+					nil,
+					span,
+					ModelTracingDisabled,
+					false,
+				)
+				return err
 			},
-			nil,
-			nil,
-			nil,
-			false,
 		)
+
 		require.NoError(t, err)
 		assert.Equal(t, &openai.ChatCompletionNewParams{
 			Messages: []openai.ChatCompletionMessageParamUnion{{
@@ -66,33 +80,46 @@ func TestOpenAIChatCompletionsModel_prepareRequest(t *testing.T) {
 			option.WithHeader("bar", "baz"),
 		}
 
-		m := NewOpenAIChatCompletionsModel("model-name", NewOpenaiClient(param.Opt[string]{}))
-		params, opts, err := m.prepareRequest(
-			t.Context(),
-			param.Opt[string]{},
-			InputString("input"),
-			modelsettings.ModelSettings{
-				CustomizeChatCompletionsRequest: func(ctx context.Context, params *openai.ChatCompletionNewParams, opts []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
-					assert.Equal(t, &openai.ChatCompletionNewParams{
-						Messages: []openai.ChatCompletionMessageParamUnion{{
-							OfUser: &openai.ChatCompletionUserMessageParam{
-								Content: openai.ChatCompletionUserMessageParamContentUnion{
-									OfString: param.NewOpt("input"),
-								},
-								Role: constant.ValueOf[constant.User](),
-							},
-						}},
-						Model: "model-name",
-					}, params)
-					assert.Nil(t, opts)
-					return customParams, customOpts, nil
-				},
+		m := NewOpenAIChatCompletionsModel("model-name", NewOpenaiClient(param.Opt[string]{}, param.Opt[string]{}))
+
+		var params *openai.ChatCompletionNewParams
+		var opts []option.RequestOption
+
+		err := tracing.GenerationSpan(
+			t.Context(), tracing.GenerationSpanParams{Disabled: true},
+			func(ctx context.Context, span tracing.Span) (err error) {
+				params, opts, err = m.prepareRequest(
+					t.Context(),
+					param.Opt[string]{},
+					InputString("input"),
+					modelsettings.ModelSettings{
+						CustomizeChatCompletionsRequest: func(ctx context.Context, params *openai.ChatCompletionNewParams, opts []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
+							assert.Equal(t, &openai.ChatCompletionNewParams{
+								Messages: []openai.ChatCompletionMessageParamUnion{{
+									OfUser: &openai.ChatCompletionUserMessageParam{
+										Content: openai.ChatCompletionUserMessageParamContentUnion{
+											OfString: param.NewOpt("input"),
+										},
+										Role: constant.ValueOf[constant.User](),
+									},
+								}},
+								Model: "model-name",
+							}, params)
+							assert.Nil(t, opts)
+							return customParams, customOpts, nil
+						},
+					},
+					nil,
+					nil,
+					nil,
+					span,
+					ModelTracingDisabled,
+					false,
+				)
+				return err
 			},
-			nil,
-			nil,
-			nil,
-			false,
 		)
+
 		require.NoError(t, err)
 		assert.Same(t, customParams, params)
 		assert.Equal(t, customOpts, opts)
@@ -100,20 +127,29 @@ func TestOpenAIChatCompletionsModel_prepareRequest(t *testing.T) {
 
 	t.Run("with ModelSettings.CustomizeChatCompletionsRequest returning error", func(t *testing.T) {
 		customError := errors.New("error")
-		m := NewOpenAIChatCompletionsModel("model-name", NewOpenaiClient(param.Opt[string]{}))
-		_, _, err := m.prepareRequest(
-			t.Context(),
-			param.Opt[string]{},
-			InputString("input"),
-			modelsettings.ModelSettings{
-				CustomizeChatCompletionsRequest: func(ctx context.Context, params *openai.ChatCompletionNewParams, opts []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
-					return nil, nil, customError
-				},
+		m := NewOpenAIChatCompletionsModel("model-name", NewOpenaiClient(param.Opt[string]{}, param.Opt[string]{}))
+
+		err := tracing.GenerationSpan(
+			t.Context(), tracing.GenerationSpanParams{Disabled: true},
+			func(ctx context.Context, span tracing.Span) error {
+				_, _, err := m.prepareRequest(
+					t.Context(),
+					param.Opt[string]{},
+					InputString("input"),
+					modelsettings.ModelSettings{
+						CustomizeChatCompletionsRequest: func(ctx context.Context, params *openai.ChatCompletionNewParams, opts []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
+							return nil, nil, customError
+						},
+					},
+					nil,
+					nil,
+					nil,
+					span,
+					ModelTracingDisabled,
+					false,
+				)
+				return err
 			},
-			nil,
-			nil,
-			nil,
-			false,
 		)
 		require.ErrorIs(t, err, customError)
 	})

@@ -10,6 +10,7 @@ import (
 	"runtime"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
 )
@@ -25,36 +26,46 @@ func main() {
 		}).
 		WithModel("gpt-4o")
 
-	fmt.Println("Generating image, this may take a while...")
+	err := tracing.RunTrace(
+		context.Background(), tracing.TraceParams{WorkflowName: "Image generation example"},
+		func(ctx context.Context, _ tracing.Trace) error {
+			fmt.Println("Generating image, this may take a while...")
 
-	input := "Create an image of a frog eating a pizza, comic book style."
-	result, err := agents.Run(context.Background(), agent, input)
+			input := "Create an image of a frog eating a pizza, comic book style."
+			result, err := agents.Run(ctx, agent, input)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(result.FinalOutput)
+
+			for _, item := range result.NewItems {
+				toolCallItem, ok := item.(agents.ToolCallItem)
+				if !ok {
+					continue
+				}
+				imageGenerationCall, ok := toolCallItem.RawItem.(agents.ResponseOutputItemImageGenerationCall)
+				if !ok {
+					continue
+				}
+				imgResult := imageGenerationCall.Result
+
+				fileName, err := createTempImageFile(imgResult)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("Temporary file created: %s\n", fileName)
+
+				if err = openFile(fileName); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		panic(err)
-	}
-
-	fmt.Println(result.FinalOutput)
-
-	for _, item := range result.NewItems {
-		toolCallItem, ok := item.(agents.ToolCallItem)
-		if !ok {
-			continue
-		}
-		imageGenerationCall, ok := toolCallItem.RawItem.(agents.ResponseOutputItemImageGenerationCall)
-		if !ok {
-			continue
-		}
-		imgResult := imageGenerationCall.Result
-
-		fileName, err := createTempImageFile(imgResult)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("Temporary file created: %s\n", fileName)
-
-		if err = openFile(fileName); err != nil {
-			panic(err)
-		}
 	}
 }
 

@@ -10,7 +10,7 @@ import (
 )
 
 func TestRunErrorIncludesData(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := agents.New("test").
 		WithModelInstance(model).
 		WithTools(agentstesting.GetFunctionTool("foo", "res"))
@@ -38,7 +38,7 @@ func TestRunErrorIncludesData(t *testing.T) {
 }
 
 func TestStreamedRunErrorIncludesData(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := agents.New("test").
 		WithModelInstance(model).
 		WithTools(agentstesting.GetFunctionTool("foo", "res"))

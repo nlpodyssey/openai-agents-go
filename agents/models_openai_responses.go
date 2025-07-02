@@ -23,6 +23,7 @@ import (
 	"slices"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -48,44 +49,78 @@ func (m OpenAIResponsesModel) GetResponse(
 	ctx context.Context,
 	params ModelResponseParams,
 ) (*ModelResponse, error) {
-	body, opts, err := m.prepareRequest(
-		ctx,
-		params.SystemInstructions,
-		params.Input,
-		params.ModelSettings,
-		params.Tools,
-		params.OutputType,
-		params.Handoffs,
-		params.PreviousResponseID,
-		false,
-		params.Prompt,
+	var u *usage.Usage
+	var response *responses.Response
+
+	err := tracing.ResponseSpan(
+		ctx, tracing.ResponseSpanParams{Disabled: params.Tracing.IsDisabled()},
+		func(ctx context.Context, spanResponse tracing.Span) (err error) {
+			defer func() {
+				if err != nil {
+					var v string
+					if params.Tracing.IncludeData() {
+						v = err.Error()
+					} else {
+						v = fmt.Sprintf("%T", err)
+					}
+					spanResponse.SetError(tracing.SpanError{
+						Message: "Error getting response",
+						Data:    map[string]any{"error": v},
+					})
+				}
+			}()
+
+			body, opts, err := m.prepareRequest(
+				ctx,
+				params.SystemInstructions,
+				params.Input,
+				params.ModelSettings,
+				params.Tools,
+				params.OutputType,
+				params.Handoffs,
+				params.PreviousResponseID,
+				false,
+				params.Prompt,
+			)
+			if err != nil {
+				return err
+			}
+
+			response, err = m.client.Responses.New(ctx, *body, opts...)
+			if err != nil {
+				Logger().Error("error getting response", slog.String("error", err.Error()))
+				return err
+			}
+
+			if DontLogModelData {
+				Logger().Debug("LLM responded")
+			} else {
+				Logger().Debug("LLM responded", slog.String("output", SimplePrettyJSONMarshal(response.Output)))
+			}
+
+			u = usage.NewUsage()
+			if !reflect.ValueOf(response.Usage).IsZero() {
+				*u = usage.Usage{
+					Requests:            1,
+					InputTokens:         uint64(response.Usage.InputTokens),
+					InputTokensDetails:  response.Usage.InputTokensDetails,
+					OutputTokens:        uint64(response.Usage.OutputTokens),
+					OutputTokensDetails: response.Usage.OutputTokensDetails,
+					TotalTokens:         uint64(response.Usage.TotalTokens),
+				}
+			}
+
+			if params.Tracing.IncludeData() {
+				spanData := spanResponse.SpanData().(*tracing.ResponseSpanData)
+				spanData.Response = response
+				spanData.Input = params.Input
+			}
+
+			return nil
+		},
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	response, err := m.client.Responses.New(ctx, *body, opts...)
-	if err != nil {
-		Logger().Error("error getting response", slog.String("error", err.Error()))
-		return nil, err
-	}
-
-	if DontLogModelData {
-		Logger().Debug("LLM responded")
-	} else {
-		Logger().Debug("LLM responded", slog.String("output", SimplePrettyJSONMarshal(response.Output)))
-	}
-
-	u := usage.NewUsage()
-	if !reflect.ValueOf(response.Usage).IsZero() {
-		*u = usage.Usage{
-			Requests:            1,
-			InputTokens:         uint64(response.Usage.InputTokens),
-			InputTokensDetails:  response.Usage.InputTokensDetails,
-			OutputTokens:        uint64(response.Usage.OutputTokens),
-			OutputTokensDetails: response.Usage.OutputTokensDetails,
-			TotalTokens:         uint64(response.Usage.TotalTokens),
-		}
 	}
 
 	return &ModelResponse{
@@ -100,6 +135,28 @@ func (m OpenAIResponsesModel) StreamResponse(
 	ctx context.Context,
 	params ModelResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
+	spanResponse := tracing.NewResponseSpan(ctx, tracing.ResponseSpanParams{
+		Disabled: params.Tracing.IsDisabled(),
+	})
+	ctx = tracing.ContextWithClonedOrNewScope(ctx)
+	err := spanResponse.Start(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	setSpanError := func(err error) {
+		var v string
+		if params.Tracing.IncludeData() {
+			v = err.Error()
+		} else {
+			v = fmt.Sprintf("%T", err)
+		}
+		spanResponse.SetError(tracing.SpanError{
+			Message: "Error streaming response",
+			Data:    map[string]any{"error": v},
+		})
+	}
+
 	body, opts, err := m.prepareRequest(
 		ctx,
 		params.SystemInstructions,
@@ -113,26 +170,53 @@ func (m OpenAIResponsesModel) StreamResponse(
 		params.Prompt,
 	)
 	if err != nil {
+		setSpanError(err)
 		return nil, err
 	}
 
 	stream := m.client.Responses.NewStreaming(ctx, *body, opts...)
-	if err := stream.Err(); err != nil {
-		return nil, fmt.Errorf("error streaming response: %w", err)
+	if err = stream.Err(); err != nil {
+		err = fmt.Errorf("error streaming response: %w", err)
+		setSpanError(err)
+		return nil, err
 	}
 
 	return func(yield func(*TResponseStreamEvent, error) bool) {
-		defer func() { _ = stream.Close() }()
+		defer func() {
+			err = stream.Close()
+			if err != nil {
+				setSpanError(err)
+				yield(nil, err) // FIXME: this Seq2 "hack" is now clearly inadequate
+			}
+			err = spanResponse.Finish(ctx, true)
+			if err != nil {
+				yield(nil, err)
+			}
+		}()
 
+		var finalResponse *responses.Response
 		for stream.Next() {
 			chunk := stream.Current()
+
+			if chunk.Type == "response.completed" {
+				finalResponse = new(responses.Response)
+				*finalResponse = chunk.Response
+			}
+
 			if !yield(&chunk, nil) {
 				return
 			}
 		}
 
-		if err := stream.Err(); err != nil {
+		if err = stream.Err(); err != nil {
+			setSpanError(err)
 			yield(nil, fmt.Errorf("error streaming response: %w", err))
+		}
+
+		if finalResponse != nil && params.Tracing.IncludeData() {
+			spanData := spanResponse.SpanData().(*tracing.ResponseSpanData)
+			spanData.Response = finalResponse
+			spanData.Input = params.Input
 		}
 	}, nil
 }

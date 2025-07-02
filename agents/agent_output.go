@@ -15,13 +15,14 @@
 package agents
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/invopop/jsonschema"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -48,7 +49,7 @@ type OutputTypeInterface interface {
 	// ValidateJSON validates a JSON string against the output type.
 	// You must return the validated object, or a `ModelBehaviorError` if the JSON is invalid.
 	// It will only be called if the output type is not plain text.
-	ValidateJSON(jsonStr string) (any, error)
+	ValidateJSON(ctx context.Context, jsonStr string) (any, error)
 }
 
 type outputTypeImpl[T any] struct {
@@ -183,7 +184,7 @@ func (t outputTypeImpl[T]) JSONSchema() (map[string]any, error) {
 	return t.outputSchema, nil
 }
 
-func (t outputTypeImpl[T]) ValidateJSON(jsonStr string) (any, error) {
+func (t outputTypeImpl[T]) ValidateJSON(ctx context.Context, jsonStr string) (_ any, err error) {
 	if t.isPlainText {
 		return nil, NewUserError("output type is plain text, so JSON validation is not available")
 	}
@@ -194,19 +195,19 @@ func (t outputTypeImpl[T]) ValidateJSON(jsonStr string) (any, error) {
 		return nil, ModelBehaviorErrorf("failed to load and compile output JSON schema: %w", err)
 	}
 
-	jsonOutputLoader := gojsonschema.NewStringLoader(jsonStr)
-	result, err := schema.Validate(jsonOutputLoader)
+	err = ValidateJSON(ctx, schema, jsonStr)
 	if err != nil {
-		return nil, ModelBehaviorErrorf("failed to load and validate JSON output: %w", err)
+		return nil, fmt.Errorf("output type validation error: %w", err)
 	}
-	if !result.Valid() {
-		var sb strings.Builder
-		sb.WriteString("JSON output validation failed with the following errors:\n")
-		for _, e := range result.Errors() {
-			_, _ = fmt.Fprintf(&sb, "- %s\n", e)
+
+	defer func() {
+		if err != nil {
+			AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+				Message: "Invalid JSON",
+				Data:    map[string]any{"details": err.Error()},
+			})
 		}
-		return nil, NewModelBehaviorError(sb.String())
-	}
+	}()
 
 	if t.isWrapped {
 		var wrappedOutput wrappedOutputType[T]

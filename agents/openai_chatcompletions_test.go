@@ -16,12 +16,14 @@ package agents
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
@@ -92,6 +94,7 @@ func TestGetResponseWithTextMessage(t *testing.T) {
 		Tools:              nil,
 		OutputType:         nil,
 		Handoffs:           nil,
+		Tracing:            ModelTracingDisabled,
 		PreviousResponseID: "",
 		Prompt:             responses.ResponsePromptParam{},
 	})
@@ -147,6 +150,7 @@ func TestGetResponseWithRefusal(t *testing.T) {
 		Tools:              nil,
 		OutputType:         nil,
 		Handoffs:           nil,
+		Tracing:            ModelTracingDisabled,
 		PreviousResponseID: "",
 		Prompt:             responses.ResponsePromptParam{},
 	})
@@ -206,6 +210,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 		Tools:              nil,
 		OutputType:         nil,
 		Handoffs:           nil,
+		Tracing:            ModelTracingDisabled,
 		PreviousResponseID: "",
 		Prompt:             responses.ResponsePromptParam{},
 	})
@@ -251,6 +256,7 @@ func TestGetResponseWithNoMessage(t *testing.T) {
 		Tools:              nil,
 		OutputType:         nil,
 		Handoffs:           nil,
+		Tracing:            ModelTracingDisabled,
 		PreviousResponseID: "",
 		Prompt:             responses.ResponsePromptParam{},
 	})
@@ -271,17 +277,29 @@ func TestPrepareRequestNonStream(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	// Execute the private prepareRequest with a system instruction and simple string input.
-	params, opts, err := model.(OpenAIChatCompletionsModel).prepareRequest(
-		t.Context(),
-		param.NewOpt("sys"),
-		InputString("hi"),
-		modelsettings.ModelSettings{},
-		nil,
-		nil,
-		nil,
-		false,
+	var params *openai.ChatCompletionNewParams
+	var opts []option.RequestOption
+
+	err = tracing.GenerationSpan(
+		t.Context(), tracing.GenerationSpanParams{Disabled: true},
+		func(ctx context.Context, span tracing.Span) error {
+			// Execute the private prepareRequest with a system instruction and simple string input.
+			params, opts, err = model.(OpenAIChatCompletionsModel).prepareRequest(
+				ctx,
+				param.NewOpt("sys"),
+				InputString("hi"),
+				modelsettings.ModelSettings{},
+				nil,
+				nil,
+				nil,
+				span,
+				ModelTracingDisabled,
+				false,
+			)
+			return err
+		},
 	)
+
 	require.NoError(t, err)
 	assert.Nil(t, opts)
 	assert.NotNil(t, params)
@@ -301,12 +319,12 @@ func TestPrepareRequestNonStream(t *testing.T) {
 func TestStoreParam(t *testing.T) {
 	t.Run("should default to Null with no base URL", func(t *testing.T) {
 		modelSettings := modelsettings.ModelSettings{}
-		client := NewOpenaiClient(param.Opt[string]{})
+		client := NewOpenaiClient(param.Opt[string]{}, param.Opt[string]{})
 		assert.Equal(t, param.Opt[bool]{}, ChatCmplHelpers().GetStoreParam(client, modelSettings))
 	})
 
 	t.Run("for OpenAI API calls", func(t *testing.T) {
-		client := NewOpenaiClient(param.NewOpt("https://api.openai.com/v1/"))
+		client := NewOpenaiClient(param.NewOpt("https://api.openai.com/v1/"), param.Opt[string]{})
 
 		t.Run("should default to true ", func(t *testing.T) {
 			modelSettings := modelsettings.ModelSettings{}
@@ -325,7 +343,7 @@ func TestStoreParam(t *testing.T) {
 	})
 
 	t.Run("for non-OpenAI API calls", func(t *testing.T) {
-		client := NewOpenaiClient(param.NewOpt("https://example.com"))
+		client := NewOpenaiClient(param.NewOpt("https://example.com"), param.Opt[string]{})
 
 		t.Run("should default to Null", func(t *testing.T) {
 			modelSettings := modelsettings.ModelSettings{}

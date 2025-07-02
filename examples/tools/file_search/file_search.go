@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -32,14 +33,23 @@ func main() {
 		}).
 		WithModel("gpt-4o-mini")
 
-	result, err := agents.Run(context.Background(), agent, "Be concise, and tell me 1 sentence about Arrakis I might not know.")
+	err := tracing.RunTrace(
+		context.Background(), tracing.TraceParams{WorkflowName: "File search example"},
+		func(ctx context.Context, _ tracing.Trace) error {
+			result, err := agents.Run(ctx, agent, "Be concise, and tell me 1 sentence about Arrakis I might not know.")
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(result.FinalOutput)
+
+			for _, item := range result.NewItems {
+				fmt.Printf("%+v\n", item)
+			}
+			return nil
+		},
+	)
 	if err != nil {
 		panic(err)
-	}
-
-	fmt.Println(result.FinalOutput)
-
-	for _, item := range result.NewItems {
-		fmt.Printf("%+v\n", item)
 	}
 }

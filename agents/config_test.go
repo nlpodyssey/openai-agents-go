@@ -21,6 +21,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/nlpodyssey/openai-agents-go/tracing/tracingtesting"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
@@ -34,7 +35,10 @@ func TestSetDefaultOpenaiKeyChatCompletions(t *testing.T) {
 			v := defaultOpenaiKey.Load()
 			t.Cleanup(func() { defaultOpenaiKey.Store(v) })
 
-			SetDefaultOpenaiKey("test_key")
+			tracingtesting.Setup(t)
+			ClearOpenaiSettings()
+
+			SetDefaultOpenaiKey("test_key", true)
 
 			var reqHeader http.Header
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +74,7 @@ func TestSetDefaultOpenaiClient(t *testing.T) {
 				),
 			}
 
-			SetDefaultOpenaiClient(dummyClient)
+			SetDefaultOpenaiClient(dummyClient, true)
 
 			model, err := NewOpenAIProvider(OpenAIProviderParams{
 				UseResponses: param.NewOpt(useResponses),

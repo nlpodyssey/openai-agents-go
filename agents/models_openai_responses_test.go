@@ -29,7 +29,7 @@ import (
 
 func TestOpenAIResponsesModel_prepareRequest(t *testing.T) {
 	t.Run("with ModelSettings.CustomizeResponsesRequest nil", func(t *testing.T) {
-		m := NewOpenAIResponsesModel("model-name", NewOpenaiClient(param.Opt[string]{}))
+		m := NewOpenAIResponsesModel("model-name", NewOpenaiClient(param.Opt[string]{}, param.Opt[string]{}))
 		params, opts, err := m.prepareRequest(
 			t.Context(),
 			param.Opt[string]{},
@@ -70,7 +70,7 @@ func TestOpenAIResponsesModel_prepareRequest(t *testing.T) {
 			option.WithHeader("bar", "baz"),
 		}
 
-		m := NewOpenAIResponsesModel("model-name", NewOpenaiClient(param.Opt[string]{}))
+		m := NewOpenAIResponsesModel("model-name", NewOpenaiClient(param.Opt[string]{}, param.Opt[string]{}))
 		params, opts, err := m.prepareRequest(
 			t.Context(),
 			param.Opt[string]{},
@@ -109,7 +109,7 @@ func TestOpenAIResponsesModel_prepareRequest(t *testing.T) {
 
 	t.Run("with ModelSettings.CustomizeResponsesRequest returning error", func(t *testing.T) {
 		customError := errors.New("error")
-		m := NewOpenAIResponsesModel("model-name", NewOpenaiClient(param.Opt[string]{}))
+		m := NewOpenAIResponsesModel("model-name", NewOpenaiClient(param.Opt[string]{}, param.Opt[string]{}))
 		_, _, err := m.prepareRequest(
 			t.Context(),
 			param.Opt[string]{},

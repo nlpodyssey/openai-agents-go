@@ -17,12 +17,15 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -52,6 +55,10 @@ var (
 )
 
 func main() {
+	// We'll create an ID for this conversation, so we can link each trace
+	u := uuid.New()
+	conversationID := hex.EncodeToString(u[:])[:16]
+
 	fmt.Print("Hi! We speak French, Spanish and English. How can I help? ")
 	_ = os.Stdout.Sync()
 	line, _, err := bufio.NewReader(os.Stdin).ReadLine()
@@ -73,27 +80,36 @@ func main() {
 	}}
 
 	for {
-		result, err := agents.RunInputsStreamed(
-			context.Background(), agent, inputs,
+		var result *agents.RunResultStreaming
+
+		// Each conversation turn is a single trace. Normally, each input from the user would be an
+		// API request to your app, and you can wrap the request in a RunTrace()
+		err = tracing.RunTrace(
+			context.Background(),
+			tracing.TraceParams{WorkflowName: "Routing example", GroupID: conversationID},
+			func(ctx context.Context, _ tracing.Trace) error {
+				var err error
+				result, err = agents.RunInputsStreamed(ctx, agent, inputs)
+				if err != nil {
+					return err
+				}
+				return result.StreamEvents(func(event agents.StreamEvent) error {
+					e, ok := event.(agents.RawResponsesStreamEvent)
+					if !ok {
+						return nil
+					}
+					data := e.Data
+					switch data.Type {
+					case "response.output_text.delta":
+						fmt.Print(data.Delta.OfString)
+						_ = os.Stdout.Sync()
+					case "response.content_part.done":
+						fmt.Println()
+					}
+					return nil
+				})
+			},
 		)
-		if err != nil {
-			panic(err)
-		}
-		err = result.StreamEvents(func(event agents.StreamEvent) error {
-			e, ok := event.(agents.RawResponsesStreamEvent)
-			if !ok {
-				return nil
-			}
-			data := e.Data
-			switch data.Type {
-			case "response.output_text.delta":
-				fmt.Print(data.Delta.OfString)
-				_ = os.Stdout.Sync()
-			case "response.content_part.done":
-				fmt.Println()
-			}
-			return nil
-		})
 		if err != nil {
 			panic(err)
 		}

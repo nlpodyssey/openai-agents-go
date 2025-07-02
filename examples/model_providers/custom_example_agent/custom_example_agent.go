@@ -20,7 +20,7 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/option"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -42,12 +42,17 @@ This example uses a custom provider for a specific agent. Steps:
 1. Create a custom OpenAI client.
 2. Create a `Model` that uses the custom client.
 3. Set the `model` on the Agent.
+
+Note that in this example, we disable tracing under the assumption that you don't have an API key
+from platform.openai.com. If you do have one, you can either set the `OPENAI_API_KEY` env var
+or call tracing.SetTracingExportAPIKey to set a tracing specific key.
 */
 
-var Client = agents.NewOpenaiClient(
-	param.NewOpt(BaseURL),
-	option.WithAPIKey(APIKey),
-)
+var Client = agents.NewOpenaiClient(param.NewOpt(BaseURL), param.NewOpt(APIKey))
+
+func init() {
+	tracing.SetTracingDisabled(true)
+}
 
 // An alternate approach that would also work:
 //
