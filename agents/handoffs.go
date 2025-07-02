@@ -19,8 +19,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/xeipuuv/gojsonschema"
@@ -241,20 +241,16 @@ func SafeHandoffFromAgent(params HandoffFromAgentParams) (*Handoff, error) {
 	invokeHandoff := func(ctx context.Context, jsonInput string) (*Agent, error) {
 		if len(params.InputJSONSchema) > 0 {
 			if jsonInput == "" {
-				return nil, NewModelBehaviorError(`handoff function expected non-null input, but got ""`)
+				AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+					Message: `"Handoff function expected an input, but got empty value`,
+					Data:    map[string]any{"details": `JSON input is empty ("")`},
+				})
+				return nil, NewModelBehaviorError(`handoff function expected an input, but got empty value`)
 			}
-			inputJSONLoader := gojsonschema.NewStringLoader(jsonInput)
-			result, err := inputJSONSchema.Validate(inputJSONLoader)
+
+			err = ValidateJSON(ctx, inputJSONSchema, jsonInput)
 			if err != nil {
-				return params.Agent, ModelBehaviorErrorf("failed to load and validate handoff JSON input: %w", err)
-			}
-			if !result.Valid() {
-				var sb strings.Builder
-				sb.WriteString("handoff input JSON validation failed with the following errors:\n")
-				for _, e := range result.Errors() {
-					_, _ = fmt.Fprintf(&sb, "- %s\n", e)
-				}
-				return params.Agent, NewModelBehaviorError(sb.String())
+				return nil, fmt.Errorf("handoff output validation error: %w", err)
 			}
 
 			inputFunc := params.OnHandoff.(OnHandoffWithInput)

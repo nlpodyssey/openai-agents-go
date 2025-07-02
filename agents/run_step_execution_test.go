@@ -431,6 +431,7 @@ func getExecuteResult(t *testing.T, params getExecuteResultParams) SingleStepRes
 	require.NoError(t, err)
 
 	processedResponse, err := RunImpl().ProcessModelResponse(
+		t.Context(),
 		params.agent,
 		allTools,
 		params.response,

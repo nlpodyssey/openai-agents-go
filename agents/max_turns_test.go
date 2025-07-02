@@ -26,7 +26,7 @@ import (
 )
 
 func TestNonStreamedMaxTurns(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -49,7 +49,7 @@ func TestNonStreamedMaxTurns(t *testing.T) {
 }
 
 func TestStreamedMaxTurns(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -80,7 +80,7 @@ func TestStructuredOutputNonStreamedMaxTurns(t *testing.T) {
 		A string `json:"a"`
 	}
 
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:       "test_1",
 		Model:      param.NewOpt(agents.NewAgentModel(model)),
@@ -107,7 +107,7 @@ func TestStructuredOutputStreamedMaxTurns(t *testing.T) {
 		A string `json:"a"`
 	}
 
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:       "test_1",
 		Model:      param.NewOpt(agents.NewAgentModel(model)),

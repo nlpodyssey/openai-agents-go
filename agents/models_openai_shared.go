@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -31,12 +32,20 @@ func init() {
 	useResponsesByDefault.Store(true)
 }
 
-// SetDefaultOpenaiKey sets the default OpenAI API key to use for LLM requests.
+// SetDefaultOpenaiKey sets the default OpenAI API key to use for LLM requests (and optionally tracing).
 // This is only necessary if the OPENAI_API_KEY environment variable is not already set.
 //
 // If provided, this key will be used instead of the OPENAI_API_KEY environment variable.
-func SetDefaultOpenaiKey(key string) {
+//
+// useForTracing indicates whether to also use this key to send traces to OpenAI.
+// If false, you'll either need to set the OPENAI_API_KEY environment variable or call
+// tracing.SetTracingExportAPIKey with the API key you want to use for tracing.
+func SetDefaultOpenaiKey(key string, useForTracing bool) {
 	defaultOpenaiKey.Store(&key)
+
+	if useForTracing {
+		tracing.SetTracingExportAPIKey(key)
+	}
 }
 
 func GetDefaultOpenaiKey() param.Opt[string] {
@@ -47,10 +56,18 @@ func GetDefaultOpenaiKey() param.Opt[string] {
 	return param.NewOpt(*v)
 }
 
-// SetDefaultOpenaiClient sets the default OpenAI client to use for LLM requests.
+// SetDefaultOpenaiClient sets the default OpenAI client to use for LLM requests and/or tracing.
 // If provided, this client will be used instead of the default OpenAI client.
-func SetDefaultOpenaiClient(client OpenaiClient) {
+//
+// useForTracing indicates whether to use the API key from this client for uploading traces.
+// If false, you'll either need to set the OPENAI_API_KEY environment variable or call
+// tracing.SetTracingExportAPIKey with the API key you want to use for tracing.
+func SetDefaultOpenaiClient(client OpenaiClient, useForTracing bool) {
 	defaultOpenaiClient.Store(&client)
+
+	if useForTracing && client.APIKey.Valid() {
+		tracing.SetTracingExportAPIKey(client.APIKey.Value)
+	}
 }
 
 func GetDefaultOpenaiClient() *OpenaiClient {
@@ -85,3 +102,9 @@ const (
 	OpenaiAPITypeChatCompletions OpenaiAPIType = "chat_completions"
 	OpenaiAPITypeResponses       OpenaiAPIType = "responses"
 )
+
+func ClearOpenaiSettings() {
+	defaultOpenaiKey.Store(nil)
+	defaultOpenaiClient.Store(nil)
+	useResponsesByDefault.Store(true)
+}

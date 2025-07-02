@@ -25,7 +25,9 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/nlpodyssey/openai-agents-go/usage"
+	"github.com/nlpodyssey/openai-agents-go/util"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/openai/openai-go/packages/param"
@@ -49,64 +51,117 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 	ctx context.Context,
 	params ModelResponseParams,
 ) (*ModelResponse, error) {
-	body, opts, err := m.prepareRequest(
+	var modelResponse *ModelResponse
+
+	modelConfig, err := util.JSONMap(params.ModelSettings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert model settings to JSON map: %w", err)
+	}
+	if m.client.BaseURL.Valid() {
+		modelConfig["base_url"] = m.client.BaseURL.Value
+	}
+
+	err = tracing.GenerationSpan(
 		ctx,
-		params.SystemInstructions,
-		params.Input,
-		params.ModelSettings,
-		params.Tools,
-		params.OutputType,
-		params.Handoffs,
-		false,
+		tracing.GenerationSpanParams{
+			Model:       m.Model,
+			ModelConfig: modelConfig,
+			Disabled:    params.Tracing.IsDisabled(),
+		},
+		func(ctx context.Context, spanGeneration tracing.Span) error {
+			body, opts, err := m.prepareRequest(
+				ctx,
+				params.SystemInstructions,
+				params.Input,
+				params.ModelSettings,
+				params.Tools,
+				params.OutputType,
+				params.Handoffs,
+				spanGeneration,
+				params.Tracing,
+				false,
+			)
+			if err != nil {
+				return err
+			}
+
+			response, err := m.client.Chat.Completions.New(ctx, *body, opts...)
+			if err != nil {
+				return err
+			}
+
+			var message *openai.ChatCompletionMessage
+			var firstChoice *openai.ChatCompletionChoice
+
+			if len(response.Choices) > 0 {
+				firstChoice = &response.Choices[0]
+				message = &firstChoice.Message
+			}
+
+			switch {
+			case DontLogModelData:
+				Logger().Debug("LLM responded")
+			case message != nil:
+				Logger().Debug("LLM responded", slog.String("message", SimplePrettyJSONMarshal(*message)))
+			default:
+				finishReason := "-"
+				if firstChoice != nil {
+					finishReason = firstChoice.FinishReason
+				}
+				Logger().Debug("LLM response", slog.String("finish_reason", finishReason))
+			}
+
+			u := usage.NewUsage()
+			if !reflect.ValueOf(response.Usage).IsZero() {
+				*u = usage.Usage{
+					Requests:    1,
+					InputTokens: uint64(response.Usage.PromptTokens),
+					InputTokensDetails: responses.ResponseUsageInputTokensDetails{
+						CachedTokens: response.Usage.PromptTokensDetails.CachedTokens,
+					},
+					OutputTokens: uint64(response.Usage.CompletionTokens),
+					OutputTokensDetails: responses.ResponseUsageOutputTokensDetails{
+						ReasoningTokens: response.Usage.CompletionTokensDetails.ReasoningTokens,
+					},
+					TotalTokens: uint64(response.Usage.TotalTokens),
+				}
+			}
+
+			if params.Tracing.IncludeData() {
+				var output []map[string]any
+				if message != nil {
+					v, err := util.JSONMap(*message)
+					if err != nil {
+						return fmt.Errorf("failed to convert message to JSON map: %w", err)
+					}
+					output = []map[string]any{v}
+				}
+				spanGeneration.SpanData().(*tracing.GenerationSpanData).Output = output
+			}
+			spanGeneration.SpanData().(*tracing.GenerationSpanData).Usage = map[string]any{
+				"input_tokens":  u.InputTokens,
+				"output_tokens": u.OutputTokens,
+			}
+
+			var items []TResponseOutputItem
+			if message != nil {
+				items, err = ChatCmplConverter().MessageToOutputItems(*message)
+				if err != nil {
+					return err
+				}
+			}
+			modelResponse = &ModelResponse{
+				Output:     items,
+				Usage:      u,
+				ResponseID: "",
+			}
+			return nil
+		},
 	)
 	if err != nil {
 		return nil, err
 	}
-
-	response, err := m.client.Chat.Completions.New(ctx, *body, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	firstChoice := response.Choices[0]
-	message := firstChoice.Message
-
-	switch {
-	case DontLogModelData:
-		Logger().Debug("LLM responded")
-	case reflect.ValueOf(message).IsZero():
-		Logger().Debug("LLM response had no message",
-			slog.String("finish_reasons", firstChoice.FinishReason))
-	default:
-		Logger().Debug("LLM response",
-			slog.String("message", SimplePrettyJSONMarshal(message)))
-	}
-
-	u := usage.NewUsage()
-	if !reflect.ValueOf(response.Usage).IsZero() {
-		*u = usage.Usage{
-			Requests:    1,
-			InputTokens: uint64(response.Usage.PromptTokens),
-			InputTokensDetails: responses.ResponseUsageInputTokensDetails{
-				CachedTokens: response.Usage.PromptTokensDetails.CachedTokens,
-			},
-			OutputTokens: uint64(response.Usage.CompletionTokens),
-			OutputTokensDetails: responses.ResponseUsageOutputTokensDetails{
-				ReasoningTokens: response.Usage.CompletionTokensDetails.ReasoningTokens,
-			},
-			TotalTokens: uint64(response.Usage.TotalTokens),
-		}
-	}
-
-	items, err := ChatCmplConverter().MessageToOutputItems(message)
-	if err != nil {
-		return nil, err
-	}
-	return &ModelResponse{
-		Output:     items,
-		Usage:      u,
-		ResponseID: "",
-	}, nil
+	return modelResponse, nil
 }
 
 // StreamResponse yields a partial message as it is generated, as well as the usage information.
@@ -114,6 +169,24 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 	ctx context.Context,
 	params ModelResponseParams,
 ) (iter.Seq2[*TResponseStreamEvent, error], error) {
+	modelConfig, err := util.JSONMap(params.ModelSettings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert model settings to JSON map: %w", err)
+	}
+	if m.client.BaseURL.Valid() {
+		modelConfig["base_url"] = m.client.BaseURL.Value
+	}
+	spanGeneration := tracing.NewGenerationSpan(ctx, tracing.GenerationSpanParams{
+		Model:       m.Model,
+		ModelConfig: modelConfig,
+		Disabled:    params.Tracing.IsDisabled(),
+	})
+	ctx = tracing.ContextWithClonedOrNewScope(ctx)
+	err = spanGeneration.Start(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
 	body, opts, err := m.prepareRequest(
 		ctx,
 		params.SystemInstructions,
@@ -122,6 +195,8 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 		params.Tools,
 		params.OutputType,
 		params.Handoffs,
+		spanGeneration,
+		params.Tracing,
 		true,
 	)
 	if err != nil {
@@ -149,7 +224,44 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 		Reasoning:         openaitypes.ReasoningFromParam(params.ModelSettings.Reasoning),
 	}
 
-	return ChatCmplStreamHandler().HandleStream(response, stream), nil
+	return func(yield func(*TResponseStreamEvent, error) bool) {
+		defer func() {
+			err = spanGeneration.Finish(ctx, true)
+			if err != nil {
+				yield(nil, err) // FIXME: this Seq2 "hack" is now clearly inadequate
+			}
+		}()
+
+		var finalResponse *responses.Response
+		for chunk, err := range ChatCmplStreamHandler().HandleStream(response, stream) {
+			if !yield(chunk, err) {
+				return
+			}
+			if chunk.Type == "response.completed" {
+				finalResponse = new(responses.Response)
+				*finalResponse = chunk.Response
+			}
+		}
+
+		if finalResponse != nil {
+			spanData := spanGeneration.SpanData().(*tracing.GenerationSpanData)
+			if params.Tracing.IncludeData() {
+				out, err := util.JSONMap(*finalResponse)
+				if err != nil {
+					if !yield(nil, fmt.Errorf("failed to convert final response to JSON map: %w", err)) {
+						return
+					}
+				}
+				spanData.Output = []map[string]any{out}
+			}
+			if !reflect.ValueOf(finalResponse.Usage).IsZero() {
+				spanData.Usage = map[string]any{
+					"input_tokens":  finalResponse.Usage.InputTokens,
+					"output_tokens": finalResponse.Usage.OutputTokens,
+				}
+			}
+		}
+	}, nil
 }
 
 func (m OpenAIChatCompletionsModel) prepareRequest(
@@ -160,6 +272,8 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 	tools []Tool,
 	outputType OutputTypeInterface,
 	handoffs []Handoff,
+	span tracing.Span,
+	modelTracing ModelTracing,
 	stream bool,
 ) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
 	convertedMessages, err := ChatCmplConverter().ItemsToMessages(input)
@@ -176,6 +290,14 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 				Role: constant.ValueOf[constant.System](),
 			},
 		})
+	}
+
+	if modelTracing.IncludeData() {
+		in, err := util.JSONMapSlice(convertedMessages)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to convert converted-messages to JSON []map: %w", err)
+		}
+		span.SpanData().(*tracing.GenerationSpanData).Input = in
 	}
 
 	var parallelToolCalls param.Opt[bool]

@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 )
 
 /*
@@ -64,37 +65,48 @@ func main() {
 	}
 	inputPrompt := string(line)
 
-	// 1. Generate an outline
-	outlineResult, err := agents.Run(context.Background(), StoryOutlineAgent, inputPrompt)
+	// Ensure the entire workflow is a single trace
+	err = tracing.RunTrace(
+		context.Background(),
+		tracing.TraceParams{WorkflowName: "Deterministic story flow"},
+		func(ctx context.Context, _ tracing.Trace) error {
+			// 1. Generate an outline
+			outlineResult, err := agents.Run(ctx, StoryOutlineAgent, inputPrompt)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Outline generated")
+
+			// 2. Check the outline
+			outlineCheckerRunResult, err := agents.Run(ctx, OutlineCheckerAgent, outlineResult.FinalOutput.(string))
+			if err != nil {
+				return err
+			}
+
+			// 3. Add a gate to stop if the outline is not good quality or not a scifi story
+			outlineCheckerResult := outlineCheckerRunResult.FinalOutput.(OutlineCheckerOutput)
+			if !outlineCheckerResult.GoodQuality {
+				fmt.Println("Outline is not good quality, so we stop here.")
+				return nil
+			}
+			if !outlineCheckerResult.IsSciFi {
+				fmt.Println("Outline is not a scifi story, so we stop here.")
+				return nil
+			}
+			fmt.Println("Outline is good quality and a scifi story, so we continue to write the story.")
+
+			// 4. Write the story
+			storyResult, err := agents.Run(ctx, StoryAgent, outlineResult.FinalOutput.(string))
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Story: %s\n", storyResult.FinalOutput)
+			return nil
+		},
+	)
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println("Outline generated")
-
-	// 2. Check the outline
-	outlineCheckerRunResult, err := agents.Run(context.Background(), OutlineCheckerAgent, outlineResult.FinalOutput.(string))
-	if err != nil {
-		panic(err)
-	}
-
-	// 3. Add a gate to stop if the outline is not good quality or not a scifi story
-	outlineCheckerResult := outlineCheckerRunResult.FinalOutput.(OutlineCheckerOutput)
-	if !outlineCheckerResult.GoodQuality {
-		fmt.Println("Outline is not good quality, so we stop here.")
-		return
-	}
-	if !outlineCheckerResult.IsSciFi {
-		fmt.Println("Outline is not a scifi story, so we stop here.")
-		return
-	}
-	fmt.Println("Outline is good quality and a scifi story, so we continue to write the story.")
-
-	// 4. Write the story
-	storyResult, err := agents.Run(context.Background(), StoryAgent, outlineResult.FinalOutput.(string))
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Story: %s\n", storyResult.FinalOutput)
 }

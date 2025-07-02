@@ -23,6 +23,20 @@ import (
 	"github.com/openai/openai-go/responses"
 )
 
+type ModelTracing uint8
+
+const (
+	// ModelTracingDisabled means that tracing is disabled entirely.
+	ModelTracingDisabled ModelTracing = iota
+	// ModelTracingEnabled means that tracing is enabled, and all data is included.
+	ModelTracingEnabled
+	// ModelTracingEnabledWithoutData means that tracing is enabled, but inputs/outputs are not included.
+	ModelTracingEnabledWithoutData
+)
+
+func (mt ModelTracing) IsDisabled() bool  { return mt == ModelTracingDisabled }
+func (mt ModelTracing) IncludeData() bool { return mt == ModelTracingEnabled }
+
 // Model is the base interface for calling an LLM.
 type Model interface {
 	// GetResponse returns the full model response from the model.
@@ -50,6 +64,9 @@ type ModelResponseParams struct {
 
 	// The handoffs available to the model.
 	Handoffs []Handoff
+
+	// Tracing configuration.
+	Tracing ModelTracing
 
 	// Optional ID of the previous response. Generally not used by the model,
 	// except for the OpenAI Responses API.

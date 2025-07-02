@@ -33,7 +33,7 @@ type DummyProvider struct {
 
 func NewDummyProvider(modelToReturn agents.Model) *DummyProvider {
 	if modelToReturn == nil {
-		modelToReturn = agentstesting.NewFakeModel(nil)
+		modelToReturn = agentstesting.NewFakeModel(false, nil)
 	}
 	return &DummyProvider{ModelToReturn: modelToReturn}
 }
@@ -52,7 +52,7 @@ func TestModelProviderOnRunConfigIsUsedForAgentModelName(t *testing.T) {
 	// When the agent's `model` attribute is a string and no explicit model override is
 	// provided in the `RunConfig`, the `Runner` should resolve the model using the
 	// `ModelProvider` on the `RunConfig`.
-	fakeModel := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	fakeModel := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("from-provider"),
 		},
@@ -77,7 +77,7 @@ func TestModelProviderOnRunConfigIsUsedForAgentModelName(t *testing.T) {
 func TestRunConfigModelNameOverrideTakesPrecedence(t *testing.T) {
 	// When a model name string is set on the RunConfig, then that name should be looked up
 	// using the RunConfig's ModelProvider, and should override any model on the agent.
-	fakeModel := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	fakeModel := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("from-provider"),
 		},
@@ -103,7 +103,7 @@ func TestRunConfigModelNameOverrideTakesPrecedence(t *testing.T) {
 func TestRunConfigModelOverrideObjectTakesPrecedence(t *testing.T) {
 	// When a concrete Model instance is set on the RunConfig, then that instance should be
 	// returned by Runner.getModel regardless of the agent's model.
-	fakeModel := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	fakeModel := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("override-object"),
 		},
@@ -126,7 +126,7 @@ func TestAgentModelObjectIsUsedWhenPresent(t *testing.T) {
 	// If the agent has a concrete Model object set as its model, and the RunConfig does
 	// not specify a model override, then that object should be used directly without
 	// consulting the RunConfig's ModelProvider.
-	fakeModel := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	fakeModel := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("from-agent-object"),
 		},

@@ -26,7 +26,7 @@ import (
 )
 
 func TestSimpleStreamingWithCancel(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -52,7 +52,7 @@ func TestSimpleStreamingWithCancel(t *testing.T) {
 }
 
 func TestMultipleEventsStreamingWithCancel(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -93,7 +93,7 @@ func TestMultipleEventsStreamingWithCancel(t *testing.T) {
 }
 
 func TestCancelPreventsFurtherEvents(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -128,7 +128,7 @@ func TestCancelPreventsFurtherEvents(t *testing.T) {
 }
 
 func TestCancelIsIdempotent(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -154,7 +154,7 @@ func TestCancelIsIdempotent(t *testing.T) {
 }
 
 func TestCancelBeforeStreaming(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "Joker",
 		Model: param.NewOpt(agents.NewAgentModel(model)),

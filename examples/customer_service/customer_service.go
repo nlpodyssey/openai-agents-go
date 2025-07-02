@@ -17,6 +17,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -24,8 +25,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_prompt"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -156,6 +159,12 @@ func main() {
 	var inputItems []agents.TResponseInputItem
 	ctx := context.WithValue(context.Background(), airlineAgentContextKey{}, new(AirlineAgentContext))
 
+	// Normally, each input from the user would be an API request to your app,
+	// and you can wrap the request in a RunTrace().
+	// Here, we'll just use a random UUID for the conversation ID
+	u := uuid.New()
+	conversationID := hex.EncodeToString(u[:])[:16]
+
 	for {
 		fmt.Print("Enter your message: ")
 		_ = os.Stdout.Sync()
@@ -168,41 +177,50 @@ func main() {
 		}
 		userInput := string(line)
 
-		inputItems = append(inputItems, agents.TResponseInputItem{
-			OfMessage: &responses.EasyInputMessageParam{
-				Content: responses.EasyInputMessageContentUnionParam{
-					OfString: param.NewOpt(userInput),
-				},
-				Role: responses.EasyInputMessageRoleUser,
-				Type: responses.EasyInputMessageTypeMessage,
-			},
-		})
+		err = tracing.RunTrace(
+			ctx, tracing.TraceParams{WorkflowName: "Customer service", GroupID: conversationID},
+			func(ctx context.Context, _ tracing.Trace) error {
+				inputItems = append(inputItems, agents.TResponseInputItem{
+					OfMessage: &responses.EasyInputMessageParam{
+						Content: responses.EasyInputMessageContentUnionParam{
+							OfString: param.NewOpt(userInput),
+						},
+						Role: responses.EasyInputMessageRoleUser,
+						Type: responses.EasyInputMessageTypeMessage,
+					},
+				})
 
-		result, err := agents.RunInputs(ctx, currentAgent, inputItems)
+				result, err := agents.RunInputs(ctx, currentAgent, inputItems)
+				if err != nil {
+					return err
+				}
+
+				for _, newItem := range result.NewItems {
+					switch newItem := newItem.(type) {
+					case agents.MessageOutputItem:
+						fmt.Printf("%s: %s\n", newItem.Agent.Name, agents.ItemHelpers().TextMessageOutput(newItem))
+					case agents.HandoffOutputItem:
+						fmt.Printf("Handed off from %s to %s\n", newItem.SourceAgent.Name, newItem.TargetAgent.Name)
+					case agents.ToolCallItem:
+						fmt.Printf("%s: Calling a tool\n", newItem.Agent.Name)
+					case agents.ToolCallOutputItem:
+						fmt.Printf("%s: Tool call output: %v\n", newItem.Agent.Name, newItem.Output)
+					case agents.HandoffCallItem:
+						fmt.Printf("%s: Skipping item: HandoffCallItem\n", newItem.Agent.Name)
+					case agents.ReasoningItem:
+						fmt.Printf("%s: Skipping item: ReasoningItem\n", newItem.Agent.Name)
+					default:
+						panic(fmt.Errorf("unexpected item type %T\n", newItem))
+					}
+				}
+
+				inputItems = result.ToInputList()
+				currentAgent = result.LastAgent
+				return nil
+			},
+		)
 		if err != nil {
 			panic(err)
 		}
-
-		for _, newItem := range result.NewItems {
-			switch newItem := newItem.(type) {
-			case agents.MessageOutputItem:
-				fmt.Printf("%s: %s\n", newItem.Agent.Name, agents.ItemHelpers().TextMessageOutput(newItem))
-			case agents.HandoffOutputItem:
-				fmt.Printf("Handed off from %s to %s\n", newItem.SourceAgent.Name, newItem.TargetAgent.Name)
-			case agents.ToolCallItem:
-				fmt.Printf("%s: Calling a tool\n", newItem.Agent.Name)
-			case agents.ToolCallOutputItem:
-				fmt.Printf("%s: Tool call output: %v\n", newItem.Agent.Name, newItem.Output)
-			case agents.HandoffCallItem:
-				fmt.Printf("%s: Skipping item: HandoffCallItem\n", newItem.Agent.Name)
-			case agents.ReasoningItem:
-				fmt.Printf("%s: Skipping item: ReasoningItem\n", newItem.Agent.Name)
-			default:
-				panic(fmt.Errorf("unexpected item type %T\n", newItem))
-			}
-		}
-
-		inputItems = result.ToInputList()
-		currentAgent = result.LastAgent
 	}
 }

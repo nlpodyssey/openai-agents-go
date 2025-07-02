@@ -32,7 +32,7 @@ type InputGuardrail struct {
 	// triggered, and can optionally include information about the guardrail's output.
 	GuardrailFunction InputGuardrailFunction
 
-	// The name of the guardrail, used for error reporting and debugging.
+	// The name of the guardrail, used for tracing.
 	Name string
 }
 
@@ -77,7 +77,7 @@ type OutputGuardrail struct {
 	// include information about the guardrail's output.
 	GuardrailFunction OutputGuardrailFunction
 
-	// The name of the guardrail, used for error reporting and debugging.
+	// The name of the guardrail, used for tracing.
 	Name string
 }
 

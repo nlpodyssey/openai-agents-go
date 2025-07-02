@@ -66,7 +66,7 @@ func (h *AgentHooksForTests) OnToolEnd(context.Context, *agents.Agent, agents.To
 
 func TestNonStreamedAgentHooks(t *testing.T) {
 	hooks := NewAgentHooksForTests()
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "test_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -157,7 +157,7 @@ func TestNonStreamedAgentHooks(t *testing.T) {
 
 func TestStreamedAgentHooks(t *testing.T) {
 	hooks := NewAgentHooksForTests()
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "test_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -261,7 +261,7 @@ func TestStructuredOutputNonStreamedAgentHooks(t *testing.T) {
 	}
 
 	hooks := NewAgentHooksForTests()
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "test_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -357,7 +357,7 @@ func TestStructuredOutputStreamedAgentHooks(t *testing.T) {
 	}
 
 	hooks := NewAgentHooksForTests()
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "test_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),

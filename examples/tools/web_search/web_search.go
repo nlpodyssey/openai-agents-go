@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -35,14 +36,23 @@ func main() {
 		}).
 		WithModel("gpt-4o-mini")
 
-	result, err := agents.Run(
-		context.Background(),
-		agent,
-		"Search the web for 'local sports news' and give me 1 interesting update in a sentence.",
+	err := tracing.RunTrace(
+		context.Background(), tracing.TraceParams{WorkflowName: "Web search example"},
+		func(ctx context.Context, _ tracing.Trace) error {
+
+			result, err := agents.Run(
+				ctx, agent,
+				"Search the web for 'local sports news' and give me 1 interesting update in a sentence.",
+			)
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Println(result.FinalOutput)
+			return nil
+		},
 	)
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(result.FinalOutput)
 }

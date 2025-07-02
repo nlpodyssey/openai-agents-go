@@ -16,6 +16,7 @@ package asynctask
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 )
 
@@ -25,6 +26,8 @@ type Task[T any] struct {
 	doneCh        chan struct{}
 	result        *T
 	canceled      *atomic.Bool
+	mu            sync.Mutex
+	closed        bool
 }
 
 type TaskResult[T any] struct {
@@ -51,7 +54,12 @@ func (t *Task[T]) IsDone() bool {
 
 func (t *Task[T]) closeDoneCh() {
 	if !t.IsDone() {
-		close(t.doneCh)
+		t.mu.Lock()
+		defer t.mu.Unlock()
+		if !t.closed {
+			close(t.doneCh)
+			t.closed = true
+		}
 	}
 }
 

@@ -20,7 +20,7 @@ type PromptCaptureFakeModel struct {
 
 func NewPromptCaptureFakeModel() *PromptCaptureFakeModel {
 	return &PromptCaptureFakeModel{
-		FakeModel: agentstesting.NewFakeModel(nil),
+		FakeModel: agentstesting.NewFakeModel(false, nil),
 	}
 }
 

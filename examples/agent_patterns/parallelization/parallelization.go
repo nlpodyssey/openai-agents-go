@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 )
 
 /*
@@ -51,39 +52,50 @@ func main() {
 	}
 	msg := string(line)
 
-	const N = 3
-	var runResults [N]*agents.RunResult
-	var runErrors [N]error
+	// Ensure the entire workflow is a single trace
+	err = tracing.RunTrace(
+		context.Background(),
+		tracing.TraceParams{WorkflowName: "Parallel translation"},
+		func(ctx context.Context, _ tracing.Trace) error {
+			const N = 3
+			var runResults [N]*agents.RunResult
+			var runErrors [N]error
 
-	var wg sync.WaitGroup
-	wg.Add(N)
+			var wg sync.WaitGroup
+			wg.Add(N)
 
-	for i := range N {
-		go func() {
-			defer wg.Done()
-			runResults[i], runErrors[i] = agents.Run(context.Background(), SpanishAgent, msg)
-		}()
-	}
+			for i := range N {
+				go func() {
+					defer wg.Done()
+					runResults[i], runErrors[i] = agents.Run(ctx, SpanishAgent, msg)
+				}()
+			}
 
-	wg.Wait()
-	if err = errors.Join(runErrors[:]...); err != nil {
-		panic(err)
-	}
+			wg.Wait()
+			if err = errors.Join(runErrors[:]...); err != nil {
+				return err
+			}
 
-	var outputs [N]string
-	for i, runResult := range runResults {
-		outputs[i] = agents.ItemHelpers().TextMessageOutputs(runResult.NewItems)
-	}
+			var outputs [N]string
+			for i, runResult := range runResults {
+				outputs[i] = agents.ItemHelpers().TextMessageOutputs(runResult.NewItems)
+			}
 
-	translations := strings.Join(outputs[:], "\n\n")
-	fmt.Printf("\n\nTranslations:\n\n%s\n", translations)
+			translations := strings.Join(outputs[:], "\n\n")
+			fmt.Printf("\n\nTranslations:\n\n%s\n", translations)
 
-	input := fmt.Sprintf("Input: %s\n\nTranslations:\n%s", msg, translations)
-	bestTranslation, err := agents.Run(context.Background(), TranslationPicker, input)
+			input := fmt.Sprintf("Input: %s\n\nTranslations:\n%s", msg, translations)
+			bestTranslation, err := agents.Run(ctx, TranslationPicker, input)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("\n\n-----")
+			fmt.Printf("Best translation: %s\n", bestTranslation.FinalOutput)
+			return nil
+		},
+	)
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println("\n\n-----")
-	fmt.Printf("Best translation: %s\n", bestTranslation.FinalOutput)
 }

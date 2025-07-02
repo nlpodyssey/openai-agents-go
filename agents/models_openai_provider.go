@@ -92,19 +92,18 @@ func (provider *OpenAIProvider) getClient() OpenaiClient {
 		if defaultClient := GetDefaultOpenaiClient(); defaultClient != nil {
 			provider.client = defaultClient
 		} else {
-			apiKey := ""
+			var apiKey param.Opt[string]
 			if provider.params.APIKey.Valid() {
-				apiKey = provider.params.APIKey.Value
+				apiKey = provider.params.APIKey
 			} else if defaultKey := GetDefaultOpenaiKey(); defaultKey.Valid() {
-				apiKey = defaultKey.Value
+				apiKey = defaultKey
 			} else if envKey := os.Getenv("OPENAI_API_KEY"); envKey != "" {
-				apiKey = envKey
+				apiKey = param.NewOpt(envKey)
 			} else {
 				Logger().Warn("OpenAIProvider: an API key is missing")
 			}
 
 			options := make([]option.RequestOption, 0)
-			options = append(options, option.WithAPIKey(apiKey))
 
 			if provider.params.Organization.Valid() {
 				options = append(options, option.WithOrganization(provider.params.Organization.Value))
@@ -113,7 +112,7 @@ func (provider *OpenAIProvider) getClient() OpenaiClient {
 				options = append(options, option.WithProject(provider.params.Project.Value))
 			}
 
-			newClient := NewOpenaiClient(provider.params.BaseURL, options...)
+			newClient := NewOpenaiClient(provider.params.BaseURL, apiKey, options...)
 			provider.client = &newClient
 		}
 	}

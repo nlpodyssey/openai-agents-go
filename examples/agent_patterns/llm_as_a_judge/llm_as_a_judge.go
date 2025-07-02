@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 )
@@ -78,43 +79,54 @@ func main() {
 	}
 	var latestOutline *string
 
-	for {
-		storyOutlineResult, err := agents.RunInputs(context.Background(), StoryOutlineGenerator, inputItems)
-		if err != nil {
-			panic(err)
-		}
+	// We'll run the entire workflow in a single trace
+	err = tracing.RunTrace(
+		context.Background(),
+		tracing.TraceParams{WorkflowName: "LLM as a judge"},
+		func(ctx context.Context, _ tracing.Trace) error {
+			for {
+				storyOutlineResult, err := agents.RunInputs(ctx, StoryOutlineGenerator, inputItems)
+				if err != nil {
+					return err
+				}
 
-		inputItems = storyOutlineResult.ToInputList()
-		textMessageOutputs := agents.ItemHelpers().TextMessageOutputs(storyOutlineResult.NewItems)
-		latestOutline = &textMessageOutputs
+				inputItems = storyOutlineResult.ToInputList()
+				textMessageOutputs := agents.ItemHelpers().TextMessageOutputs(storyOutlineResult.NewItems)
+				latestOutline = &textMessageOutputs
 
-		fmt.Println("Story outline generated")
+				fmt.Println("Story outline generated")
 
-		evaluatorResult, err := agents.RunInputs(context.Background(), Evaluator, inputItems)
-		if err != nil {
-			panic(err)
-		}
+				evaluatorResult, err := agents.RunInputs(ctx, Evaluator, inputItems)
+				if err != nil {
+					return err
+				}
 
-		result := evaluatorResult.FinalOutput.(EvaluationFeedback)
+				result := evaluatorResult.FinalOutput.(EvaluationFeedback)
 
-		fmt.Printf("Evaluator score: %s\n", result.Score)
+				fmt.Printf("Evaluator score: %s\n", result.Score)
 
-		if result.Score == FeedbackScorePass {
-			fmt.Println("Story outline is good enough, exiting.")
-			break
-		}
+				if result.Score == FeedbackScorePass {
+					fmt.Println("Story outline is good enough, exiting.")
+					break
+				}
 
-		fmt.Println("Re-running with feedback")
+				fmt.Println("Re-running with feedback")
 
-		inputItems = append(inputItems, agents.TResponseInputItem{
-			OfMessage: &responses.EasyInputMessageParam{
-				Content: responses.EasyInputMessageContentUnionParam{
-					OfString: param.NewOpt(fmt.Sprintf("Feedback: %s", result.Feedback)),
-				},
-				Role: responses.EasyInputMessageRoleUser,
-				Type: responses.EasyInputMessageTypeMessage,
-			},
-		})
+				inputItems = append(inputItems, agents.TResponseInputItem{
+					OfMessage: &responses.EasyInputMessageParam{
+						Content: responses.EasyInputMessageContentUnionParam{
+							OfString: param.NewOpt(fmt.Sprintf("Feedback: %s", result.Feedback)),
+						},
+						Role: responses.EasyInputMessageRoleUser,
+						Type: responses.EasyInputMessageTypeMessage,
+					},
+				})
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		panic(err)
 	}
 
 	fmt.Printf("Final story outline: %s\n", *latestOutline)

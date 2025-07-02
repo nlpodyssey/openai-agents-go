@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 )
 
 type ResearchManager struct{}
@@ -17,19 +18,33 @@ func NewResearchManager() *ResearchManager {
 }
 
 func (rm *ResearchManager) Run(ctx context.Context, query string) error {
-	fmt.Println("Starting research...")
+	var report *ReportData
 
-	searchPlan, err := rm.planSearches(ctx, query)
-	if err != nil {
-		return err
-	}
+	traceID := tracing.GenTraceID()
+	err := tracing.RunTrace(
+		ctx, tracing.TraceParams{WorkflowName: "Research trace", TraceID: traceID},
+		func(ctx context.Context, _ tracing.Trace) error {
+			fmt.Printf("View trace: https://platform.openai.com/traces/trace?trace_id=%s\n", traceID)
+			fmt.Println("Starting research...")
 
-	searchResults, err := rm.performSearches(ctx, *searchPlan)
-	if err != nil {
-		return err
-	}
+			searchPlan, err := rm.planSearches(ctx, query)
+			if err != nil {
+				return err
+			}
 
-	report, err := rm.writeReport(ctx, query, searchResults)
+			searchResults, err := rm.performSearches(ctx, *searchPlan)
+			if err != nil {
+				return err
+			}
+
+			report, err = rm.writeReport(ctx, query, searchResults)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -56,35 +71,43 @@ func (rm *ResearchManager) planSearches(ctx context.Context, query string) (*Web
 }
 
 func (rm *ResearchManager) performSearches(ctx context.Context, searchPlan WebSearchPlan) ([]string, error) {
-	fmt.Println("Searching...")
-
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	numCompleted := 0
 	results := make([]string, len(searchPlan.Searches))
-	searchErrors := make([]error, len(searchPlan.Searches))
 
-	childCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	err := tracing.CustomSpan(
+		ctx, tracing.CustomSpanParams{Name: "Search the web"},
+		func(ctx context.Context, _ tracing.Span) error {
+			fmt.Println("Searching...")
 
-	wg.Add(len(searchPlan.Searches))
-	for i, item := range searchPlan.Searches {
-		go func() {
-			defer wg.Done()
-			results[i], searchErrors[i] = rm.search(childCtx, item)
-			if searchErrors[i] != nil {
-				cancel()
+			var mu sync.Mutex
+			var wg sync.WaitGroup
+			numCompleted := 0
+			searchErrors := make([]error, len(searchPlan.Searches))
+
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithCancel(ctx)
+			defer cancel()
+
+			wg.Add(len(searchPlan.Searches))
+			for i, item := range searchPlan.Searches {
+				go func() {
+					defer wg.Done()
+					results[i], searchErrors[i] = rm.search(ctx, item)
+					if searchErrors[i] != nil {
+						cancel()
+					}
+
+					mu.Lock()
+					defer mu.Unlock()
+					numCompleted += 1
+					fmt.Printf("Searching... %d/%d completed\n", numCompleted, len(searchPlan.Searches))
+				}()
 			}
 
-			mu.Lock()
-			defer mu.Unlock()
-			numCompleted += 1
-			fmt.Printf("Searching... %d/%d completed\n", numCompleted, len(searchPlan.Searches))
-		}()
-	}
-
-	wg.Wait()
-	if err := errors.Join(searchErrors...); err != nil {
+			wg.Wait()
+			return errors.Join(searchErrors...)
+		},
+	)
+	if err != nil {
 		return nil, err
 	}
 	return results, nil

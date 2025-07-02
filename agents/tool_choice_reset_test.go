@@ -97,7 +97,7 @@ func TestRequiredToolChoiceWithMultipleRuns(t *testing.T) {
 	// remains "required" between runs.
 
 	// Set up our fake model with responses for two runs
-	fakeModel := agentstesting.NewFakeModel(nil)
+	fakeModel := agentstesting.NewFakeModel(false, nil)
 	fakeModel.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{
 		{Value: []agents.TResponseOutputItem{agentstesting.GetTextMessage("First run response")}},
 		{Value: []agents.TResponseOutputItem{agentstesting.GetTextMessage("Second run response")}},
@@ -130,7 +130,7 @@ func TestRequiredWithStopAtToolName(t *testing.T) {
 	// it correctly stops at the specified tool.
 
 	// Set up fake model to return a tool call for second_tool
-	fakeModel := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	fakeModel := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetFunctionToolCall("second_tool", "{}"),
 		},
@@ -159,7 +159,7 @@ func TestSpecificToolChoice(t *testing.T) {
 	// loops.
 
 	// Set up fake model to return a text message
-	fakeModel := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	fakeModel := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("Test message"),
 		},
@@ -188,7 +188,7 @@ func TestRequiredWithSingleTool(t *testing.T) {
 	// infinite loops.
 
 	// Set up fake model to return a tool call followed by a text message
-	fakeModel := agentstesting.NewFakeModel(nil)
+	fakeModel := agentstesting.NewFakeModel(false, nil)
 	fakeModel.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{
 		// First call returns a tool call
 		{Value: []agents.TResponseOutputItem{
@@ -219,7 +219,7 @@ func TestDontResetToolChoiceIfNotRequired(t *testing.T) {
 	// Test scenario 5: When the agent's ResetToolChoice is false, ensure ToolChoice is not reset.
 
 	// Set up fake model to return a tool call followed by a text message
-	fakeModel := agentstesting.NewFakeModel(nil)
+	fakeModel := agentstesting.NewFakeModel(false, nil)
 	fakeModel.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{
 		// First call returns a tool call
 		{Value: []agents.TResponseOutputItem{

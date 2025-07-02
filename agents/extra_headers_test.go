@@ -51,6 +51,7 @@ func TestExtraHeadersPassedToOpenaiResponsesModel(t *testing.T) {
 		ModelSettings: modelsettings.ModelSettings{
 			ExtraHeaders: extraHeaders,
 		},
+		Tracing: agents.ModelTracingDisabled,
 	})
 
 	assert.Equal(t, "test-value", reqHeader.Get("X-Test-Header"))
@@ -80,6 +81,7 @@ func TestExtraHeadersPassedToOpenaiChatCompletionsClient(t *testing.T) {
 		ModelSettings: modelsettings.ModelSettings{
 			ExtraHeaders: extraHeaders,
 		},
+		Tracing: agents.ModelTracingDisabled,
 	})
 
 	assert.Equal(t, "test-value", reqHeader.Get("X-Test-Header"))

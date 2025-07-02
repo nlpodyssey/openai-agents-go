@@ -31,7 +31,7 @@ import (
 )
 
 func TestSimpleFirstRun(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -73,7 +73,7 @@ func TestSimpleFirstRun(t *testing.T) {
 }
 
 func TestSubsequentRuns(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -110,7 +110,7 @@ func TestSubsequentRuns(t *testing.T) {
 }
 
 func TestToolCallRuns(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -145,7 +145,7 @@ func TestToolCallRuns(t *testing.T) {
 }
 
 func TestHandoffs(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -195,7 +195,7 @@ type AgentRunnerTestFoo struct {
 }
 
 func TestStructuredOutput(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -252,7 +252,7 @@ func RemoveNewItems(_ context.Context, handoffInputData agents.HandoffInputData)
 }
 
 func TestHandoffFilters(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -288,7 +288,7 @@ func TestHandoffFilters(t *testing.T) {
 }
 
 func TestInputFilterError(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -349,7 +349,7 @@ func TestHandoffOnInput(t *testing.T) {
 		return nil
 	}
 
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -393,7 +393,7 @@ func TestHandoffOnInputError(t *testing.T) {
 		return onInputError
 	}
 
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -457,7 +457,7 @@ func TestInputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 		}, nil
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("user_message"),
 		},
@@ -484,7 +484,7 @@ func TestOutputGuardrailTripwireTriggeredCausesError(t *testing.T) {
 		}, nil
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("user_message"),
 		},
@@ -536,7 +536,7 @@ var TestToolTwo = agents.FunctionTool{
 }
 
 func TestToolUseBehaviorFirstOutput(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -574,7 +574,7 @@ var CustomToolUseBehavior = func(_ context.Context, results []agents.FunctionToo
 }
 
 func TestToolUseBehaviorCustomFunction(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -607,7 +607,7 @@ func TestToolUseBehaviorCustomFunction(t *testing.T) {
 }
 
 func TestModelSettingsOverride(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -638,7 +638,7 @@ func TestModelSettingsOverride(t *testing.T) {
 func TestPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 	// Test that PreviousResponseID is passed to the model on subsequent runs.
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("done"),
 		},
@@ -657,7 +657,7 @@ func TestPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 func TestMultiTurnPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 	// Test that PreviousResponseID is passed to the model on subsequent runs.
 
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -687,7 +687,7 @@ func TestMultiTurnPreviousResponseIDPassedBetweenRuns(t *testing.T) {
 func TestPreviousResponseIDPassedBetweenRunsStreamed(t *testing.T) {
 	// Test that PreviousResponseID is passed to the model on subsequent streamed runs.
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("done"),
 		},
@@ -711,7 +711,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamed(t *testing.T) {
 func TestPreviousResponseIDPassedBetweenRunsStreamedMultiTurn(t *testing.T) {
 	// Test that PreviousResponseID is passed to the model on subsequent streamed runs.
 
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -745,7 +745,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamedMultiTurn(t *testing.T) {
 
 func TestDynamicToolAdditionRun(t *testing.T) {
 	// Test that tools can be added to an agent during a run.
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 
 	agent := agents.New("test").
 		WithModelInstance(model).

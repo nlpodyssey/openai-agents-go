@@ -29,7 +29,7 @@ import (
 )
 
 func TestSimpleFirstRunStreamed(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -77,7 +77,7 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 }
 
 func TestSubsequentRunsStreamed(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -121,7 +121,7 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 }
 
 func TestToolCallRunsStreamed(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent := &agents.Agent{
 		Name:  "test",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -159,7 +159,7 @@ func TestToolCallRunsStreamed(t *testing.T) {
 }
 
 func TestHandoffsStreaming(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -208,7 +208,7 @@ func TestHandoffsStreaming(t *testing.T) {
 }
 
 func TestStructuredOutputStreamed(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -260,7 +260,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 }
 
 func TestHandoffFiltersStreamed(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -298,7 +298,7 @@ func TestHandoffFiltersStreamed(t *testing.T) {
 }
 
 func TestInputFilterErrorStreamed(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -361,7 +361,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 		return nil
 	}
 
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "agent_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -412,7 +412,7 @@ func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		}, nil
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("user_message"),
 		},
@@ -441,7 +441,7 @@ func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		}, nil
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("first_test"),
 		},
@@ -470,7 +470,7 @@ func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		}, nil
 	}
 
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 
 	agent := &agents.Agent{
 		Name:  "test",
@@ -496,7 +496,7 @@ func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		}, nil
 	}
 
-	model := agentstesting.NewFakeModel(&agentstesting.FakeModelTurnOutput{
+	model := agentstesting.NewFakeModel(false, &agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
 			agentstesting.GetTextMessage("first_test"),
 		},
@@ -519,7 +519,7 @@ func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 }
 
 func TestStreamingEvents(t *testing.T) {
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 	agent1 := &agents.Agent{
 		Name:  "test_1",
 		Model: param.NewOpt(agents.NewAgentModel(model)),
@@ -617,7 +617,7 @@ func TestStreamingEvents(t *testing.T) {
 
 func TestDynamicToolAdditionRunStreamed(t *testing.T) {
 	// Test that tools can be added to an agent during a run.
-	model := agentstesting.NewFakeModel(nil)
+	model := agentstesting.NewFakeModel(false, nil)
 
 	agent := agents.New("test").
 		WithModelInstance(model).

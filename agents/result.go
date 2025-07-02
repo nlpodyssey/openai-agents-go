@@ -23,6 +23,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
+	"github.com/nlpodyssey/openai-agents-go/tracing"
 )
 
 type RunResult struct {
@@ -82,6 +83,7 @@ type RunResultStreaming struct {
 	currentTurn            *atomic.Uint64
 	maxTurns               *atomic.Uint64
 	currentAgentOutputType *atomic.Pointer[OutputTypeInterface]
+	trace                  *atomic.Pointer[tracing.Trace]
 	isComplete             *atomic.Bool
 	eventQueue             *asyncqueue.Queue[StreamEvent]
 	inputGuardrailQueue    *asyncqueue.Queue[InputGuardrailResult]
@@ -109,6 +111,7 @@ func newRunResultStreaming(ctx context.Context) *RunResultStreaming {
 		currentTurn:            new(atomic.Uint64),
 		maxTurns:               new(atomic.Uint64),
 		currentAgentOutputType: newZeroValAtomicPointer[OutputTypeInterface](),
+		trace:                  newZeroValAtomicPointer[tracing.Trace](),
 		isComplete:             new(atomic.Bool),
 		eventQueue:             asyncqueue.New[StreamEvent](),
 		inputGuardrailQueue:    asyncqueue.New[InputGuardrailResult](),
@@ -181,6 +184,13 @@ func (r *RunResultStreaming) getCurrentAgentOutputType() OutputTypeInterface {
 }
 func (r *RunResultStreaming) setCurrentAgentOutputType(v OutputTypeInterface) {
 	r.currentAgentOutputType.Store(&v)
+}
+
+func (r *RunResultStreaming) getTrace() tracing.Trace {
+	return *r.trace.Load()
+}
+func (r *RunResultStreaming) setTrace(v tracing.Trace) {
+	r.trace.Store(&v)
 }
 
 // IsComplete reports whether the agent has finished running.
