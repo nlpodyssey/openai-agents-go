@@ -63,7 +63,7 @@ func TestPrettyRunResultStreaming(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "Hello")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	v := agents.PrettyPrintRunResultStreaming(*result)
@@ -134,7 +134,7 @@ func TestPrettyRunResultStreamingStructuredOutput(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "Hello")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	v := agents.PrettyPrintRunResultStreaming(*result)
@@ -222,7 +222,7 @@ func TestPrettyRunResultStreamingListStructuredOutput(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "Hello")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	v := agents.PrettyPrintRunResultStreaming(*result)

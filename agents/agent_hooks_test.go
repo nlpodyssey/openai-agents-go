@@ -184,7 +184,7 @@ func TestStreamedAgentHooks(t *testing.T) {
 	output, err := agents.Runner{}.RunStreamed(
 		t.Context(), agent3, "user_message")
 	require.NoError(t, err)
-	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = output.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{"OnStart": 1, "OnEnd": 1}, hooks.Events, output)
 	hooks.Reset()
@@ -207,7 +207,7 @@ func TestStreamedAgentHooks(t *testing.T) {
 	output, err = agents.Runner{}.RunStreamed(
 		t.Context(), agent3, "user_message")
 	require.NoError(t, err)
-	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = output.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	// Shouldn't have OnEnd because it's not the last agent
@@ -243,7 +243,7 @@ func TestStreamedAgentHooks(t *testing.T) {
 	output, err = agents.Runner{}.RunStreamed(
 		t.Context(), agent3, "user_message")
 	require.NoError(t, err)
-	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = output.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]int{
@@ -385,7 +385,7 @@ func TestStructuredOutputStreamedAgentHooks(t *testing.T) {
 	output, err := agents.Runner{}.RunStreamed(
 		t.Context(), agent3, "user_message")
 	require.NoError(t, err)
-	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = output.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 	assert.Equal(t, map[string]int{"OnStart": 1, "OnEnd": 1}, hooks.Events, output)
 	hooks.Reset()
@@ -408,7 +408,7 @@ func TestStructuredOutputStreamedAgentHooks(t *testing.T) {
 	output, err = agents.Runner{}.RunStreamed(
 		t.Context(), agent3, "user_message")
 	require.NoError(t, err)
-	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = output.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	// Shouldn't have OnEnd because it's not the last agent
@@ -444,7 +444,7 @@ func TestStructuredOutputStreamedAgentHooks(t *testing.T) {
 	output, err = agents.Runner{}.RunStreamed(
 		t.Context(), agent3, "user_message")
 	require.NoError(t, err)
-	err = output.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = output.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]int{

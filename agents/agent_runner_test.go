@@ -702,7 +702,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamed(t *testing.T) {
 	result, err := (agents.Runner{Config: agents.RunConfig{PreviousResponseID: "resp-stream-test"}}).
 		RunStreamed(t.Context(), agent, "test")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, "resp-stream-test", model.LastTurnArgs.PreviousResponseID)
@@ -737,7 +737,7 @@ func TestPreviousResponseIDPassedBetweenRunsStreamedMultiTurn(t *testing.T) {
 	result, err := (agents.Runner{Config: agents.RunConfig{PreviousResponseID: "resp-stream-test"}}).
 		RunStreamed(t.Context(), agent, "test")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, "resp-stream-test", model.LastTurnArgs.PreviousResponseID)
