@@ -43,7 +43,7 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "test")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, agents.InputString("test"), result.Input())
@@ -67,7 +67,7 @@ func TestSimpleFirstRunStreamed(t *testing.T) {
 		agentstesting.GetTextInputItem("another_message"),
 	})
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Len(t, result.NewItems(), 1)
@@ -91,7 +91,7 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "test")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, agents.InputString("test"), result.Input())
@@ -106,7 +106,7 @@ func TestSubsequentRunsStreamed(t *testing.T) {
 
 	result, err = agents.Runner{}.RunInputsStreamed(t.Context(), agent, result.ToInputList())
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Len(t, result.Input().(agents.InputItems), 2)
@@ -144,7 +144,7 @@ func TestToolCallRunsStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, "done", result.FinalOutput())
@@ -195,7 +195,7 @@ func TestHandoffsStreaming(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent3, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, "done", result.FinalOutput())
@@ -248,7 +248,7 @@ func TestStructuredOutputStreamed(t *testing.T) {
 		agentstesting.GetTextInputItem("another_message"),
 	})
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, AgentRunnerTestFoo{Bar: "baz"}, result.FinalOutput())
@@ -289,7 +289,7 @@ func TestHandoffFiltersStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent2, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, "last", result.FinalOutput())
@@ -341,7 +341,7 @@ func TestInputFilterErrorStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent2, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	assert.ErrorIs(t, err, inputFilterError)
 }
 
@@ -395,7 +395,7 @@ func TestHandoffOnInputStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent2, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, "last", result.FinalOutput())
@@ -429,7 +429,7 @@ func TestInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	assert.ErrorAs(t, err, &agents.InputGuardrailTripwireTriggeredError{})
 }
 
@@ -458,7 +458,7 @@ func TestOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	assert.ErrorAs(t, err, &agents.OutputGuardrailTripwireTriggeredError{})
 }
 
@@ -484,7 +484,7 @@ func TestRunInputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		}},
 	}}).RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	assert.ErrorAs(t, err, &agents.InputGuardrailTripwireTriggeredError{})
 }
 
@@ -514,7 +514,7 @@ func TestRunOutputGuardrailTripwireTriggeredCausesErrorStreamed(t *testing.T) {
 		}},
 	}}).RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	assert.ErrorAs(t, err, &agents.OutputGuardrailTripwireTriggeredError{})
 }
 
@@ -650,7 +650,7 @@ func TestDynamicToolAdditionRunStreamed(t *testing.T) {
 
 	result, err := agents.Runner{}.RunStreamed(t.Context(), agent, "test")
 	require.NoError(t, err)
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, "done", result.FinalOutput())

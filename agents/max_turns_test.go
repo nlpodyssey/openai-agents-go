@@ -71,7 +71,7 @@ func TestStreamedMaxTurns(t *testing.T) {
 		RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	assert.ErrorAs(t, err, &agents.MaxTurnsExceededError{})
 }
 
@@ -129,6 +129,6 @@ func TestStructuredOutputStreamedMaxTurns(t *testing.T) {
 		RunStreamed(t.Context(), agent, "user_message")
 	require.NoError(t, err)
 
-	err = result.StreamEvents(func(event agents.StreamEvent) error { return nil })
+	err = result.StreamEvents(func(agents.StreamEvent) error { return nil })
 	assert.ErrorAs(t, err, &agents.MaxTurnsExceededError{})
 }
