@@ -18,6 +18,7 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"sync/atomic"
 )
 
 //TSpanData = TypeVar("TSpanData", bound=SpanData)
@@ -122,7 +123,7 @@ type SpanImpl struct {
 	parentID        string
 	startedAt       string
 	endedAt         string
-	error           *SpanError
+	error           atomic.Pointer[SpanError]
 	prevContextSpan *Span
 	processor       Processor
 	spanData        SpanData
@@ -144,7 +145,6 @@ func NewSpanImpl(
 		parentID:        parentID,
 		startedAt:       "",
 		endedAt:         "",
-		error:           nil,
 		prevContextSpan: nil,
 		processor:       processor,
 		spanData:        spanData,
@@ -210,8 +210,8 @@ func (s *SpanImpl) TraceID() string        { return s.traceID }
 func (s *SpanImpl) SpanID() string         { return s.spanID }
 func (s *SpanImpl) SpanData() SpanData     { return s.spanData }
 func (s *SpanImpl) ParentID() string       { return s.parentID }
-func (s *SpanImpl) SetError(err SpanError) { s.error = &err }
-func (s *SpanImpl) Error() *SpanError      { return s.error }
+func (s *SpanImpl) SetError(err SpanError) { s.error.Store(&err) }
+func (s *SpanImpl) Error() *SpanError      { return s.error.Load() }
 func (s *SpanImpl) StartedAt() string      { return s.startedAt }
 func (s *SpanImpl) EndedAt() string        { return s.endedAt }
 
@@ -221,9 +221,9 @@ func (s *SpanImpl) Export() map[string]any {
 		spanData = s.SpanData().Export()
 	}
 
-	var err map[string]any
-	if s.error != nil {
-		err = s.error.Export()
+	var exportedError map[string]any
+	if err := s.error.Load(); err != nil {
+		exportedError = err.Export()
 	}
 
 	var parentID any
@@ -247,6 +247,6 @@ func (s *SpanImpl) Export() map[string]any {
 		"started_at": startedAt,
 		"ended_at":   endedAt,
 		"span_data":  spanData,
-		"error":      err,
+		"error":      exportedError,
 	}
 }
