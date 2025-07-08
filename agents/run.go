@@ -186,7 +186,7 @@ func (r Runner) RunInputsStreamed(ctx context.Context, startingAgent *Agent, inp
 
 func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*RunResult, error) {
 	if startingAgent == nil {
-		return nil, fmt.Errorf("StartingAgent must not be nil")
+		return nil, fmt.Errorf("startingAgent must not be nil")
 	}
 
 	hooks := r.Config.Hooks
@@ -415,7 +415,7 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*Ru
 
 func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Input) (*RunResultStreaming, error) {
 	if startingAgent == nil {
-		return nil, fmt.Errorf("StartingAgent must not be nil")
+		return nil, fmt.Errorf("startingAgent must not be nil")
 	}
 
 	maxTurns := r.Config.MaxTurns
@@ -679,25 +679,21 @@ func (r Runner) startStreaming(
 
 		switch nextStep := turnResult.NextStep.(type) {
 		case NextStepFinalOutput:
-			streamedResult.createOutputGuardrailsTask(ctx, func(ctx context.Context) outputGuardrailsTaskResult {
-				result, err := r.runOutputGuardrails(
+			streamedResult.createOutputGuardrailsTask(ctx, func(ctx context.Context) ([]OutputGuardrailResult, error) {
+				return r.runOutputGuardrails(
 					ctx,
 					slices.Concat(currentAgent.OutputGuardrails, runConfig.OutputGuardrails),
 					currentAgent,
 					nextStep.Output,
 				)
-				return outputGuardrailsTaskResult{Result: result, Err: err}
 			})
 
 			taskResult := streamedResult.getOutputGuardrailsTask().Await()
 
 			var outputGuardrailResults []OutputGuardrailResult
-			if taskResult.Canceled {
-				return NewTaskCanceledError("output guardrails task has been canceled")
-			}
-			if taskResult.Result.Err == nil {
+			if taskResult.Error == nil {
 				// Errors will be checked in the stream-events loop
-				outputGuardrailResults = taskResult.Result.Result
+				outputGuardrailResults = taskResult.Value
 			}
 
 			streamedResult.setOutputGuardrailResults(outputGuardrailResults)
@@ -802,7 +798,7 @@ func (r Runner) runSingleTurnStreamed(
 	}
 
 	// 1. Stream the output events
-	stream, err := model.StreamResponse(ctx, ModelResponseParams{
+	modelResponseParams := ModelResponseParams{
 		SystemInstructions: systemPrompt,
 		Input:              InputItems(input),
 		ModelSettings:      modelSettings,
@@ -815,44 +811,39 @@ func (r Runner) runSingleTurnStreamed(
 		),
 		PreviousResponseID: previousResponseID,
 		Prompt:             promptConfig,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("stream response error: %w", err)
 	}
-
-	eventErrors := make([]error, 0)
-	for event, eventErr := range stream {
-		if eventErr != nil {
-			eventErrors = append(eventErrors, eventErr)
-			continue
-		}
-		if event.Type == "response.completed" {
-			u := usage.NewUsage()
-			if !reflect.ValueOf(event.Response.Usage).IsZero() {
-				*u = usage.Usage{
-					Requests:            1,
-					InputTokens:         uint64(event.Response.Usage.InputTokens),
-					InputTokensDetails:  event.Response.Usage.InputTokensDetails,
-					OutputTokens:        uint64(event.Response.Usage.OutputTokens),
-					OutputTokensDetails: event.Response.Usage.OutputTokensDetails,
-					TotalTokens:         uint64(event.Response.Usage.TotalTokens),
+	err = model.StreamResponse(
+		ctx, modelResponseParams,
+		func(ctx context.Context, event TResponseStreamEvent) error {
+			if event.Type == "response.completed" {
+				u := usage.NewUsage()
+				if !reflect.ValueOf(event.Response.Usage).IsZero() {
+					*u = usage.Usage{
+						Requests:            1,
+						InputTokens:         uint64(event.Response.Usage.InputTokens),
+						InputTokensDetails:  event.Response.Usage.InputTokensDetails,
+						OutputTokens:        uint64(event.Response.Usage.OutputTokens),
+						OutputTokensDetails: event.Response.Usage.OutputTokensDetails,
+						TotalTokens:         uint64(event.Response.Usage.TotalTokens),
+					}
+				}
+				finalResponse = &ModelResponse{
+					Output:     event.Response.Output,
+					Usage:      u,
+					ResponseID: event.Response.ID,
+				}
+				if contextUsage, _ := usage.FromContext(ctx); contextUsage != nil {
+					contextUsage.Add(u)
 				}
 			}
-			finalResponse = &ModelResponse{
-				Output:     event.Response.Output,
-				Usage:      u,
-				ResponseID: event.Response.ID,
-			}
-			if contextUsage, _ := usage.FromContext(ctx); contextUsage != nil {
-				contextUsage.Add(u)
-			}
-		}
-		streamedResult.eventQueue.Put(RawResponsesStreamEvent{
-			Data: *event,
-			Type: "raw_response_event",
-		})
-	}
-	if err = errors.Join(eventErrors...); err != nil {
+			streamedResult.eventQueue.Put(RawResponsesStreamEvent{
+				Data: event,
+				Type: "raw_response_event",
+			})
+			return nil
+		},
+	)
+	if err != nil {
 		return nil, err
 	}
 

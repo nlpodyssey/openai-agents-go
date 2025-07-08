@@ -128,9 +128,10 @@ func TestBatchTraceProcessorQueueFull(t *testing.T) {
 	ctx := t.Context()
 
 	processor := NewBatchTraceProcessor(BatchTraceProcessorParams{
-		Exporter:      &mockedExporter{},
-		MaxQueueSize:  param.NewOpt(2),
-		ScheduleDelay: param.NewOpt(100 * time.Millisecond),
+		Exporter:           &mockedExporter{},
+		MaxQueueSize:       param.NewOpt(2),
+		ScheduleDelay:      param.NewOpt(5 * time.Second),
+		ExportTriggerRatio: param.NewOpt(2.0),
 	})
 	t.Cleanup(func() { require.NoError(t, processor.Shutdown(ctx)) })
 

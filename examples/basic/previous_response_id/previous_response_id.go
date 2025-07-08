@@ -78,9 +78,7 @@ func mainNoStream(agent *agents.Agent) {
 func mainStream(agent *agents.Agent) {
 	ctx := context.Background()
 
-	result, err := agents.RunStreamed(
-		ctx, agent, "What is the largest country in South America?",
-	)
+	result, err := agents.RunStreamed(ctx, agent, "What is the largest country in South America?")
 	if err != nil {
 		panic(err)
 	}

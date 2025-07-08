@@ -16,8 +16,8 @@ package agents
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"iter"
 	"log/slog"
 	"reflect"
 	"slices"
@@ -134,91 +134,72 @@ func (m OpenAIResponsesModel) GetResponse(
 func (m OpenAIResponsesModel) StreamResponse(
 	ctx context.Context,
 	params ModelResponseParams,
-) (iter.Seq2[*TResponseStreamEvent, error], error) {
-	spanResponse := tracing.NewResponseSpan(ctx, tracing.ResponseSpanParams{
-		Disabled: params.Tracing.IsDisabled(),
-	})
-	ctx = tracing.ContextWithClonedOrNewScope(ctx)
-	err := spanResponse.Start(ctx, true)
-	if err != nil {
-		return nil, err
-	}
+	yield ModelStreamResponseCallback,
+) error {
+	return tracing.ResponseSpan(
+		ctx, tracing.ResponseSpanParams{Disabled: params.Tracing.IsDisabled()},
+		func(ctx context.Context, spanResponse tracing.Span) (err error) {
+			defer func() {
+				if err != nil {
+					var v string
+					if params.Tracing.IncludeData() {
+						v = err.Error()
+					} else {
+						v = fmt.Sprintf("%T", err)
+					}
+					spanResponse.SetError(tracing.SpanError{
+						Message: "Error streaming response",
+						Data:    map[string]any{"error": v},
+					})
+					Logger().Error("error streaming response", slog.String("error", err.Error()))
+				}
+			}()
 
-	setSpanError := func(err error) {
-		var v string
-		if params.Tracing.IncludeData() {
-			v = err.Error()
-		} else {
-			v = fmt.Sprintf("%T", err)
-		}
-		spanResponse.SetError(tracing.SpanError{
-			Message: "Error streaming response",
-			Data:    map[string]any{"error": v},
+			body, opts, err := m.prepareRequest(
+				ctx,
+				params.SystemInstructions,
+				params.Input,
+				params.ModelSettings,
+				params.Tools,
+				params.OutputType,
+				params.Handoffs,
+				params.PreviousResponseID,
+				true,
+				params.Prompt,
+			)
+			if err != nil {
+				return err
+			}
+
+			stream := m.client.Responses.NewStreaming(ctx, *body, opts...)
+			defer func() {
+				if e := stream.Close(); e != nil {
+					err = errors.Join(err, fmt.Errorf("error closing stream: %w", e))
+				}
+			}()
+
+			var finalResponse *responses.Response
+			for stream.Next() {
+				chunk := stream.Current()
+				if chunk.Type == "response.completed" {
+					finalResponse = &chunk.Response
+				}
+				if err = yield(ctx, chunk); err != nil {
+					return err
+				}
+			}
+
+			if err = stream.Err(); err != nil {
+				return fmt.Errorf("error streaming response: %w", err)
+			}
+
+			if finalResponse != nil && params.Tracing.IncludeData() {
+				spanData := spanResponse.SpanData().(*tracing.ResponseSpanData)
+				spanData.Response = finalResponse
+				spanData.Input = params.Input
+			}
+			return nil
 		})
-	}
-
-	body, opts, err := m.prepareRequest(
-		ctx,
-		params.SystemInstructions,
-		params.Input,
-		params.ModelSettings,
-		params.Tools,
-		params.OutputType,
-		params.Handoffs,
-		params.PreviousResponseID,
-		true,
-		params.Prompt,
-	)
-	if err != nil {
-		setSpanError(err)
-		return nil, err
-	}
-
-	stream := m.client.Responses.NewStreaming(ctx, *body, opts...)
-	if err = stream.Err(); err != nil {
-		err = fmt.Errorf("error streaming response: %w", err)
-		setSpanError(err)
-		return nil, err
-	}
-
-	return func(yield func(*TResponseStreamEvent, error) bool) {
-		defer func() {
-			err = stream.Close()
-			if err != nil {
-				setSpanError(err)
-				yield(nil, err) // FIXME: this Seq2 "hack" is now clearly inadequate
-			}
-			err = spanResponse.Finish(ctx, true)
-			if err != nil {
-				yield(nil, err)
-			}
-		}()
-
-		var finalResponse *responses.Response
-		for stream.Next() {
-			chunk := stream.Current()
-
-			if chunk.Type == "response.completed" {
-				finalResponse = new(responses.Response)
-				*finalResponse = chunk.Response
-			}
-
-			if !yield(&chunk, nil) {
-				return
-			}
-		}
-
-		if err = stream.Err(); err != nil {
-			setSpanError(err)
-			yield(nil, fmt.Errorf("error streaming response: %w", err))
-		}
-
-		if finalResponse != nil && params.Tracing.IncludeData() {
-			spanData := spanResponse.SpanData().(*tracing.ResponseSpanData)
-			spanData.Response = finalResponse
-			spanData.Input = params.Input
-		}
-	}, nil
 }
 
 func (m OpenAIResponsesModel) prepareRequest(

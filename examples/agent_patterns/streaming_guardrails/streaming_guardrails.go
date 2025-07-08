@@ -54,17 +54,12 @@ var GuardrailAgent = agents.New("Checker").
 	WithOutputType(agents.OutputType[GuardrailOutput]()).
 	WithModel(Model)
 
-type CheckGuardrailResult struct {
-	Output GuardrailOutput
-	Error  error
-}
-
-func CheckGuardrail(text string) CheckGuardrailResult {
+func CheckGuardrail(text string) (GuardrailOutput, error) {
 	result, err := agents.Run(context.Background(), GuardrailAgent, text)
 	if err != nil {
-		return CheckGuardrailResult{Error: err}
+		return GuardrailOutput{}, err
 	}
-	return CheckGuardrailResult{Output: result.FinalOutput.(GuardrailOutput)}
+	return result.FinalOutput.(GuardrailOutput), nil
 }
 
 func main() {
@@ -78,7 +73,7 @@ func main() {
 
 	// We will check the guardrail every N characters
 	nextGuardrailCheckLen := 300
-	var guardrailTask *asynctask.Task[CheckGuardrailResult]
+	var guardrailTask *asynctask.Task[GuardrailOutput]
 
 	streamBreakErr := errors.New("stream break")
 
@@ -95,7 +90,7 @@ func main() {
 			if len(currentText) >= nextGuardrailCheckLen && guardrailTask == nil {
 				fmt.Println("Running guardrail check")
 				currentText := currentText
-				guardrailTask = asynctask.CreateTask(context.Background(), func(context.Context) CheckGuardrailResult {
+				guardrailTask = asynctask.CreateTask(context.Background(), func(context.Context) (GuardrailOutput, error) {
 					return CheckGuardrail(currentText)
 				})
 				nextGuardrailCheckLen += 300
@@ -105,13 +100,10 @@ func main() {
 		// Every iteration of the loop, check if the guardrail has been triggered
 		if guardrailTask != nil && guardrailTask.IsDone() {
 			taskResult := guardrailTask.Await()
-			if taskResult.Canceled {
-				return errors.New("guardrail result canceled")
-			}
-			if err := taskResult.Result.Error; err != nil {
+			if err := taskResult.Error; err != nil {
 				return err
 			}
-			guardrailResult := taskResult.Result.Output
+			guardrailResult := taskResult.Value
 			if !guardrailResult.IsReadableByTenYearOld {
 				fmt.Print("\n\n================\n\n\n")
 				fmt.Printf("Guardrail triggered. Reasoning:\n%s\n", guardrailResult.Reasoning)
@@ -126,11 +118,10 @@ func main() {
 	}
 
 	// Do one final check on the final output
-	checkResult := CheckGuardrail(currentText)
-	if err = checkResult.Error; err != nil {
+	guardrailResult, err := CheckGuardrail(currentText)
+	if err != nil {
 		panic(err)
 	}
-	guardrailResult := checkResult.Output
 	if !guardrailResult.IsReadableByTenYearOld {
 		fmt.Print("\n\n================\n\n\n")
 		fmt.Printf("Guardrail triggered. Reasoning:\n%s\n", guardrailResult.Reasoning)

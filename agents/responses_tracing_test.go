@@ -140,20 +140,17 @@ func TestStreamResponseCreatesTrace(t *testing.T) {
 		func(ctx context.Context, _ tracing.Trace) error {
 			model := agents.NewOpenAIResponsesModel("test-model", newDummyClientStreaming(t))
 
-			stream, err := model.StreamResponse(ctx, agents.ModelResponseParams{
-				SystemInstructions: param.NewOpt("instr"),
-				Input:              agents.InputString("input"),
-				Tracing:            agents.ModelTracingEnabled,
-			})
-			if err != nil {
-				return err
-			}
-			for _, err = range stream {
-				if err != nil {
-					return err
-				}
-			}
-			return nil
+			return model.StreamResponse(
+				ctx,
+				agents.ModelResponseParams{
+					SystemInstructions: param.NewOpt("instr"),
+					Input:              agents.InputString("input"),
+					Tracing:            agents.ModelTracingEnabled,
+				},
+				func(context.Context, agents.TResponseStreamEvent) error {
+					return nil
+				},
+			)
 		})
 	require.NoError(t, err)
 
@@ -177,20 +174,17 @@ func TestStreamNonDataTracingDoesNotSetResponseID(t *testing.T) {
 		func(ctx context.Context, _ tracing.Trace) error {
 			model := agents.NewOpenAIResponsesModel("test-model", newDummyClientStreaming(t))
 
-			stream, err := model.StreamResponse(ctx, agents.ModelResponseParams{
-				SystemInstructions: param.NewOpt("instr"),
-				Input:              agents.InputString("input"),
-				Tracing:            agents.ModelTracingEnabledWithoutData,
-			})
-			if err != nil {
-				return err
-			}
-			for _, err = range stream {
-				if err != nil {
-					return err
-				}
-			}
-			return nil
+			return model.StreamResponse(
+				ctx,
+				agents.ModelResponseParams{
+					SystemInstructions: param.NewOpt("instr"),
+					Input:              agents.InputString("input"),
+					Tracing:            agents.ModelTracingEnabledWithoutData,
+				},
+				func(context.Context, agents.TResponseStreamEvent) error {
+					return nil
+				},
+			)
 		})
 	require.NoError(t, err)
 
@@ -214,20 +208,16 @@ func TestStreamDisabledTracingDoesNotCreateSpan(t *testing.T) {
 		func(ctx context.Context, _ tracing.Trace) error {
 			model := agents.NewOpenAIResponsesModel("test-model", newDummyClientStreaming(t))
 
-			stream, err := model.StreamResponse(ctx, agents.ModelResponseParams{
-				SystemInstructions: param.NewOpt("instr"),
-				Input:              agents.InputString("input"),
-				Tracing:            agents.ModelTracingDisabled,
-			})
-			if err != nil {
-				return err
-			}
-			for _, err = range stream {
-				if err != nil {
-					return err
-				}
-			}
-			return nil
+			return model.StreamResponse(
+				ctx,
+				agents.ModelResponseParams{
+					SystemInstructions: param.NewOpt("instr"),
+					Input:              agents.InputString("input"),
+					Tracing:            agents.ModelTracingDisabled,
+				}, func(context.Context, agents.TResponseStreamEvent) error {
+					return nil
+				},
+			)
 		})
 	require.NoError(t, err)
 

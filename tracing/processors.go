@@ -52,7 +52,7 @@ func (c ConsoleSpanExporter) Export(items []any) error {
 const DefaultBackendSpanExporterEndpoint = "https://api.openai.com/v1/traces/ingest"
 
 type BackendSpanExporter struct {
-	apiKey       string
+	apiKey       atomic.Pointer[string]
 	organization string
 	project      string
 	Endpoint     string
@@ -89,8 +89,7 @@ type BackendSpanExporterParams struct {
 }
 
 func NewBackendSpanExporter(params BackendSpanExporterParams) *BackendSpanExporter {
-	return &BackendSpanExporter{
-		apiKey:       params.APIKey,
+	b := &BackendSpanExporter{
 		organization: params.Organization,
 		project:      params.Project,
 		Endpoint:     cmp.Or(params.Endpoint, DefaultBackendSpanExporterEndpoint),
@@ -99,18 +98,22 @@ func NewBackendSpanExporter(params BackendSpanExporterParams) *BackendSpanExport
 		MaxDelay:     params.MaxDelay.Or(30 * time.Second),
 		client:       cmp.Or(params.HTTPClient, &http.Client{Timeout: 60 * time.Second}),
 	}
+	if params.APIKey != "" {
+		b.apiKey.Store(&params.APIKey)
+	}
+	return b
 }
 
 // SetAPIKey sets the OpenAI API key for the exporter.
 func (b *BackendSpanExporter) SetAPIKey(apiKey string) {
-	b.apiKey = apiKey
+	b.apiKey.Store(&apiKey)
 }
 
 func (b *BackendSpanExporter) APIKey() string {
-	if b.apiKey == "" {
-		return os.Getenv("OPENAI_API_KEY")
+	if v := b.apiKey.Load(); v != nil && *v != "" {
+		return *v
 	}
-	return b.apiKey
+	return os.Getenv("OPENAI_API_KEY")
 }
 
 func (b *BackendSpanExporter) Organization() string {

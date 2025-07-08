@@ -17,8 +17,8 @@ package agents
 import (
 	"context"
 	"errors"
-	"iter"
 	"testing"
+	"time"
 
 	"github.com/openai/openai-go/packages/param"
 	"github.com/stretchr/testify/assert"
@@ -31,22 +31,15 @@ func TestCancelCleansUpResources(t *testing.T) {
 		Model: param.NewOpt(NewAgentModel(FakeModel{})),
 	}
 
-	result, err := Runner{}.RunStreamed(
-		t.Context(),
-		agent,
-		"Please tell me 5 jokes.",
-	)
+	result, err := Runner{}.RunStreamed(t.Context(), agent, "Please tell me 5 jokes.")
 	require.NoError(t, err)
 
-	stopErr := errors.New("stop")
-
 	// Start streaming, then cancel
-	err = result.StreamEvents(func(event StreamEvent) error {
+	_ = result.StreamEvents(func(event StreamEvent) error {
 		result.Cancel()
-		return stopErr
+		time.Sleep(100 * time.Millisecond)
+		return nil
 	})
-
-	require.ErrorIs(t, err, stopErr)
 
 	// After cancel, queues should be empty and is_complete True
 	assert.True(t, result.IsComplete())
@@ -57,9 +50,9 @@ func TestCancelCleansUpResources(t *testing.T) {
 type FakeModel struct{}
 
 func (m FakeModel) GetResponse(context.Context, ModelResponseParams) (*ModelResponse, error) {
-	return nil, errors.New("not implemented")
+	return nil, errors.New("FakeModel.GetResponse not implemented")
 }
 
-func (m FakeModel) StreamResponse(context.Context, ModelResponseParams) (iter.Seq2[*TResponseStreamEvent, error], error) {
-	return nil, errors.New("not implemented")
+func (m FakeModel) StreamResponse(context.Context, ModelResponseParams, ModelStreamResponseCallback) error {
+	return errors.New("FakeModel.StreamResponse not implemented")
 }

@@ -17,7 +17,6 @@ package agentstesting
 import (
 	"context"
 	"fmt"
-	"iter"
 	"reflect"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
@@ -129,7 +128,11 @@ func (m *FakeModel) GetResponse(ctx context.Context, params agents.ModelResponse
 	return modelResponse, nil
 }
 
-func (m *FakeModel) StreamResponse(ctx context.Context, params agents.ModelResponseParams) (iter.Seq2[*agents.TResponseStreamEvent, error], error) {
+func (m *FakeModel) StreamResponse(
+	ctx context.Context,
+	params agents.ModelResponseParams,
+	yield agents.ModelStreamResponseCallback,
+) error {
 	m.LastTurnArgs = FakeModelLastTurnArgs{
 		SystemInstructions: params.SystemInstructions,
 		Input:              params.Input,
@@ -139,46 +142,28 @@ func (m *FakeModel) StreamResponse(ctx context.Context, params agents.ModelRespo
 		PreviousResponseID: params.PreviousResponseID,
 	}
 
-	span := tracing.NewGenerationSpan(ctx, tracing.GenerationSpanParams{Disabled: !m.TracingEnabled})
-	ctx = tracing.ContextWithClonedOrNewScope(ctx)
-	err := span.Start(ctx, true)
-	if err != nil {
-		return nil, err
-	}
+	return tracing.GenerationSpan(
+		ctx, tracing.GenerationSpanParams{Disabled: !m.TracingEnabled},
+		func(ctx context.Context, span tracing.Span) error {
+			output := m.GetNextOutput()
 
-	output := m.GetNextOutput()
-
-	return func(yield func(*agents.TResponseStreamEvent, error) bool) {
-		defer func() {
-			err := span.Finish(ctx, true)
-			if err != nil {
-				yield(nil, err)
+			if err := output.Error; err != nil {
+				span.SetError(tracing.SpanError{
+					Message: "Error",
+					Data: map[string]any{
+						"name":    fmt.Sprintf("%T", err),
+						"message": err.Error(),
+					},
+				})
+				return err
 			}
-		}()
 
-		if err := output.Error; err != nil {
-			span.SetError(tracing.SpanError{
-				Message: "Error",
-				Data: map[string]any{
-					"name":    fmt.Sprintf("%T", err),
-					"message": err.Error(),
-				},
+			return yield(ctx, agents.TResponseStreamEvent{ // responses.ResponseCompletedEvent
+				Response:       GetResponseObj(output.Value, "", m.HardcodedUsage),
+				Type:           "response.completed",
+				SequenceNumber: 0,
 			})
-
-			yield(nil, err)
-			return
-		}
-
-		u := m.HardcodedUsage
-		if u == nil {
-			u = usage.NewUsage()
-		}
-
-		yield(&agents.TResponseStreamEvent{ // responses.ResponseCompletedEvent
-			Response: GetResponseObj(output.Value, "", m.HardcodedUsage),
-			Type:     "response.completed",
-		}, nil)
-	}, nil
+		})
 }
 
 func GetResponseObj(

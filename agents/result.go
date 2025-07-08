@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync"
 	"sync/atomic"
 
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
@@ -87,15 +88,10 @@ type RunResultStreaming struct {
 	isComplete             *atomic.Bool
 	eventQueue             *asyncqueue.Queue[StreamEvent]
 	inputGuardrailQueue    *asyncqueue.Queue[InputGuardrailResult]
-	runImplTask            *atomic.Pointer[asynctask.Task[error]]
-	inputGuardrailsTask    *atomic.Pointer[asynctask.Task[error]]
-	outputGuardrailsTask   *atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]
+	runImplTask            *atomic.Pointer[asynctask.TaskNoValue]
+	inputGuardrailsTask    *atomic.Pointer[asynctask.TaskNoValue]
+	outputGuardrailsTask   *atomic.Pointer[asynctask.Task[[]OutputGuardrailResult]]
 	storedError            *atomic.Pointer[error]
-}
-
-type outputGuardrailsTaskResult struct {
-	Result []OutputGuardrailResult
-	Err    error
 }
 
 func newRunResultStreaming(ctx context.Context) *RunResultStreaming {
@@ -115,9 +111,9 @@ func newRunResultStreaming(ctx context.Context) *RunResultStreaming {
 		isComplete:             new(atomic.Bool),
 		eventQueue:             asyncqueue.New[StreamEvent](),
 		inputGuardrailQueue:    asyncqueue.New[InputGuardrailResult](),
-		runImplTask:            new(atomic.Pointer[asynctask.Task[error]]),
-		inputGuardrailsTask:    new(atomic.Pointer[asynctask.Task[error]]),
-		outputGuardrailsTask:   new(atomic.Pointer[asynctask.Task[outputGuardrailsTaskResult]]),
+		runImplTask:            new(atomic.Pointer[asynctask.TaskNoValue]),
+		inputGuardrailsTask:    new(atomic.Pointer[asynctask.TaskNoValue]),
+		outputGuardrailsTask:   new(atomic.Pointer[asynctask.Task[[]OutputGuardrailResult]]),
 		storedError:            newZeroValAtomicPointer[error](),
 	}
 }
@@ -198,29 +194,29 @@ func (r *RunResultStreaming) IsComplete() bool     { return r.isComplete.Load() 
 func (r *RunResultStreaming) setIsComplete(v bool) { r.isComplete.Store(v) }
 func (r *RunResultStreaming) markAsComplete()      { r.setIsComplete(true) }
 
-func (r *RunResultStreaming) getRunImplTask() *asynctask.Task[error]  { return r.runImplTask.Load() }
-func (r *RunResultStreaming) setRunImplTask(v *asynctask.Task[error]) { r.runImplTask.Store(v) }
+func (r *RunResultStreaming) getRunImplTask() *asynctask.TaskNoValue  { return r.runImplTask.Load() }
+func (r *RunResultStreaming) setRunImplTask(v *asynctask.TaskNoValue) { r.runImplTask.Store(v) }
 func (r *RunResultStreaming) createRunImplTask(ctx context.Context, fn func(context.Context) error) {
-	r.setRunImplTask(asynctask.CreateTask(ctx, fn))
+	r.setRunImplTask(asynctask.CreateTaskNoValue(ctx, fn))
 }
 
-func (r *RunResultStreaming) getInputGuardrailsTask() *asynctask.Task[error] {
+func (r *RunResultStreaming) getInputGuardrailsTask() *asynctask.TaskNoValue {
 	return r.inputGuardrailsTask.Load()
 }
-func (r *RunResultStreaming) setInputGuardrailsTask(v *asynctask.Task[error]) {
+func (r *RunResultStreaming) setInputGuardrailsTask(v *asynctask.TaskNoValue) {
 	r.inputGuardrailsTask.Store(v)
 }
 func (r *RunResultStreaming) createInputGuardrailsTask(ctx context.Context, fn func(context.Context) error) {
-	r.setInputGuardrailsTask(asynctask.CreateTask(ctx, fn))
+	r.setInputGuardrailsTask(asynctask.CreateTaskNoValue(ctx, fn))
 }
 
-func (r *RunResultStreaming) getOutputGuardrailsTask() *asynctask.Task[outputGuardrailsTaskResult] {
+func (r *RunResultStreaming) getOutputGuardrailsTask() *asynctask.Task[[]OutputGuardrailResult] {
 	return r.outputGuardrailsTask.Load()
 }
-func (r *RunResultStreaming) setOutputGuardrailsTask(v *asynctask.Task[outputGuardrailsTaskResult]) {
+func (r *RunResultStreaming) setOutputGuardrailsTask(v *asynctask.Task[[]OutputGuardrailResult]) {
 	r.outputGuardrailsTask.Store(v)
 }
-func (r *RunResultStreaming) createOutputGuardrailsTask(ctx context.Context, fn func(context.Context) outputGuardrailsTaskResult) {
+func (r *RunResultStreaming) createOutputGuardrailsTask(ctx context.Context, fn func(context.Context) ([]OutputGuardrailResult, error)) {
 	r.setOutputGuardrailsTask(asynctask.CreateTask(ctx, fn))
 }
 
@@ -246,8 +242,9 @@ func (r *RunResultStreaming) LastAgent() *Agent {
 
 // Cancel the streaming run, stopping all background tasks and marking the run as complete.
 func (r *RunResultStreaming) Cancel() {
-	r.cleanupTasks()   // Cancel all running tasks
 	r.markAsComplete() // Mark the run as complete to stop event streaming
+	r.cleanupTasks()   // Cancel all running tasks
+	r.awaitTasks()
 
 	// Optionally, clear the event queue to prevent processing stale events
 	for !r.eventQueue.IsEmpty() {
@@ -289,19 +286,6 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 			if err = r.checkErrors(); err != nil {
 				return err
 			}
-
-			// NOTE: this differs from the original Python implementation.
-			// We just reached the end of streaming without errors. However,
-			// the asynchronous execution of input guardrails might be slower than
-			// everything else. Let's wait for their completion, and check for errors
-			// once again, as a tripwire might have been triggered.
-			if t := r.getInputGuardrailsTask(); t != nil && !t.IsDone() {
-				_ = t.Await()
-				if err = r.checkErrors(); err != nil {
-					return err
-				}
-			}
-
 			break
 		}
 
@@ -309,6 +293,11 @@ func (r *RunResultStreaming) StreamEvents(fn func(StreamEvent) error) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	r.awaitTasks()
+	if err := r.checkErrors(); err != nil {
+		return err
 	}
 
 	r.cleanupTasks()
@@ -348,10 +337,7 @@ func (r *RunResultStreaming) checkErrors() error {
 	// Check the tasks for any error
 	if t := r.getRunImplTask(); t != nil && t.IsDone() {
 		result := t.Await()
-		if result.Canceled {
-			return NewTaskCanceledError("run task has been canceled")
-		}
-		if err := *result.Result; err != nil {
+		if err := result.Error; err != nil {
 			var agentsErr *AgentsError
 			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
 				agentsErr.RunData = r.createErrorDetails()
@@ -362,10 +348,7 @@ func (r *RunResultStreaming) checkErrors() error {
 
 	if t := r.getInputGuardrailsTask(); t != nil && t.IsDone() {
 		result := t.Await()
-		if result.Canceled {
-			return NewTaskCanceledError("input guardrails task has been canceled")
-		}
-		if err := *result.Result; err != nil {
+		if err := result.Error; err != nil {
 			var agentsErr *AgentsError
 			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
 				agentsErr.RunData = r.createErrorDetails()
@@ -376,10 +359,7 @@ func (r *RunResultStreaming) checkErrors() error {
 
 	if t := r.getOutputGuardrailsTask(); t != nil && t.IsDone() {
 		result := t.Await()
-		if result.Canceled {
-			return NewTaskCanceledError("output guardrails task has been canceled")
-		}
-		if err := result.Result.Err; err != nil {
+		if err := result.Error; err != nil {
 			var agentsErr *AgentsError
 			if errors.As(err, &agentsErr) && agentsErr.RunData == nil {
 				agentsErr.RunData = r.createErrorDetails()
@@ -389,6 +369,32 @@ func (r *RunResultStreaming) checkErrors() error {
 	}
 
 	return nil
+}
+
+func (r *RunResultStreaming) awaitTasks() {
+	var wg sync.WaitGroup
+	if t := r.getRunImplTask(); t != nil && !t.IsDone() {
+		wg.Add(1)
+		go func() {
+			t.Await()
+			wg.Done()
+		}()
+	}
+	if t := r.getInputGuardrailsTask(); t != nil && !t.IsDone() {
+		wg.Add(1)
+		go func() {
+			t.Await()
+			wg.Done()
+		}()
+	}
+	if t := r.getOutputGuardrailsTask(); t != nil && !t.IsDone() {
+		wg.Add(1)
+		go func() {
+			t.Await()
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 }
 
 func (r *RunResultStreaming) cleanupTasks() {

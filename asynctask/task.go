@@ -16,85 +16,106 @@ package asynctask
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
-	"sync/atomic"
 )
 
 type Task[T any] struct {
-	ctx           context.Context
-	ctxCancelFunc context.CancelFunc
-	doneCh        chan struct{}
-	result        *T
-	canceled      *atomic.Bool
-	mu            sync.Mutex
-	closed        bool
+	mu       *sync.RWMutex
+	cond     *sync.Cond
+	cancel   context.CancelFunc
+	canceled bool
+	done     bool
+	result   Result[T]
 }
 
-type TaskResult[T any] struct {
-	Result   *T
-	Canceled bool
+type Result[T any] struct {
+	Value T
+	Error error
 }
 
-func (t *Task[T]) Await() TaskResult[T] {
-	<-t.doneCh
-	return TaskResult[T]{
-		Result:   t.result,
-		Canceled: t.canceled.Load(),
+var taskCanceledErr = errors.New("task has been canceled")
+
+func TaskCanceledErr() error { return taskCanceledErr }
+
+func (t *Task[T]) Await() Result[T] {
+	t.cond.L.Lock()
+	for !t.done {
+		t.cond.Wait()
 	}
+	t.cond.L.Unlock()
+	return t.result
 }
 
 func (t *Task[T]) IsDone() bool {
-	select {
-	case <-t.doneCh:
-		return true
-	default:
-		return false
-	}
+	t.mu.RLock()
+	done := t.done
+	t.mu.RUnlock()
+	return done
 }
 
-func (t *Task[T]) closeDoneCh() {
-	if !t.IsDone() {
-		t.mu.Lock()
-		defer t.mu.Unlock()
-		if !t.closed {
-			close(t.doneCh)
-			t.closed = true
-		}
-	}
+func (t *Task[T]) IsCanceled() bool {
+	t.mu.RLock()
+	canceled := t.canceled
+	t.mu.RUnlock()
+	return canceled
 }
 
-func (t *Task[T]) Cancel() bool {
-	if t.IsDone() {
-		return false
+func (t *Task[T]) Cancel() {
+	t.mu.Lock()
+	if !t.done && !t.canceled {
+		t.cancel()
+		t.canceled = true
 	}
-
-	t.closeDoneCh()
-	t.canceled.Store(true)
-	t.ctxCancelFunc()
-	return true
+	t.mu.Unlock()
 }
 
-func CreateTask[T any](
-	baseCtx context.Context,
-	fn func(context.Context) T,
-) *Task[T] {
-	ctx, cancel := context.WithCancel(baseCtx)
+type TaskFunc[T any] = func(context.Context) (T, error)
 
+func CreateTask[T any](ctx context.Context, fn TaskFunc[T]) *Task[T] {
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
+	mu := new(sync.RWMutex)
 	t := &Task[T]{
-		ctx:           nil,
-		ctxCancelFunc: cancel,
-		doneCh:        make(chan struct{}),
-		canceled:      new(atomic.Bool),
+		mu:       mu,
+		cond:     sync.NewCond(mu),
+		cancel:   cancel,
+		canceled: false,
+		done:     false,
 	}
 
 	go func() {
-		defer cancel()
-		defer t.closeDoneCh()
-		result := fn(ctx)
-		if !t.canceled.Load() {
-			t.result = &result
-		}
+		var value T
+		var err error
+
+		defer func() {
+			if r := recover(); r != nil {
+				err = errors.Join(err, fmt.Errorf("task panicked: %v", r))
+			}
+
+			t.cond.L.Lock()
+			if t.canceled {
+				err = errors.Join(err, TaskCanceledErr())
+			}
+			t.result = Result[T]{Value: value, Error: err}
+			t.done = true
+			t.cond.L.Unlock()
+			t.cond.Broadcast()
+
+			cancel()
+		}()
+
+		value, err = fn(ctx)
 	}()
 
 	return t
+}
+
+type TaskNoValue = Task[struct{}]
+
+func CreateTaskNoValue(ctx context.Context, fn func(context.Context) error) *TaskNoValue {
+	return CreateTask[struct{}](ctx, func(ctx context.Context) (struct{}, error) {
+		return struct{}{}, fn(ctx)
+	})
 }

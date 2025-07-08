@@ -16,7 +16,6 @@ package agents
 
 import (
 	"context"
-	"iter"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/openai/openai-go/packages/param"
@@ -43,8 +42,10 @@ type Model interface {
 	GetResponse(context.Context, ModelResponseParams) (*ModelResponse, error)
 
 	// StreamResponse streams a response from the model.
-	StreamResponse(context.Context, ModelResponseParams) (iter.Seq2[*TResponseStreamEvent, error], error)
+	StreamResponse(context.Context, ModelResponseParams, ModelStreamResponseCallback) error
 }
+
+type ModelStreamResponseCallback = func(context.Context, TResponseStreamEvent) error
 
 type ModelResponseParams struct {
 	// The system instructions to use.

@@ -16,6 +16,7 @@ package agents_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -100,25 +101,26 @@ func TestStreamResponseYieldsEventsForTextContent(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
-		SystemInstructions: param.Opt[string]{},
-		Input:              agents.InputString(""),
-		ModelSettings:      modelsettings.ModelSettings{},
-		Tools:              nil,
-		OutputType:         nil,
-		Handoffs:           nil,
-		Tracing:            agents.ModelTracingDisabled,
-		PreviousResponseID: "",
-		Prompt:             responses.ResponsePromptParam{},
-	})
-	require.NoError(t, err)
-
 	var outputEvents []agents.TResponseStreamEvent
-	for event, err := range stream {
-		require.NoError(t, err)
-		require.NotNil(t, event)
-		outputEvents = append(outputEvents, *event)
-	}
+	err = model.StreamResponse(
+		t.Context(),
+		agents.ModelResponseParams{
+			SystemInstructions: param.Opt[string]{},
+			Input:              agents.InputString(""),
+			ModelSettings:      modelsettings.ModelSettings{},
+			Tools:              nil,
+			OutputType:         nil,
+			Handoffs:           nil,
+			Tracing:            agents.ModelTracingDisabled,
+			PreviousResponseID: "",
+			Prompt:             responses.ResponsePromptParam{},
+		},
+		func(ctx context.Context, event agents.TResponseStreamEvent) error {
+			outputEvents = append(outputEvents, event)
+			return nil
+		},
+	)
+	require.NoError(t, err)
 
 	// We expect a response.created, then a response.output_item.added, content part added,
 	// two content delta events (for "He" and "llo"), a content part done, the assistant message
@@ -193,25 +195,26 @@ func TestStreamResponseYieldsEventsForRefusalContent(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
-		SystemInstructions: param.Opt[string]{},
-		Input:              agents.InputString(""),
-		ModelSettings:      modelsettings.ModelSettings{},
-		Tools:              nil,
-		OutputType:         nil,
-		Handoffs:           nil,
-		Tracing:            agents.ModelTracingDisabled,
-		PreviousResponseID: "",
-		Prompt:             responses.ResponsePromptParam{},
-	})
-	require.NoError(t, err)
-
 	var outputEvents []agents.TResponseStreamEvent
-	for event, err := range stream {
-		require.NoError(t, err)
-		require.NotNil(t, event)
-		outputEvents = append(outputEvents, *event)
-	}
+	err = model.StreamResponse(
+		t.Context(),
+		agents.ModelResponseParams{
+			SystemInstructions: param.Opt[string]{},
+			Input:              agents.InputString(""),
+			ModelSettings:      modelsettings.ModelSettings{},
+			Tools:              nil,
+			OutputType:         nil,
+			Handoffs:           nil,
+			Tracing:            agents.ModelTracingDisabled,
+			PreviousResponseID: "",
+			Prompt:             responses.ResponsePromptParam{},
+		},
+		func(ctx context.Context, event agents.TResponseStreamEvent) error {
+			outputEvents = append(outputEvents, event)
+			return nil
+		},
+	)
+	require.NoError(t, err)
 
 	// Expect sequence similar to text: created, output_item.added, content part added,
 	// two refusal delta events, content part done, output_item.done, completed.
@@ -277,24 +280,25 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 	model, err := provider.GetModel("gpt-4")
 	require.NoError(t, err)
 
-	stream, err := model.StreamResponse(t.Context(), agents.ModelResponseParams{
-		SystemInstructions: param.Opt[string]{},
-		Input:              agents.InputString(""),
-		ModelSettings:      modelsettings.ModelSettings{},
-		Tools:              nil,
-		Handoffs:           nil,
-		Tracing:            agents.ModelTracingDisabled,
-		PreviousResponseID: "",
-		Prompt:             responses.ResponsePromptParam{},
-	})
-	require.NoError(t, err)
-
 	var outputEvents []agents.TResponseStreamEvent
-	for event, err := range stream {
-		require.NoError(t, err)
-		require.NotNil(t, event)
-		outputEvents = append(outputEvents, *event)
-	}
+	err = model.StreamResponse(
+		t.Context(),
+		agents.ModelResponseParams{
+			SystemInstructions: param.Opt[string]{},
+			Input:              agents.InputString(""),
+			ModelSettings:      modelsettings.ModelSettings{},
+			Tools:              nil,
+			Handoffs:           nil,
+			Tracing:            agents.ModelTracingDisabled,
+			PreviousResponseID: "",
+			Prompt:             responses.ResponsePromptParam{},
+		},
+		func(ctx context.Context, event agents.TResponseStreamEvent) error {
+			outputEvents = append(outputEvents, event)
+			return nil
+		},
+	)
+	require.NoError(t, err)
 
 	// Sequence should be: response.created, then after loop we expect function call-related events:
 	// one response.output_item.added for function call, a response.function_call_arguments.delta,

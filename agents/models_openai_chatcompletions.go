@@ -17,7 +17,6 @@ package agents
 import (
 	"context"
 	"fmt"
-	"iter"
 	"log/slog"
 	"reflect"
 	"slices"
@@ -53,21 +52,13 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 ) (*ModelResponse, error) {
 	var modelResponse *ModelResponse
 
-	modelConfig, err := util.JSONMap(params.ModelSettings)
+	generationSpanParams, err := m.generationSpanParams(params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert model settings to JSON map: %w", err)
-	}
-	if m.client.BaseURL.Valid() {
-		modelConfig["base_url"] = m.client.BaseURL.Value
+		return nil, err
 	}
 
 	err = tracing.GenerationSpan(
-		ctx,
-		tracing.GenerationSpanParams{
-			Model:       m.Model,
-			ModelConfig: modelConfig,
-			Disabled:    params.Tracing.IsDisabled(),
-		},
+		ctx, *generationSpanParams,
 		func(ctx context.Context, spanGeneration tracing.Span) error {
 			body, opts, err := m.prepareRequest(
 				ctx,
@@ -168,7 +159,87 @@ func (m OpenAIChatCompletionsModel) GetResponse(
 func (m OpenAIChatCompletionsModel) StreamResponse(
 	ctx context.Context,
 	params ModelResponseParams,
-) (iter.Seq2[*TResponseStreamEvent, error], error) {
+	yield ModelStreamResponseCallback,
+) error {
+	generationSpanParams, err := m.generationSpanParams(params)
+	if err != nil {
+		return err
+	}
+
+	return tracing.GenerationSpan(
+		ctx, *generationSpanParams,
+		func(ctx context.Context, spanGeneration tracing.Span) error {
+			body, opts, err := m.prepareRequest(
+				ctx,
+				params.SystemInstructions,
+				params.Input,
+				params.ModelSettings,
+				params.Tools,
+				params.OutputType,
+				params.Handoffs,
+				spanGeneration,
+				params.Tracing,
+				true,
+			)
+			if err != nil {
+				return err
+			}
+
+			stream := m.client.Chat.Completions.NewStreaming(ctx, *body, opts...)
+			if err = stream.Err(); err != nil {
+				return fmt.Errorf("error streaming response: %w", err)
+			}
+
+			response := responses.Response{
+				ID:        FakeResponsesID,
+				CreatedAt: float64(time.Now().Unix()),
+				Model:     m.Model,
+				Object:    constant.ValueOf[constant.Response](),
+				Output:    nil,
+				ToolChoice: responses.ResponseToolChoiceUnion{
+					OfToolChoiceMode: responses.ToolChoiceOptions(body.ToolChoice.OfAuto.Or("auto")),
+				},
+				TopP:              params.ModelSettings.TopP.Or(0),
+				Temperature:       params.ModelSettings.Temperature.Or(0),
+				Tools:             nil,
+				ParallelToolCalls: body.ParallelToolCalls.Or(false),
+				Reasoning:         openaitypes.ReasoningFromParam(params.ModelSettings.Reasoning),
+			}
+
+			var finalResponse *responses.Response
+			err = ChatCmplStreamHandler().HandleStream(response, stream, func(chunk TResponseStreamEvent) error {
+				if chunk.Type == "response.completed" {
+					finalResponse = &chunk.Response
+				}
+				return yield(ctx, chunk)
+			})
+			if err != nil {
+				return err
+			}
+
+			if finalResponse != nil {
+				spanData := spanGeneration.SpanData().(*tracing.GenerationSpanData)
+
+				if params.Tracing.IncludeData() {
+					out, err := util.JSONMap(*finalResponse)
+					if err != nil {
+						return fmt.Errorf("failed to convert final response to JSON map: %w", err)
+					}
+					spanData.Output = []map[string]any{out}
+				}
+
+				if u := finalResponse.Usage; !reflect.ValueOf(u).IsZero() {
+					spanData.Usage = map[string]any{
+						"input_tokens":  u.InputTokens,
+						"output_tokens": u.OutputTokens,
+					}
+				}
+			}
+			return nil
+		})
+}
+
+func (m OpenAIChatCompletionsModel) generationSpanParams(params ModelResponseParams) (*tracing.GenerationSpanParams, error) {
 	modelConfig, err := util.JSONMap(params.ModelSettings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert model settings to JSON map: %w", err)
@@ -176,91 +247,10 @@ func (m OpenAIChatCompletionsModel) StreamResponse(
 	if m.client.BaseURL.Valid() {
 		modelConfig["base_url"] = m.client.BaseURL.Value
 	}
-	spanGeneration := tracing.NewGenerationSpan(ctx, tracing.GenerationSpanParams{
+	return &tracing.GenerationSpanParams{
 		Model:       m.Model,
 		ModelConfig: modelConfig,
 		Disabled:    params.Tracing.IsDisabled(),
-	})
-	ctx = tracing.ContextWithClonedOrNewScope(ctx)
-	err = spanGeneration.Start(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	body, opts, err := m.prepareRequest(
-		ctx,
-		params.SystemInstructions,
-		params.Input,
-		params.ModelSettings,
-		params.Tools,
-		params.OutputType,
-		params.Handoffs,
-		spanGeneration,
-		params.Tracing,
-		true,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	stream := m.client.Chat.Completions.NewStreaming(ctx, *body, opts...)
-	if err := stream.Err(); err != nil {
-		return nil, fmt.Errorf("error streaming response: %w", err)
-	}
-
-	response := responses.Response{
-		ID:        FakeResponsesID,
-		CreatedAt: float64(time.Now().Unix()),
-		Model:     m.Model,
-		Object:    constant.ValueOf[constant.Response](),
-		Output:    nil,
-		ToolChoice: responses.ResponseToolChoiceUnion{
-			OfToolChoiceMode: responses.ToolChoiceOptions(body.ToolChoice.OfAuto.Or("auto")),
-		},
-		TopP:              params.ModelSettings.TopP.Or(0),
-		Temperature:       params.ModelSettings.Temperature.Or(0),
-		Tools:             nil,
-		ParallelToolCalls: body.ParallelToolCalls.Or(false),
-		Reasoning:         openaitypes.ReasoningFromParam(params.ModelSettings.Reasoning),
-	}
-
-	return func(yield func(*TResponseStreamEvent, error) bool) {
-		defer func() {
-			err = spanGeneration.Finish(ctx, true)
-			if err != nil {
-				yield(nil, err) // FIXME: this Seq2 "hack" is now clearly inadequate
-			}
-		}()
-
-		var finalResponse *responses.Response
-		for chunk, err := range ChatCmplStreamHandler().HandleStream(response, stream) {
-			if !yield(chunk, err) {
-				return
-			}
-			if chunk.Type == "response.completed" {
-				finalResponse = new(responses.Response)
-				*finalResponse = chunk.Response
-			}
-		}
-
-		if finalResponse != nil {
-			spanData := spanGeneration.SpanData().(*tracing.GenerationSpanData)
-			if params.Tracing.IncludeData() {
-				out, err := util.JSONMap(*finalResponse)
-				if err != nil {
-					if !yield(nil, fmt.Errorf("failed to convert final response to JSON map: %w", err)) {
-						return
-					}
-				}
-				spanData.Output = []map[string]any{out}
-			}
-			if !reflect.ValueOf(finalResponse.Usage).IsZero() {
-				spanData.Usage = map[string]any{
-					"input_tokens":  finalResponse.Usage.InputTokens,
-					"output_tokens": finalResponse.Usage.OutputTokens,
-				}
-			}
-		}
 	}, nil
 }
 

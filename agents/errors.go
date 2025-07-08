@@ -182,27 +182,3 @@ func NewOutputGuardrailTripwireTriggeredError(guardrailResult OutputGuardrailRes
 		GuardrailResult: guardrailResult,
 	}
 }
-
-// TaskCanceledError is returned when a task has been canceled.
-type TaskCanceledError struct {
-	*AgentsError
-}
-
-func (err TaskCanceledError) Error() string {
-	if err.AgentsError == nil {
-		return "TaskCanceledError"
-	}
-	return err.AgentsError.Error()
-}
-
-func (err TaskCanceledError) Unwrap() error {
-	return err.AgentsError
-}
-
-func NewTaskCanceledError(message string) TaskCanceledError {
-	return TaskCanceledError{AgentsError: NewAgentsError(message)}
-}
-
-func TaskCanceledErrorf(format string, a ...any) TaskCanceledError {
-	return TaskCanceledError{AgentsError: AgentsErrorf(format, a...)}
-}
