@@ -920,7 +920,7 @@ func (runImpl) ExecuteHandoffs(
 			err := agent.Hooks.OnHandoff(childCtx, newAgent, agent)
 			if err != nil {
 				cancel()
-				handoffErrors[0] = fmt.Errorf("AgentHooks.OnHandoff failed: %w", err)
+				handoffErrors[1] = fmt.Errorf("AgentHooks.OnHandoff failed: %w", err)
 			}
 		}()
 	}
