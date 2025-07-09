@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"sync/atomic"
+	"time"
 )
 
 //TSpanData = TypeVar("TSpanData", bound=SpanData)
@@ -57,8 +58,8 @@ type Span interface {
 	ParentID() string
 	SetError(err SpanError)
 	Error() *SpanError
-	StartedAt() string
-	EndedAt() string
+	StartedAt() time.Time
+	EndedAt() time.Time
 	Export() map[string]any
 }
 
@@ -113,16 +114,16 @@ func (s *NoOpSpan) SpanData() SpanData     { return s.spanData }
 func (s *NoOpSpan) ParentID() string       { return "" }
 func (s *NoOpSpan) SetError(SpanError)     {}
 func (s *NoOpSpan) Error() *SpanError      { return nil }
-func (s *NoOpSpan) StartedAt() string      { return "" }
-func (s *NoOpSpan) EndedAt() string        { return "" }
+func (s *NoOpSpan) StartedAt() time.Time   { return time.Time{} }
+func (s *NoOpSpan) EndedAt() time.Time     { return time.Time{} }
 func (s *NoOpSpan) Export() map[string]any { return nil }
 
 type SpanImpl struct {
 	traceID         string
 	spanID          string
 	parentID        string
-	startedAt       string
-	endedAt         string
+	startedAt       time.Time
+	endedAt         time.Time
 	error           atomic.Pointer[SpanError]
 	prevContextSpan *Span
 	processor       Processor
@@ -143,8 +144,8 @@ func NewSpanImpl(
 		traceID:         traceID,
 		spanID:          spanID,
 		parentID:        parentID,
-		startedAt:       "",
-		endedAt:         "",
+		startedAt:       time.Time{},
+		endedAt:         time.Time{},
 		prevContextSpan: nil,
 		processor:       processor,
 		spanData:        spanData,
@@ -169,12 +170,12 @@ func (s *SpanImpl) Run(ctx context.Context, fn func(context.Context, Span) error
 }
 
 func (s *SpanImpl) Start(ctx context.Context, markAsCurrent bool) error {
-	if s.startedAt != "" {
+	if !s.startedAt.IsZero() {
 		Logger().Warn("Span already started")
 		return nil
 	}
 
-	s.startedAt = TimeISO()
+	s.startedAt = time.Now()
 	err := s.processor.OnSpanStart(ctx, s)
 	if err != nil {
 		return err
@@ -188,12 +189,12 @@ func (s *SpanImpl) Start(ctx context.Context, markAsCurrent bool) error {
 }
 
 func (s *SpanImpl) Finish(ctx context.Context, resetCurrent bool) error {
-	if s.endedAt != "" {
+	if !s.endedAt.IsZero() {
 		Logger().Warn("Span already finished")
 		return nil
 	}
 
-	s.endedAt = TimeISO()
+	s.endedAt = time.Now()
 	err := s.processor.OnSpanEnd(ctx, s)
 	if err != nil {
 		return err
@@ -212,8 +213,8 @@ func (s *SpanImpl) SpanData() SpanData     { return s.spanData }
 func (s *SpanImpl) ParentID() string       { return s.parentID }
 func (s *SpanImpl) SetError(err SpanError) { s.error.Store(&err) }
 func (s *SpanImpl) Error() *SpanError      { return s.error.Load() }
-func (s *SpanImpl) StartedAt() string      { return s.startedAt }
-func (s *SpanImpl) EndedAt() string        { return s.endedAt }
+func (s *SpanImpl) StartedAt() time.Time   { return s.startedAt }
+func (s *SpanImpl) EndedAt() time.Time     { return s.endedAt }
 
 func (s *SpanImpl) Export() map[string]any {
 	var spanData map[string]any
@@ -231,12 +232,12 @@ func (s *SpanImpl) Export() map[string]any {
 		parentID = s.parentID
 	}
 	var startedAt any
-	if s.startedAt != "" {
-		startedAt = s.startedAt
+	if !s.startedAt.IsZero() {
+		startedAt = s.startedAt.UTC().Format(time.RFC3339Nano)
 	}
 	var endedAt any
-	if s.endedAt != "" {
-		endedAt = s.endedAt
+	if !s.endedAt.IsZero() {
+		endedAt = s.endedAt.UTC().Format(time.RFC3339Nano)
 	}
 
 	return map[string]any{

@@ -536,8 +536,8 @@ func TestNoopSpanDoesntRecord(t *testing.T) {
 	tracingtesting.RequireNoTraces(t)
 	assert.Nil(t, trace.Export())
 	assert.Nil(t, span.Export())
-	assert.Empty(t, span.StartedAt())
-	assert.Empty(t, span.EndedAt())
+	assert.Zero(t, span.StartedAt())
+	assert.Zero(t, span.EndedAt())
 	assert.Nil(t, span.Error())
 }
 

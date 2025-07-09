@@ -102,7 +102,7 @@ func (p *SpanProcessorForTests) GetOrderedSpans(includingEmpty, sortSpansByID bo
 		})
 	} else {
 		sort.Slice(spans, func(i, j int) bool {
-			return cmp.Less(spans[i].StartedAt(), spans[j].StartedAt())
+			return spans[i].StartedAt().Before(spans[j].StartedAt())
 		})
 	}
 

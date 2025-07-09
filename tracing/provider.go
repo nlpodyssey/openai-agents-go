@@ -24,7 +24,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -143,9 +142,6 @@ type TraceProvider interface {
 	// SetDisabled enable or disable tracing globally.
 	SetDisabled(disabled bool)
 
-	// TimeISO returns the current time in ISO 8601 format.
-	TimeISO() string
-
 	// GenTraceID generates a new trace identifier.
 	GenTraceID() string
 
@@ -216,11 +212,6 @@ func (p *DefaultTraceProvider) GetCurrentSpan(ctx context.Context) Span {
 // SetDisabled set whether tracing is disabled.
 func (p *DefaultTraceProvider) SetDisabled(disabled bool) {
 	p.disabled = disabled
-}
-
-// TimeISO returns the current time in ISO 8601 format.
-func (p *DefaultTraceProvider) TimeISO() string {
-	return time.Now().UTC().Format(time.RFC3339Nano)
 }
 
 // GenTraceID generates a new trace ID.

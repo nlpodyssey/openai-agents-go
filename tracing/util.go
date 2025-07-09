@@ -14,9 +14,6 @@
 
 package tracing
 
-// TimeISO returns the current time in ISO 8601 format.
-func TimeISO() string { return GetTraceProvider().TimeISO() }
-
 // GenTraceID generates a new trace ID.
 func GenTraceID() string { return GetTraceProvider().GenTraceID() }
 
