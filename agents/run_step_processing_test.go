@@ -78,7 +78,7 @@ func TestSingleToolCall(t *testing.T) {
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
 			getTextMessage("Hello, world!"),
-			getFunctionToolCall("test", ""),
+			getFunctionToolCall("test", "", ""),
 		},
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
@@ -112,7 +112,7 @@ func TestMissingToolCallReturnsError(t *testing.T) {
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
 			getTextMessage("Hello, world!"),
-			getFunctionToolCall("missing", ""),
+			getFunctionToolCall("missing", "", ""),
 		},
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
@@ -141,8 +141,8 @@ func TestRunStepProcessingMultipleToolCalls(t *testing.T) {
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
 			getTextMessage("Hello, world!"),
-			getFunctionToolCall("test_1", "abc"),
-			getFunctionToolCall("test_2", "xyz"),
+			getFunctionToolCall("test_1", "abc", ""),
+			getFunctionToolCall("test_2", "xyz", ""),
 		},
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
@@ -534,7 +534,7 @@ func TestToolAndHandoffParsedCorrectly(t *testing.T) {
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
 			getTextMessage("Hello, world!"),
-			getFunctionToolCall("test", "abc"),
+			getFunctionToolCall("test", "abc", ""),
 			getHandoffToolCall(agent1, "", ""),
 		},
 		Usage:      usage.NewUsage(),

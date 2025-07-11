@@ -15,6 +15,9 @@
 package agents
 
 import (
+	"cmp"
+	"context"
+	"fmt"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/usage"
@@ -104,7 +107,7 @@ func TestPlaintextAgentWithToolCallIsRunAgain(t *testing.T) {
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
 			getTextMessage("hello_world"),
-			getFunctionToolCall("test", ""),
+			getFunctionToolCall("test", "", ""),
 		},
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
@@ -121,13 +124,13 @@ func TestPlaintextAgentWithToolCallIsRunAgain(t *testing.T) {
 	require.Len(t, items, 3)
 
 	assertItemIsMessage(t, items[0], agent, "hello_world")
-	assertItemIsFunctionToolCall(t, items[1], agent, "test", "")
-	assertItemIsFunctionToolCallOutput(t, items[2], agent, "123")
+	assertItemIsFunctionToolCall(t, items[1], agent, "test", "", "")
+	assertItemIsFunctionToolCallOutput(t, items[2], agent, "123", "")
 
 	assert.IsType(t, NextStepRunAgain{}, result.NextStep)
 }
 
-func TestRunStepExecutionMultipleToolCalls(t *testing.T) {
+func TestMultipleToolCalls(t *testing.T) {
 	agent := &Agent{
 		Name: "test",
 		Tools: []Tool{
@@ -139,8 +142,8 @@ func TestRunStepExecutionMultipleToolCalls(t *testing.T) {
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
 			getTextMessage("Hello, world!"),
-			getFunctionToolCall("test_1", ""),
-			getFunctionToolCall("test_2", ""),
+			getFunctionToolCall("test_1", "", ""),
+			getFunctionToolCall("test_2", "", ""),
 		},
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
@@ -157,10 +160,52 @@ func TestRunStepExecutionMultipleToolCalls(t *testing.T) {
 	require.Len(t, items, 5)
 
 	assertItemIsMessage(t, items[0], agent, "Hello, world!")
-	assertItemIsFunctionToolCall(t, items[1], agent, "test_1", "")
-	assertItemIsFunctionToolCall(t, items[2], agent, "test_2", "")
-	assertItemIsFunctionToolCallOutput(t, items[3], agent, "123")
-	assertItemIsFunctionToolCallOutput(t, items[4], agent, "456")
+	assertItemIsFunctionToolCall(t, items[1], agent, "test_1", "", "")
+	assertItemIsFunctionToolCall(t, items[2], agent, "test_2", "", "")
+	assertItemIsFunctionToolCallOutput(t, items[3], agent, "123", "")
+	assertItemIsFunctionToolCallOutput(t, items[4], agent, "456", "")
+
+	assert.IsType(t, NextStepRunAgain{}, result.NextStep)
+}
+
+func TestMultipleToolCallsWithToolContext(t *testing.T) {
+	type fakeToolArgs struct {
+		Value string
+	}
+	fakeTool := func(ctx context.Context, args fakeToolArgs) (string, error) {
+		toolContextData := ToolDataFromContext(ctx)
+		if toolContextData == nil {
+			return "", fmt.Errorf("tool context data is nil")
+		}
+		return fmt.Sprintf("%s-%s", args.Value, toolContextData.ToolCallID), nil
+	}
+
+	tool := NewFunctionTool("fake_tool", "", fakeTool)
+
+	agent := New("test").WithTools(tool)
+	response := ModelResponse{
+		Output: []TResponseOutputItem{
+			getFunctionToolCall("fake_tool", `{"value": "123"}`, "1"),
+			getFunctionToolCall("fake_tool", `{"value": "456"}`, "2"),
+		},
+		Usage:      usage.NewUsage(),
+		ResponseID: "",
+	}
+	result := getExecuteResult(t, getExecuteResultParams{
+		agent:    agent,
+		response: response,
+	})
+
+	assert.Equal(t, InputString("hello"), result.OriginalInput)
+
+	// 4 items: 2 tool calls, 2 tool call outputs
+	items := result.GeneratedItems()
+	require.Len(t, items, 4)
+
+	assertItemIsFunctionToolCall(t, items[0], agent, "fake_tool", `{"value": "123"}`, "1")
+	assertItemIsFunctionToolCall(t, items[1], agent, "fake_tool", `{"value": "456"}`, "2")
+	assertItemIsFunctionToolCallOutput(t, items[2], agent, "123-1", "1")
+	assertItemIsFunctionToolCallOutput(t, items[3], agent, "456-2", "2")
 
 	assert.IsType(t, NextStepRunAgain{}, result.NextStep)
 }
@@ -205,7 +250,7 @@ func TestFinalOutputWithoutToolRunsAgain(t *testing.T) {
 	}
 	response := ModelResponse{
 		Output: []TResponseOutputItem{
-			getFunctionToolCall("tool_1", ""),
+			getFunctionToolCall("tool_1", "", ""),
 		},
 		Usage:      usage.NewUsage(),
 		ResponseID: "",
@@ -322,13 +367,13 @@ func assertItemIsMessage(t *testing.T, item RunItem, agent *Agent, text string) 
 	}, item)
 }
 
-func assertItemIsFunctionToolCall(t *testing.T, item RunItem, agent *Agent, name, arguments string) {
+func assertItemIsFunctionToolCall(t *testing.T, item RunItem, agent *Agent, name, arguments, callID string) {
 	t.Helper()
 	assert.Equal(t, ToolCallItem{
 		Agent: agent,
 		RawItem: ResponseFunctionToolCall{
 			ID:        "1",
-			CallID:    "2",
+			CallID:    cmp.Or(callID, "2"),
 			Name:      name,
 			Arguments: arguments,
 			Status:    "",
@@ -338,13 +383,13 @@ func assertItemIsFunctionToolCall(t *testing.T, item RunItem, agent *Agent, name
 	}, item)
 }
 
-func assertItemIsFunctionToolCallOutput(t *testing.T, item RunItem, agent *Agent, output string) {
+func assertItemIsFunctionToolCallOutput(t *testing.T, item RunItem, agent *Agent, output, callID string) {
 	t.Helper()
 	assert.Equal(t, ToolCallOutputItem{
 		Agent: agent,
 		RawItem: ResponseInputItemFunctionCallOutputParam{
 			ID:     param.Opt[string]{},
-			CallID: "2",
+			CallID: cmp.Or(callID, "2"),
 			Output: output,
 			Status: "",
 			Type:   constant.ValueOf[constant.FunctionCallOutput](),
@@ -379,10 +424,10 @@ func getTextInputItem(content string) TResponseInputItem {
 	}
 }
 
-func getFunctionToolCall(name string, arguments string) responses.ResponseOutputItemUnion {
+func getFunctionToolCall(name, arguments, callID string) responses.ResponseOutputItemUnion {
 	return responses.ResponseOutputItemUnion{ // responses.ResponseFunctionToolCall
 		ID:        "1",
-		CallID:    "2",
+		CallID:    cmp.Or(callID, "2"),
 		Type:      "function_call",
 		Name:      name,
 		Arguments: arguments,
@@ -394,7 +439,7 @@ func getHandoffToolCall(toAgent *Agent, overrideName string, args string) respon
 	if name == "" {
 		name = DefaultHandoffToolName(toAgent)
 	}
-	return getFunctionToolCall(name, args)
+	return getFunctionToolCall(name, args, "")
 }
 
 func getFinalOutputMessage(args string) responses.ResponseOutputItemUnion {
@@ -415,7 +460,8 @@ type getExecuteResultParams struct {
 	agent    *Agent
 	response ModelResponse
 	// optional
-	originalInput  Input
+	originalInput Input
+	// optional
 	generatedItems []RunItem
 	// optional
 	hooks RunHooks
