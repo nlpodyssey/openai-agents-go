@@ -138,6 +138,10 @@ type ResponseOutputItemImageGenerationCall responses.ResponseOutputItemImageGene
 
 func (ResponseOutputItemImageGenerationCall) isToolCallItemType() {}
 
+type ResponseOutputItemMcpCall responses.ResponseOutputItemMcpCall
+
+func (ResponseOutputItemMcpCall) isToolCallItemType() {}
+
 func TResponseInputItemFromToolCallItemType(input ToolCallItemType) TResponseInputItem {
 	switch v := input.(type) {
 	case ResponseFunctionToolCall:
@@ -231,4 +235,58 @@ func (ReasoningItem) isRunItem() {}
 
 func (item ReasoningItem) ToInputItem() TResponseInputItem {
 	return openaitypes.ResponseInputItemUnionParamFromResponseReasoningItem(item.RawItem)
+}
+
+// MCPListToolsItem represents a call to an MCP server to list tools.
+type MCPListToolsItem struct {
+	// The agent whose run caused this item to be generated.
+	Agent *Agent
+
+	// The raw MCP list tools call.
+	RawItem responses.ResponseOutputItemMcpListTools
+
+	// Always `mcp_list_tools_item`.
+	Type string
+}
+
+func (MCPListToolsItem) isRunItem() {}
+
+func (item MCPListToolsItem) ToInputItem() TResponseInputItem {
+	return openaitypes.ResponseInputItemUnionParamFromResponseOutputItemMcpListTools(item.RawItem)
+}
+
+// MCPApprovalRequestItem represents a request for MCP approval.
+type MCPApprovalRequestItem struct {
+	// The agent whose run caused this item to be generated.
+	Agent *Agent
+
+	// The raw MCP approval request.
+	RawItem responses.ResponseOutputItemMcpApprovalRequest
+
+	// Always `mcp_approval_request_item`.
+	Type string
+}
+
+func (MCPApprovalRequestItem) isRunItem() {}
+
+func (item MCPApprovalRequestItem) ToInputItem() TResponseInputItem {
+	return openaitypes.ResponseInputItemUnionParamFromResponseOutputItemMcpApprovalRequest(item.RawItem)
+}
+
+// MCPApprovalResponseItem represents a response to an MCP approval request.
+type MCPApprovalResponseItem struct {
+	// The agent whose run caused this item to be generated.
+	Agent *Agent
+
+	// The raw MCP approval response.
+	RawItem responses.ResponseInputItemMcpApprovalResponseParam
+
+	// Always `mcp_approval_response_item`.
+	Type string
+}
+
+func (MCPApprovalResponseItem) isRunItem() {}
+
+func (item MCPApprovalResponseItem) ToInputItem() TResponseInputItem {
+	return openaitypes.ResponseInputItemUnionParamFromResponseInputItemMcpApprovalResponseParam(item.RawItem)
 }
