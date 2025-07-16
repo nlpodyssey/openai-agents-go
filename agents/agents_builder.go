@@ -104,6 +104,24 @@ func (a *Agent) AddTool(t Tool) *Agent {
 	return a
 }
 
+// WithMCPServers sets the list of MCP servers available to the agent.
+func (a *Agent) WithMCPServers(mcpServers []MCPServer) *Agent {
+	a.MCPServers = mcpServers
+	return a
+}
+
+// AddMCPServer appends an MCP server to the agent's MCP server list.
+func (a *Agent) AddMCPServer(mcpServer MCPServer) *Agent {
+	a.MCPServers = append(a.MCPServers, mcpServer)
+	return a
+}
+
+// WithMCPConfig sets the agent's MCP configuration.
+func (a *Agent) WithMCPConfig(mcpConfig MCPConfig) *Agent {
+	a.MCPConfig = mcpConfig
+	return a
+}
+
 // WithInputGuardrails sets the input guardrails.
 func (a *Agent) WithInputGuardrails(gr []InputGuardrail) *Agent {
 	a.InputGuardrails = gr

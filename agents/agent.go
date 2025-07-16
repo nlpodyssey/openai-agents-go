@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
@@ -37,6 +38,14 @@ type ToolsToFinalOutputResult struct {
 	// The final output. Can be Null if `IsFinalOutput` is false, otherwise must match the
 	// `OutputType` of the agent.
 	FinalOutput param.Opt[any]
+}
+
+// MCPConfig provides configuration parameters for MCP servers.
+type MCPConfig struct {
+	// If true, we will attempt to convert the MCP schemas to strict-mode schemas.
+	// This is a best-effort conversion, so some schemas may not be convertible.
+	// Defaults to false.
+	ConvertSchemasToStrict bool
 }
 
 // An Agent is an AI model configured with instructions, tools, guardrails, handoffs and more.
@@ -81,6 +90,18 @@ type Agent struct {
 
 	// A list of tools that the agent can use.
 	Tools []Tool
+
+	// Optional list of Model Context Protocol (https://modelcontextprotocol.io) servers that
+	// the agent can use. Every time the agent runs, it will include tools from these servers in the
+	// list of available tools.
+	//
+	// NOTE: You are expected to manage the lifecycle of these servers. Specifically, you must call
+	// `MCPServer.Connect()` before passing it to the agent, and `MCPServer.Cleanup()` when the server is no
+	// longer needed.
+	MCPServers []MCPServer
+
+	// Optional configuration for MCP servers.
+	MCPConfig MCPConfig
 
 	// A list of checks that run in parallel to the agent's execution, before generating a
 	// response. Runs only if the agent is the first agent in the chain.
@@ -179,9 +200,18 @@ func (a *Agent) GetPrompt(ctx context.Context) (responses.ResponsePromptParam, b
 	return PromptUtil().ToModelInput(ctx, a.Prompt, a)
 }
 
-// GetAllTools returns all agent tools.
-// It only includes function tools, since other types are omitted, as we don't need them.
+// GetMCPTools fetches the available tools from the MCP servers.
+func (a *Agent) GetMCPTools(ctx context.Context) ([]Tool, error) {
+	return MCPUtil().GetAllFunctionTools(ctx, a.MCPServers, a.MCPConfig.ConvertSchemasToStrict, a)
+}
+
+// GetAllTools returns all agent tools, including MCP tools and function tools.
 func (a *Agent) GetAllTools(ctx context.Context) ([]Tool, error) {
+	mcpTools, err := a.GetMCPTools(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get MCP tools: %w", err)
+	}
+
 	isEnabledResults := make([]bool, len(a.Tools))
 	isEnabledErrors := make([]error, len(a.Tools))
 
@@ -220,5 +250,5 @@ func (a *Agent) GetAllTools(ctx context.Context) ([]Tool, error) {
 		}
 	}
 
-	return enabledTools, nil
+	return slices.Concat(mcpTools, enabledTools), nil
 }
