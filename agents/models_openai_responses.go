@@ -443,6 +443,11 @@ func (conv responsesConverter) convertTool(
 			},
 		}
 		includes = nil
+	case HostedMCPTool:
+		convertedTool = &responses.ToolUnionParam{
+			OfMcp: &t.ToolConfig,
+		}
+		includes = nil
 	case ImageGenerationTool:
 		convertedTool = &responses.ToolUnionParam{
 			OfImageGeneration: &t.ToolConfig,

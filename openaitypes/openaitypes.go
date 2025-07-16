@@ -726,6 +726,79 @@ func ResponseOutputMessageFromResponseOutputItemUnion(
 	}
 }
 
+func ResponseInputItemUnionParamFromResponseOutputItemMcpListTools(
+	input responses.ResponseOutputItemMcpListTools,
+) responses.ResponseInputItemUnionParam {
+	v := ResponseInputItemMcpListToolsParamFromResponseOutputItemMcpListTools(input)
+	return responses.ResponseInputItemUnionParam{
+		OfMcpListTools: &v,
+	}
+}
+
+func ResponseInputItemMcpListToolsParamFromResponseOutputItemMcpListTools(
+	input responses.ResponseOutputItemMcpListTools,
+) responses.ResponseInputItemMcpListToolsParam {
+	return responses.ResponseInputItemMcpListToolsParam{
+		ID:          input.ID,
+		ServerLabel: input.ServerLabel,
+		Tools:       ResponseInputItemMcpListToolsToolParamSliceFromResponseOutputItemMcpListToolsToolSlice(input.Tools),
+		Error:       makeOpt(input.Error),
+		Type:        constant.ValueOf[constant.McpListTools](),
+	}
+}
+func ResponseInputItemMcpListToolsToolParamSliceFromResponseOutputItemMcpListToolsToolSlice(
+	input []responses.ResponseOutputItemMcpListToolsTool,
+) []responses.ResponseInputItemMcpListToolsToolParam {
+	if input == nil {
+		return nil
+	}
+	out := make([]responses.ResponseInputItemMcpListToolsToolParam, len(input))
+	for i, item := range input {
+		out[i] = ResponseInputItemMcpListToolsToolParamFromResponseOutputItemMcpListToolsTool(item)
+	}
+	return out
+}
+
+func ResponseInputItemMcpListToolsToolParamFromResponseOutputItemMcpListToolsTool(
+	input responses.ResponseOutputItemMcpListToolsTool,
+) responses.ResponseInputItemMcpListToolsToolParam {
+	return responses.ResponseInputItemMcpListToolsToolParam{
+		InputSchema: input.InputSchema,
+		Name:        input.Name,
+		Description: makeOpt(input.Description),
+		Annotations: input.Annotations,
+	}
+}
+
+func ResponseInputItemUnionParamFromResponseOutputItemMcpApprovalRequest(
+	input responses.ResponseOutputItemMcpApprovalRequest,
+) responses.ResponseInputItemUnionParam {
+	v := ResponseInputItemMcpApprovalRequestParamFromResponseOutputItemMcpApprovalRequest(input)
+	return responses.ResponseInputItemUnionParam{
+		OfMcpApprovalRequest: &v,
+	}
+}
+
+func ResponseInputItemMcpApprovalRequestParamFromResponseOutputItemMcpApprovalRequest(
+	input responses.ResponseOutputItemMcpApprovalRequest,
+) responses.ResponseInputItemMcpApprovalRequestParam {
+	return responses.ResponseInputItemMcpApprovalRequestParam{
+		ID:          input.ID,
+		Arguments:   input.Arguments,
+		Name:        input.Name,
+		ServerLabel: input.ServerLabel,
+		Type:        constant.ValueOf[constant.McpApprovalRequest](),
+	}
+}
+
+func ResponseInputItemUnionParamFromResponseInputItemMcpApprovalResponseParam(
+	input responses.ResponseInputItemMcpApprovalResponseParam,
+) responses.ResponseInputItemUnionParam {
+	return responses.ResponseInputItemUnionParam{
+		OfMcpApprovalResponse: &input,
+	}
+}
+
 func makeOpt[T comparable](v T) param.Opt[T] {
 	var zero T
 	if v == zero {
