@@ -23,8 +23,7 @@ import (
 var agentsLogger atomic.Pointer[slog.Logger]
 
 func init() {
-	opts := &slog.HandlerOptions{Level: slog.LevelInfo}
-	agentsLogger.Store(slog.New(slog.NewTextHandler(os.Stderr, opts)))
+	ResetLogger()
 }
 
 // Logger is the global logger used by Agents SDK.
@@ -40,6 +39,11 @@ func SetLogger(l *slog.Logger) {
 	if l != nil {
 		agentsLogger.Store(l)
 	}
+}
+
+func ResetLogger() {
+	opts := &slog.HandlerOptions{Level: slog.LevelInfo}
+	SetLogger(slog.New(slog.NewTextHandler(os.Stderr, opts)))
 }
 
 // EnableVerboseStdoutLogging enables verbose logging to stdout.
