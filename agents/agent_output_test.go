@@ -42,7 +42,7 @@ func TestOutputType(t *testing.T) {
 		assert.Equal(t, m{
 			"$schema":              "https://json-schema.org/draft/2020-12/schema",
 			"type":                 "object",
-			"required":             []string{"bar"},
+			"required":             []any{"bar"},
 			"additionalProperties": false,
 			"properties":           m{"bar": m{"type": "string"}},
 		}, schema)
@@ -64,7 +64,7 @@ func TestOutputType(t *testing.T) {
 		assert.Equal(t, m{
 			"$schema":              "https://json-schema.org/draft/2020-12/schema",
 			"type":                 "object",
-			"required":             []string{"response"},
+			"required":             []any{"response"},
 			"additionalProperties": false,
 			"properties":           m{"response": m{"type": "array", "items": m{"type": "string"}}},
 		}, schema)
@@ -133,7 +133,7 @@ var CustomOutputTypeJSONSchema = map[string]any{
 	"properties": map[string]any{
 		"foo": map[string]any{"type": "string"},
 	},
-	"required": []string{"foo"},
+	"required": []any{"foo"},
 }
 
 type CustomOutputType struct{}
