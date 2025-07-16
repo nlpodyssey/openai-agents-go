@@ -64,6 +64,8 @@ const (
 	StreamEventToolCalled           RunItemStreamEventName = "tool_called"
 	StreamEventToolOutput           RunItemStreamEventName = "tool_output"
 	StreamEventReasoningItemCreated RunItemStreamEventName = "reasoning_item_created"
+	StreamEventMCPApprovalRequested RunItemStreamEventName = "mcp_approval_requested"
+	StreamEventMCPListTools         RunItemStreamEventName = "mcp_list_tools"
 )
 
 // AgentUpdatedStreamEvent is an event that notifies that there is a new agent running.
