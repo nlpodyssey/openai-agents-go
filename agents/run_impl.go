@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"sync"
 
@@ -91,6 +92,11 @@ type ToolRunComputerAction struct {
 	ComputerTool ComputerTool
 }
 
+type ToolRunMCPApprovalRequest struct {
+	RequestItem responses.ResponseOutputItemMcpApprovalRequest
+	MCPTool     HostedMCPTool
+}
+
 type ToolRunLocalShellCall struct {
 	ToolCall       responses.ResponseOutputItemLocalShellCall
 	LocalShellTool LocalShellTool
@@ -104,13 +110,16 @@ type ProcessedResponse struct {
 	LocalShellCalls []ToolRunLocalShellCall
 	// Names of all tools used, including hosted tools
 	ToolsUsed []string
+	// Only requests with callbacks
+	MCPApprovalRequests []ToolRunMCPApprovalRequest
 }
 
-func (pr *ProcessedResponse) HasToolsToRun() bool {
+func (pr *ProcessedResponse) HasToolsOrApprovalsToRun() bool {
 	// Handoffs, functions and computer actions need local processing.
 	// Hosted tools have already run, so there's nothing to do.
 	return len(pr.Handoffs) > 0 || len(pr.Functions) > 0 ||
-		len(pr.ComputerActions) > 0 || len(pr.LocalShellCalls) > 0
+		len(pr.ComputerActions) > 0 || len(pr.LocalShellCalls) > 0 ||
+		len(pr.MCPApprovalRequests) > 0
 }
 
 type NextStep interface {
@@ -228,6 +237,15 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	}
 	newStepItems = append(newStepItems, computerResults...)
 
+	// Next, run the MCP approval requests
+	if mcpApprovalRequests := processedResponse.MCPApprovalRequests; len(mcpApprovalRequests) > 0 {
+		approvalResults, err := ri.ExecuteMCPApprovalRequests(ctx, agent, processedResponse.MCPApprovalRequests)
+		if err != nil {
+			return nil, err
+		}
+		newStepItems = append(newStepItems, approvalResults...)
+	}
+
 	// Next, check if there are any handoffs
 	if runHandoffs := processedResponse.Handoffs; len(runHandoffs) > 0 {
 		return ri.ExecuteHandoffs(
@@ -307,7 +325,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 			finalOutput,
 			hooks,
 		)
-	} else if (outputType == nil || outputType.IsPlainText()) && !processedResponse.HasToolsToRun() {
+	} else if (outputType == nil || outputType.IsPlainText()) && !processedResponse.HasToolsOrApprovalsToRun() {
 		return ri.ExecuteFinalOutput(
 			ctx,
 			agent,
@@ -354,14 +372,15 @@ func (runImpl) ProcessModelResponse(
 	handoffs []Handoff,
 ) (*ProcessedResponse, error) {
 	var (
-		items           []RunItem
-		runHandoffs     []ToolRunHandoff
-		functions       []ToolRunFunction
-		computerActions []ToolRunComputerAction
-		localShellCalls []ToolRunLocalShellCall
-		computerTool    *ComputerTool
-		localShellTool  *LocalShellTool
-		toolsUsed       []string
+		items               []RunItem
+		runHandoffs         []ToolRunHandoff
+		functions           []ToolRunFunction
+		computerActions     []ToolRunComputerAction
+		localShellCalls     []ToolRunLocalShellCall
+		mcpApprovalRequests []ToolRunMCPApprovalRequest
+		computerTool        *ComputerTool
+		localShellTool      *LocalShellTool
+		toolsUsed           []string
 	)
 
 	handoffMap := make(map[string]Handoff, len(handoffs))
@@ -370,6 +389,7 @@ func (runImpl) ProcessModelResponse(
 	}
 
 	functionMap := make(map[string]FunctionTool)
+	hostedMCPServerMap := make(map[string]HostedMCPTool)
 
 	for _, tool := range allTools {
 		switch t := tool.(type) {
@@ -379,6 +399,8 @@ func (runImpl) ProcessModelResponse(
 			computerTool = &t
 		case LocalShellTool:
 			localShellTool = &t
+		case HostedMCPTool:
+			hostedMCPServerMap[t.ToolConfig.ServerLabel] = t
 		}
 	}
 
@@ -459,6 +481,63 @@ func (runImpl) ProcessModelResponse(
 				ToolCall:     output,
 				ComputerTool: *computerTool,
 			})
+		case "mcp_approval_request":
+			output := responses.ResponseOutputItemMcpApprovalRequest{
+				ID:          outputUnion.ID,
+				Arguments:   outputUnion.Arguments,
+				Name:        outputUnion.Name,
+				ServerLabel: outputUnion.ServerLabel,
+				Type:        constant.ValueOf[constant.McpApprovalRequest](),
+			}
+			items = append(items, MCPApprovalRequestItem{
+				Agent:   agent,
+				RawItem: output,
+				Type:    "mcp_approval_request_item",
+			})
+			if server, ok := hostedMCPServerMap[output.ServerLabel]; !ok {
+				AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+					Message: "MCP server label not found",
+					Data:    map[string]any{"server_label": output.ServerLabel},
+				})
+				return nil, ModelBehaviorErrorf("MCP server label %q not found", output.ServerLabel)
+			} else if server.OnApprovalRequest != nil {
+				mcpApprovalRequests = append(mcpApprovalRequests, ToolRunMCPApprovalRequest{
+					RequestItem: output,
+					MCPTool:     server,
+				})
+			} else {
+				Logger().Warn("MCP server has no OnApprovalRequest hook",
+					slog.String("serverLabel", output.ServerLabel))
+			}
+		case "mcp_list_tools":
+			output := responses.ResponseOutputItemMcpListTools{
+				ID:          outputUnion.ID,
+				ServerLabel: outputUnion.ServerLabel,
+				Tools:       outputUnion.Tools,
+				Type:        constant.ValueOf[constant.McpListTools](),
+				Error:       outputUnion.Error,
+			}
+			items = append(items, MCPListToolsItem{
+				Agent:   agent,
+				RawItem: output,
+				Type:    "mcp_list_tools_item",
+			})
+		case "mcp_call":
+			output := responses.ResponseOutputItemMcpCall{
+				ID:          outputUnion.ID,
+				Arguments:   outputUnion.Arguments,
+				Name:        outputUnion.Name,
+				ServerLabel: outputUnion.ServerLabel,
+				Type:        constant.ValueOf[constant.McpCall](),
+				Error:       outputUnion.Error,
+				Output:      outputUnion.Output,
+			}
+			items = append(items, ToolCallItem{
+				Agent:   agent,
+				RawItem: ResponseOutputItemMcpCall(output),
+				Type:    "tool_call_item",
+			})
+			toolsUsed = append(toolsUsed, "mcp")
 		case "image_generation_call":
 			output := responses.ResponseOutputItemImageGenerationCall{
 				ID:     outputUnion.ID,
@@ -539,7 +618,7 @@ func (runImpl) ProcessModelResponse(
 						Message: "Tool not found",
 						Data:    map[string]any{"tool_name": output.Name},
 					})
-					return nil, ModelBehaviorErrorf("Tool %s not found in agent %s", output.Name, agent.Name)
+					return nil, ModelBehaviorErrorf("tool %s not found in agent %s", output.Name, agent.Name)
 				}
 				items = append(items, ToolCallItem{
 					Agent:   agent,
@@ -557,12 +636,13 @@ func (runImpl) ProcessModelResponse(
 	}
 
 	return &ProcessedResponse{
-		NewItems:        items,
-		Handoffs:        runHandoffs,
-		Functions:       functions,
-		ComputerActions: computerActions,
-		LocalShellCalls: localShellCalls,
-		ToolsUsed:       toolsUsed,
+		NewItems:            items,
+		Handoffs:            runHandoffs,
+		Functions:           functions,
+		ComputerActions:     computerActions,
+		LocalShellCalls:     localShellCalls,
+		ToolsUsed:           toolsUsed,
+		MCPApprovalRequests: mcpApprovalRequests,
 	}, nil
 }
 
@@ -961,6 +1041,77 @@ func (runImpl) ExecuteHandoffs(
 	}, nil
 }
 
+func (ri runImpl) ExecuteMCPApprovalRequests(
+	ctx context.Context,
+	agent *Agent,
+	approvalRequests []ToolRunMCPApprovalRequest,
+) ([]RunItem, error) {
+	if len(approvalRequests) == 0 {
+		return nil, nil
+	}
+
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
+	defer cancel()
+
+	errs := make([]error, len(approvalRequests))
+	results := make([]RunItem, len(approvalRequests))
+
+	var wg sync.WaitGroup
+	wg.Add(len(approvalRequests))
+
+	for i, approvalRequest := range approvalRequests {
+		go func() {
+			defer wg.Done()
+			results[i], errs[i] = ri.runSingleMCPApproval(ctx, agent, approvalRequest)
+			if errs[i] != nil {
+				cancel()
+			}
+		}()
+	}
+
+	wg.Wait()
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (ri runImpl) runSingleMCPApproval(
+	ctx context.Context,
+	agent *Agent,
+	approvalRequest ToolRunMCPApprovalRequest,
+) (RunItem, error) {
+	callback := approvalRequest.MCPTool.OnApprovalRequest
+	if callback == nil {
+		return nil, errors.New("callback is required for MCP approval requests")
+	}
+
+	result, err := callback(ctx, approvalRequest.RequestItem)
+	if err != nil {
+		return nil, err
+	}
+
+	var reason param.Opt[string]
+	if !result.Approve && result.Reason != "" {
+		reason = param.NewOpt(result.Reason)
+	}
+
+	rawItem := responses.ResponseInputItemMcpApprovalResponseParam{
+		ApprovalRequestID: approvalRequest.RequestItem.ID,
+		Approve:           result.Approve,
+		ID:                param.Opt[string]{},
+		Reason:            reason,
+		Type:              constant.ValueOf[constant.McpApprovalResponse](),
+	}
+
+	return MCPApprovalResponseItem{
+		Agent:   agent,
+		RawItem: rawItem,
+		Type:    "mcp_approval_response_item",
+	}, nil
+}
+
 func (ri runImpl) ExecuteFinalOutput(
 	ctx context.Context,
 	agent *Agent,
@@ -1090,12 +1241,19 @@ func (runImpl) StreamStepResultToQueue(stepResult SingleStepResult, queue *async
 			event = NewRunItemStreamEvent(StreamEventToolOutput, item)
 		case ReasoningItem:
 			event = NewRunItemStreamEvent(StreamEventReasoningItemCreated, item)
+		case MCPApprovalRequestItem:
+			event = NewRunItemStreamEvent(StreamEventMCPApprovalRequested, item)
+		case MCPListToolsItem:
+			event = NewRunItemStreamEvent(StreamEventMCPListTools, item)
+		// TODO: is it right not to handle MCPApprovalResponseItem here?
 		default:
-			// This would be an unrecoverable implementation bug, so a panic is appropriate.
-			panic(fmt.Errorf("unexpected RunItem type %T", item))
+			Logger().Warn(fmt.Sprintf("Unexpected RunItem type %T", item))
+			event = nil
 		}
 
-		queue.Put(event)
+		if event != nil {
+			queue.Put(event)
+		}
 	}
 }
 
