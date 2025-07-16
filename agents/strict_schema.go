@@ -3,7 +3,9 @@ package agents
 import (
 	"fmt"
 	"maps"
+	"reflect"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -48,7 +50,7 @@ func ensureStrictJSONSchema(rawJSONSchema any, path []string, root map[string]an
 	if typ, _ := jsonSchema["type"].(string); typ == "object" {
 		if !hasAdditionalProperties {
 			jsonSchema["additionalProperties"] = false
-		} else if additionalProperties == true {
+		} else if additionalProperties != false && !reflect.DeepEqual(additionalProperties, map[string]any{"not": map[string]any{}}) {
 			return nil, NewUserError(
 				"additionalProperties should not be set for object types. " +
 					"This could be because you configured additional properties to be allowed. " +
@@ -60,7 +62,15 @@ func ensureStrictJSONSchema(rawJSONSchema any, path []string, root map[string]an
 	// object types
 	// { 'type': 'object', 'properties': { 'a':  {...} } }
 	if properties, ok := jsonSchema["properties"].(map[string]any); ok {
-		jsonSchema["required"] = slices.Collect(maps.Keys(properties))
+		keys := slices.Collect(maps.Keys(properties))
+		sort.Strings(keys) // Sort for deterministic results, especially in tests
+
+		// For consistency, prefer []any to []string and empty slice over nil
+		required := make([]any, len(keys))
+		for i, k := range keys {
+			required[i] = k
+		}
+		jsonSchema["required"] = required
 
 		newProperties := make(map[string]any, len(properties))
 		for key, propSchema := range properties {

@@ -41,7 +41,7 @@ func TestObjectWithoutAdditionalProperties(t *testing.T) {
 	assert.Equal(t, m{
 		"type":                 "object",
 		"additionalProperties": false,
-		"required":             []string{"a"},
+		"required":             []any{"a"},
 		"properties": m{
 			"a": m{
 				// The inner property remains unchanged
@@ -105,7 +105,7 @@ func TestAnyOfProcessing(t *testing.T) {
 			m{
 				"type":                 "object",
 				"additionalProperties": false,
-				"required":             []string{"a"},
+				"required":             []any{"a"},
 				"properties":           m{"a": m{"type": "string"}},
 			},
 			m{"type": "number"},
@@ -127,7 +127,7 @@ func TestAllOfSingleEntryMerging(t *testing.T) {
 	assert.Equal(t, m{
 		"type":                 "object",
 		"additionalProperties": false,
-		"required":             []string{"a"},
+		"required":             []any{"a"},
 		"properties":           m{"a": m{"type": "boolean"}},
 	}, result)
 }
@@ -155,7 +155,7 @@ func TestRefExpansion(t *testing.T) {
 		"definitions":          m{"refObj": m{"type": "string"}},
 		"type":                 "object",
 		"additionalProperties": false,
-		"required":             []string{"a"},
+		"required":             []any{"a"},
 		"properties":           m{"a": m{"type": "string", "description": "desc"}},
 	}, result)
 }
