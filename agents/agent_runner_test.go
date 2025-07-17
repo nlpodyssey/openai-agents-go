@@ -781,3 +781,53 @@ func TestDynamicToolAdditionRun(t *testing.T) {
 	assert.Equal(t, "done", result.FinalOutput)
 	assert.True(t, tool2Called)
 }
+
+func TestRunStreamedChan(t *testing.T) {
+	model := agentstesting.NewFakeModel(false, nil)
+	agent := &agents.Agent{
+		Name:  "test",
+		Model: param.NewOpt(agents.NewAgentModel(model)),
+	}
+
+	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
+		Value: []agents.TResponseOutputItem{
+			agentstesting.GetTextMessage("hi"),
+		},
+	})
+
+	events, errCh, err := agents.Runner{}.RunStreamedChan(t.Context(), agent, "test")
+	require.NoError(t, err)
+
+	var seen int
+	for range events {
+		seen++
+	}
+
+	assert.Greater(t, seen, 0)
+	assert.NoError(t, <-errCh)
+}
+
+func TestTestRunStreamedSeq(t *testing.T) {
+	model := agentstesting.NewFakeModel(false, nil)
+	agent := &agents.Agent{
+		Name:  "test",
+		Model: param.NewOpt(agents.NewAgentModel(model)),
+	}
+
+	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
+		Value: []agents.TResponseOutputItem{
+			agentstesting.GetTextMessage("hi"),
+		},
+	})
+
+	seq, err := agents.Runner{}.RunStreamedSeq(t.Context(), agent, "test")
+	require.NoError(t, err)
+
+	var seen int
+	for range seq.Seq {
+		seen++
+	}
+
+	assert.Greater(t, seen, 0)
+	assert.NoError(t, seq.Err)
+}
