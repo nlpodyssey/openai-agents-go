@@ -46,6 +46,12 @@ type MCPServer interface {
 
 	// CallTool invokes a tool on the server.
 	CallTool(ctx context.Context, toolName string, arguments map[string]any) (*mcp.CallToolResult, error)
+
+	// ListPrompts lists the prompts available on the server.
+	ListPrompts(ctx context.Context) (*mcp.ListPromptsResult, error)
+
+	// GetPrompt returns a specific prompt from the server.
+	GetPrompt(ctx context.Context, name string, arguments map[string]string) (*mcp.GetPromptResult, error)
 }
 
 // MCPServerWithClientSession is a base type for MCP servers that uses an
@@ -162,6 +168,23 @@ func (s *MCPServerWithClientSession) CallTool(ctx context.Context, toolName stri
 	}
 	return s.session.CallTool(ctx, &mcp.CallToolParams{
 		Name:      toolName,
+		Arguments: arguments,
+	})
+}
+
+func (s *MCPServerWithClientSession) ListPrompts(ctx context.Context) (*mcp.ListPromptsResult, error) {
+	if s.session == nil {
+		return nil, NewUserError("server not initialized: make sure you call `Connect()` first")
+	}
+	return s.session.ListPrompts(ctx, nil)
+}
+
+func (s *MCPServerWithClientSession) GetPrompt(ctx context.Context, name string, arguments map[string]string) (*mcp.GetPromptResult, error) {
+	if s.session == nil {
+		return nil, NewUserError("server not initialized: make sure you call `Connect()` first")
+	}
+	return s.session.GetPrompt(ctx, &mcp.GetPromptParams{
+		Name:      name,
 		Arguments: arguments,
 	})
 }

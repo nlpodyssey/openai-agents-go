@@ -80,3 +80,21 @@ func (s *FakeMCPServer) CallTool(_ context.Context, toolName string, arguments m
 	s.ToolResults = append(s.ToolResults, result)
 	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: result}}}, nil
 }
+
+// ListPrompts returns empty list of prompts for fake server.
+func (s *FakeMCPServer) ListPrompts(context.Context) (*mcp.ListPromptsResult, error) {
+	return &mcp.ListPromptsResult{}, nil
+}
+
+// GetPrompt returns a simple prompt result for fake server.
+func (s *FakeMCPServer) GetPrompt(_ context.Context, name string, _ map[string]string) (*mcp.GetPromptResult, error) {
+	content := fmt.Sprintf("Fake prompt content for %s", name)
+	message := &mcp.PromptMessage{
+		Content: &mcp.TextContent{Text: content},
+		Role:    "user",
+	}
+	return &mcp.GetPromptResult{
+		Description: fmt.Sprintf("Fake prompt: %s", name),
+		Messages:    []*mcp.PromptMessage{message},
+	}, nil
+}
