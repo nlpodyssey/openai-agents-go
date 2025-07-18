@@ -153,6 +153,9 @@ func (s *MCPServerWithClientSession) ListTools(ctx context.Context, agent *Agent
 
 	filteredTools := tools
 	if s.toolFilter != nil {
+		if agent == nil {
+			return nil, UserErrorf("agent is required for dynamic tool filtering")
+		}
 		filterContext := MCPToolFilterContext{
 			Agent:      agent,
 			ServerName: s.name,
