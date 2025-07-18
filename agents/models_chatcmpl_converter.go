@@ -215,7 +215,18 @@ func (chatCmplConverter) ExtractAllContentFromResponseInputContentUnionParams(
 				},
 			}
 		} else if !param.IsOmitted(c.OfInputFile) {
-			return nil, UserErrorf("file uploads are not supported for chat completions %+v", c)
+			fileParam := c.OfInputFile
+			if !fileParam.FileData.Valid() {
+				return nil, UserErrorf("only FileData is supported for InputFile %#v", *fileParam)
+			}
+			out[i] = openai.ChatCompletionContentPartUnionParam{
+				OfFile: &openai.ChatCompletionContentPartFileParam{
+					File: openai.ChatCompletionContentPartFileFileParam{
+						FileData: fileParam.FileData,
+					},
+					Type: constant.ValueOf[constant.File](),
+				},
+			}
 		} else {
 			return nil, UserErrorf("unknown content: %+v", c)
 		}
