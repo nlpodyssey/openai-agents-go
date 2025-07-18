@@ -253,7 +253,7 @@ func (chatCmplStreamHandler) HandleStream(
 
 			tc.Arguments += tcFunction.Arguments
 			tc.Name += tcFunction.Name
-			tc.CallID += tcDelta.ID
+			tc.CallID = tcDelta.ID
 		}
 	}
 
