@@ -146,8 +146,8 @@ func SafeOutputType[T any](opts OutputTypeOpts) (OutputTypeInterface, error) {
 				var userError UserError
 				if errors.As(err, &userError) {
 					return nil, UserErrorf(
-						"Strict JSON schema is enabled, but the output type is not valid. Either make the "+
-							"output type strict, or disable strict JSON schema in your Agent(). Error: %w", userError,
+						"strict JSON schema is enabled, but the output type is not valid: either make the "+
+							"output type strict, or disable strict JSON schema in your Agent; error: %w", userError,
 					)
 				} else {
 					return nil, err
