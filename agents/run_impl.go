@@ -436,6 +436,7 @@ func (runImpl) ProcessModelResponse(
 		case "web_search_call":
 			output := responses.ResponseFunctionWebSearch{
 				ID:     outputUnion.ID,
+				Action: openaitypes.ResponseFunctionWebSearchActionUnionFromResponseOutputItemUnionAction(outputUnion.Action),
 				Status: responses.ResponseFunctionWebSearchStatus(outputUnion.Status),
 				Type:   constant.ValueOf[constant.WebSearchCall](),
 			}

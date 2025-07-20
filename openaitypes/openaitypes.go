@@ -296,6 +296,7 @@ func ResponseInputItemUnionParamFromResponseOutputItemUnion(
 	case "web_search_call":
 		return ResponseInputItemUnionParamFromResponseFunctionWebSearch(responses.ResponseFunctionWebSearch{
 			ID:     input.ID,
+			Action: ResponseFunctionWebSearchActionUnionFromResponseOutputItemUnionAction(input.Action),
 			Status: responses.ResponseFunctionWebSearchStatus(input.Status),
 			Type:   constant.ValueOf[constant.WebSearchCall](),
 		})
@@ -403,8 +404,51 @@ func ResponseFunctionWebSearchToParam(
 ) responses.ResponseFunctionWebSearchParam {
 	return responses.ResponseFunctionWebSearchParam{
 		ID:     input.ID,
+		Action: ResponseFunctionWebSearchActionUnionToParam(input.Action),
 		Status: input.Status,
 		Type:   constant.ValueOf[constant.WebSearchCall](),
+	}
+}
+
+func ResponseFunctionWebSearchActionUnionToParam(
+	input responses.ResponseFunctionWebSearchActionUnion,
+) responses.ResponseFunctionWebSearchActionUnionParam {
+	switch input.Type {
+	case "search":
+		return responses.ResponseFunctionWebSearchActionUnionParam{
+			OfSearch: &responses.ResponseFunctionWebSearchActionSearchParam{
+				Query: input.Query,
+				Type:  constant.ValueOf[constant.Search](),
+			},
+		}
+	case "open_page":
+		return responses.ResponseFunctionWebSearchActionUnionParam{
+			OfOpenPage: &responses.ResponseFunctionWebSearchActionOpenPageParam{
+				URL:  input.URL,
+				Type: constant.ValueOf[constant.OpenPage](),
+			},
+		}
+	case "find":
+		return responses.ResponseFunctionWebSearchActionUnionParam{
+			OfFind: &responses.ResponseFunctionWebSearchActionFindParam{
+				Pattern: input.Pattern,
+				URL:     input.URL,
+				Type:    constant.ValueOf[constant.Find](),
+			},
+		}
+	default:
+		return responses.ResponseFunctionWebSearchActionUnionParam{}
+	}
+}
+
+func ResponseFunctionWebSearchActionUnionFromResponseOutputItemUnionAction(
+	input responses.ResponseOutputItemUnionAction,
+) responses.ResponseFunctionWebSearchActionUnion {
+	return responses.ResponseFunctionWebSearchActionUnion{
+		Query:   input.Query,
+		Type:    input.Type,
+		URL:     input.URL,
+		Pattern: input.Pattern,
 	}
 }
 

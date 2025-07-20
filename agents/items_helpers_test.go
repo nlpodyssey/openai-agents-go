@@ -378,7 +378,11 @@ func TestToInputItemsForFileSearchCall(t *testing.T) {
 func TestToInputItemsForWebSearchCall(t *testing.T) {
 	// A web search tool call output should produce the same value as a web search input.
 	wsCall := agents.TResponseOutputItem{ // responses.ResponseFunctionWebSearch
-		ID:     "w1",
+		ID: "w1",
+		Action: responses.ResponseOutputItemUnionAction{
+			Type:  "search",
+			Query: "query",
+		},
 		Status: "completed",
 		Type:   "web_search_call",
 	}
@@ -391,7 +395,13 @@ func TestToInputItemsForWebSearchCall(t *testing.T) {
 	assert.Equal(t, []agents.TResponseInputItem{
 		{
 			OfWebSearchCall: &responses.ResponseFunctionWebSearchParam{
-				ID:     "w1",
+				ID: "w1",
+				Action: responses.ResponseFunctionWebSearchActionUnionParam{
+					OfSearch: &responses.ResponseFunctionWebSearchActionSearchParam{
+						Query: "query",
+						Type:  constant.ValueOf[constant.Search](),
+					},
+				},
 				Status: responses.ResponseFunctionWebSearchStatusCompleted,
 				Type:   constant.ValueOf[constant.WebSearchCall](),
 			},

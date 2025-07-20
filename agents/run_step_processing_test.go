@@ -338,7 +338,11 @@ func TestFileSearchToolCallParsedCorrectly(t *testing.T) {
 func TestFunctionWebSearchToolCallParsedCorrectly(t *testing.T) {
 	agent := &Agent{Name: "test"}
 	webSearchCall := TResponseOutputItem{ // responses.ResponseFunctionWebSearch
-		ID:     "w1",
+		ID: "w1",
+		Action: responses.ResponseOutputItemUnionAction{
+			Type:  "search",
+			Query: "query",
+		},
 		Status: "completed",
 		Type:   "web_search_call",
 	}
@@ -365,7 +369,11 @@ func TestFunctionWebSearchToolCallParsedCorrectly(t *testing.T) {
 	item := result.NewItems[1]
 	require.IsType(t, ToolCallItem{}, item)
 	assert.Equal(t, ResponseFunctionWebSearch{
-		ID:     "w1",
+		ID: "w1",
+		Action: responses.ResponseFunctionWebSearchActionUnion{
+			Type:  "search",
+			Query: "query",
+		},
 		Status: responses.ResponseFunctionWebSearchStatusCompleted,
 		Type:   constant.ValueOf[constant.WebSearchCall](),
 	}, item.(ToolCallItem).RawItem)
