@@ -677,7 +677,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 		err := tracing.FunctionSpan(
 			ctx, tracing.FunctionSpanParams{Name: funcTool.Name},
 			func(ctx context.Context, spanFn tracing.Span) (err error) {
-				ctx = ContextWithToolData(ctx, toolCall.CallID)
+				ctx = ContextWithToolData(ctx, toolCall.CallID, responses.ResponseFunctionToolCall(toolCall))
 				if traceIncludeSensitiveData {
 					spanFn.SpanData().(*tracing.FunctionSpanData).Input = toolCall.Arguments
 				}

@@ -14,16 +14,30 @@
 
 package agents
 
-import "context"
+import (
+	"context"
 
+	"github.com/openai/openai-go/responses"
+)
+
+// ToolContextData provides context data of a tool call.
 type ToolContextData struct {
+	// The name of the tool being invoked.
+	ToolName string
+
+	// The ID of the tool call.
 	ToolCallID string
 }
 
 type toolContextDataKey struct{}
 
-func ContextWithToolData(ctx context.Context, toolCallID string) context.Context {
+func ContextWithToolData(
+	ctx context.Context,
+	toolCallID string,
+	toolCall responses.ResponseFunctionToolCall,
+) context.Context {
 	return context.WithValue(ctx, toolContextDataKey{}, &ToolContextData{
+		ToolName:   toolCall.Name,
 		ToolCallID: toolCallID,
 	})
 }
