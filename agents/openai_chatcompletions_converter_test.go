@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -249,29 +250,30 @@ func TestConvertToolChoiceHandlesStandardAndNamedOptions(t *testing.T) {
 	// or "none" unchanged, and translate any other string into a function
 	// selection object.
 
-	_, ok := agents.ChatCmplConverter().ConvertToolChoice("")
-	assert.False(t, ok)
+	v, err := agents.ChatCmplConverter().ConvertToolChoice(nil)
+	require.NoError(t, err)
+	assert.Zero(t, v)
 
-	v, ok := agents.ChatCmplConverter().ConvertToolChoice("auto")
-	assert.True(t, ok)
+	v, err = agents.ChatCmplConverter().ConvertToolChoice(modelsettings.ToolChoiceAuto)
+	require.NoError(t, err)
 	assert.Equal(t, openai.ChatCompletionToolChoiceOptionUnionParam{
 		OfAuto: param.NewOpt("auto"),
 	}, v)
 
-	v, ok = agents.ChatCmplConverter().ConvertToolChoice("required")
-	assert.True(t, ok)
+	v, err = agents.ChatCmplConverter().ConvertToolChoice(modelsettings.ToolChoiceRequired)
+	require.NoError(t, err)
 	assert.Equal(t, openai.ChatCompletionToolChoiceOptionUnionParam{
 		OfAuto: param.NewOpt("required"),
 	}, v)
 
-	v, ok = agents.ChatCmplConverter().ConvertToolChoice("none")
-	assert.True(t, ok)
+	v, err = agents.ChatCmplConverter().ConvertToolChoice(modelsettings.ToolChoiceNone)
+	require.NoError(t, err)
 	assert.Equal(t, openai.ChatCompletionToolChoiceOptionUnionParam{
 		OfAuto: param.NewOpt("none"),
 	}, v)
 
-	v, ok = agents.ChatCmplConverter().ConvertToolChoice("mytool")
-	assert.True(t, ok)
+	v, err = agents.ChatCmplConverter().ConvertToolChoice(modelsettings.ToolChoiceString("mytool"))
+	require.NoError(t, err)
 	assert.Equal(t, openai.ChatCompletionToolChoiceOptionUnionParam{
 		OfChatCompletionNamedToolChoice: &openai.ChatCompletionNamedToolChoiceParam{
 			Function: openai.ChatCompletionNamedToolChoiceFunctionParam{
@@ -280,6 +282,12 @@ func TestConvertToolChoiceHandlesStandardAndNamedOptions(t *testing.T) {
 			Type: constant.ValueOf[constant.Function](),
 		},
 	}, v)
+
+	_, err = agents.ChatCmplConverter().ConvertToolChoice(modelsettings.ToolChoiceMCP{
+		ServerLabel: "foo",
+		Name:        "bar",
+	})
+	require.ErrorAs(t, err, &agents.UserError{})
 }
 
 func TestConvertResponseFormatReturnsNotGivenForPlainTextAndObjectForSchemas(t *testing.T) {

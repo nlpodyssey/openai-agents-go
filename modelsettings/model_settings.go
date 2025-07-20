@@ -46,8 +46,7 @@ type ModelSettings struct {
 	PresencePenalty param.Opt[float64] `json:"presence_penalty"`
 
 	// Optional tool choice to use when calling the model.
-	// Well-known values are: "auto", "required", "none".
-	ToolChoice string `json:"tool_choice"`
+	ToolChoice ToolChoice `json:"tool_choice"`
 
 	// Controls whether the model can make multiple parallel tool calls in a single turn.
 	// If not provided, this behavior defers to the underlying model provider's default.
@@ -103,6 +102,28 @@ type ModelSettings struct {
 	CustomizeChatCompletionsRequest func(context.Context, *openai.ChatCompletionNewParams, []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) `json:"-"`
 }
 
+type ToolChoice interface {
+	isToolChoice()
+}
+
+type ToolChoiceString string
+
+func (ToolChoiceString) isToolChoice()     {}
+func (tc ToolChoiceString) String() string { return string(tc) }
+
+const (
+	ToolChoiceAuto     ToolChoiceString = "auto"
+	ToolChoiceRequired ToolChoiceString = "required"
+	ToolChoiceNone     ToolChoiceString = "none"
+)
+
+type ToolChoiceMCP struct {
+	ServerLabel string `json:"server_label"`
+	Name        string `json:"name"`
+}
+
+func (ToolChoiceMCP) isToolChoice() {}
+
 type Truncation string
 
 const (
@@ -141,7 +162,8 @@ func resolveOpt[T comparable](base *param.Opt[T], override param.Opt[T]) {
 }
 
 func resolveAny[T any](base *T, override T) {
-	if !reflect.ValueOf(override).IsZero() {
+	v := reflect.ValueOf(override)
+	if v.Kind() != reflect.Invalid && !v.IsZero() {
 		*base = override
 	}
 }

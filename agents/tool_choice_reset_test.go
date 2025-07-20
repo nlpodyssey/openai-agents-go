@@ -30,64 +30,64 @@ func TestShouldResetToolChoiceDirect(t *testing.T) {
 
 	agent := &agents.Agent{Name: "test_agent"}
 
-	t.Run(`empty tool use tracker should not change the empty "" tool choice`, func(t *testing.T) {
-		modelSettings := modelsettings.ModelSettings{ToolChoice: ""}
+	t.Run(`empty tool use tracker should not change the nil tool choice`, func(t *testing.T) {
+		modelSettings := modelsettings.ModelSettings{ToolChoice: nil}
 		tracker := agents.NewAgentToolUseTracker()
 		newSettings := agents.RunImpl().MaybeResetToolChoice(agent, tracker, modelSettings)
-		assert.Equal(t, "", newSettings.ToolChoice)
+		assert.Nil(t, newSettings.ToolChoice)
 	})
 
 	t.Run(`empty tool use tracker should not change the "none" tool choice`, func(t *testing.T) {
-		modelSettings := modelsettings.ModelSettings{ToolChoice: "none"}
+		modelSettings := modelsettings.ModelSettings{ToolChoice: modelsettings.ToolChoiceNone}
 		tracker := agents.NewAgentToolUseTracker()
 		newSettings := agents.RunImpl().MaybeResetToolChoice(agent, tracker, modelSettings)
-		assert.Equal(t, "none", newSettings.ToolChoice)
+		assert.Equal(t, modelsettings.ToolChoiceNone, newSettings.ToolChoice)
 	})
 
 	t.Run(`empty tool use tracker should not change the "auto" tool choice`, func(t *testing.T) {
-		modelSettings := modelsettings.ModelSettings{ToolChoice: "auto"}
+		modelSettings := modelsettings.ModelSettings{ToolChoice: modelsettings.ToolChoiceAuto}
 		tracker := agents.NewAgentToolUseTracker()
 		newSettings := agents.RunImpl().MaybeResetToolChoice(agent, tracker, modelSettings)
-		assert.Equal(t, "auto", newSettings.ToolChoice)
+		assert.Equal(t, modelsettings.ToolChoiceAuto, newSettings.ToolChoice)
 	})
 
 	t.Run(`empty tool use tracker should not change the "required" tool choice`, func(t *testing.T) {
-		modelSettings := modelsettings.ModelSettings{ToolChoice: "required"}
+		modelSettings := modelsettings.ModelSettings{ToolChoice: modelsettings.ToolChoiceRequired}
 		tracker := agents.NewAgentToolUseTracker()
 		newSettings := agents.RunImpl().MaybeResetToolChoice(agent, tracker, modelSettings)
-		assert.Equal(t, "required", newSettings.ToolChoice)
+		assert.Equal(t, modelsettings.ToolChoiceRequired, newSettings.ToolChoice)
 	})
 
 	t.Run(`ToolChoice = "required" with one tool should reset`, func(t *testing.T) {
-		modelSettings := modelsettings.ModelSettings{ToolChoice: "required"}
+		modelSettings := modelsettings.ModelSettings{ToolChoice: modelsettings.ToolChoiceRequired}
 		tracker := agents.NewAgentToolUseTracker()
 		tracker.AddToolUse(agent, []string{"tool1"})
 		newSettings := agents.RunImpl().MaybeResetToolChoice(agent, tracker, modelSettings)
-		assert.Equal(t, "", newSettings.ToolChoice)
+		assert.Nil(t, newSettings.ToolChoice)
 	})
 
 	t.Run(`ToolChoice = "required" with multiple tools should reset`, func(t *testing.T) {
-		modelSettings := modelsettings.ModelSettings{ToolChoice: "required"}
+		modelSettings := modelsettings.ModelSettings{ToolChoice: modelsettings.ToolChoiceRequired}
 		tracker := agents.NewAgentToolUseTracker()
 		tracker.AddToolUse(agent, []string{"tool1", "tool2"})
 		newSettings := agents.RunImpl().MaybeResetToolChoice(agent, tracker, modelSettings)
-		assert.Equal(t, "", newSettings.ToolChoice)
+		assert.Nil(t, newSettings.ToolChoice)
 	})
 
 	t.Run(`tool usage on a different agent should not affect the tool choice`, func(t *testing.T) {
-		modelSettings := modelsettings.ModelSettings{ToolChoice: "foo_bar"}
+		modelSettings := modelsettings.ModelSettings{ToolChoice: modelsettings.ToolChoiceString("foo_bar")}
 		tracker := agents.NewAgentToolUseTracker()
 		tracker.AddToolUse(&agents.Agent{Name: "other_agent"}, []string{"foo_bar", "baz"})
 		newSettings := agents.RunImpl().MaybeResetToolChoice(agent, tracker, modelSettings)
-		assert.Equal(t, "foo_bar", newSettings.ToolChoice)
+		assert.Equal(t, modelsettings.ToolChoiceString("foo_bar"), newSettings.ToolChoice)
 	})
 
 	t.Run(`ToolChoice = "foo_bar" with multiple tools should reset`, func(t *testing.T) {
-		modelSettings := modelsettings.ModelSettings{ToolChoice: "foo_bar"}
+		modelSettings := modelsettings.ModelSettings{ToolChoice: modelsettings.ToolChoiceString("foo_bar")}
 		tracker := agents.NewAgentToolUseTracker()
 		tracker.AddToolUse(agent, []string{"foo_bar", "baz"})
 		newSettings := agents.RunImpl().MaybeResetToolChoice(agent, tracker, modelSettings)
-		assert.Equal(t, "", newSettings.ToolChoice)
+		assert.Nil(t, newSettings.ToolChoice)
 	})
 }
 
@@ -106,23 +106,25 @@ func TestRequiredToolChoiceWithMultipleRuns(t *testing.T) {
 	// Create agent with a custom tool and ToolChoice="required"
 	customTool := agentstesting.GetFunctionTool("custom_tool", "tool_result")
 	agent := &agents.Agent{
-		Name:          "test_agent",
-		Model:         param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:         []agents.Tool{customTool},
-		ModelSettings: modelsettings.ModelSettings{ToolChoice: "required"},
+		Name:  "test_agent",
+		Model: param.NewOpt(agents.NewAgentModel(fakeModel)),
+		Tools: []agents.Tool{customTool},
+		ModelSettings: modelsettings.ModelSettings{
+			ToolChoice: modelsettings.ToolChoiceRequired,
+		},
 	}
 
 	// First run should work correctly and preserve ToolChoice
 	result1, err := agents.Runner{}.Run(t.Context(), agent, "first run")
 	require.NoError(t, err)
 	assert.Equal(t, "First run response", result1.FinalOutput)
-	assert.Equal(t, "required", fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
+	assert.Equal(t, modelsettings.ToolChoiceRequired, fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
 
 	// Second run should also work correctly with ToolChoice still required
 	result2, err := agents.Runner{}.Run(t.Context(), agent, "second run")
 	require.NoError(t, err)
 	assert.Equal(t, "Second run response", result2.FinalOutput)
-	assert.Equal(t, "required", fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
+	assert.Equal(t, modelsettings.ToolChoiceRequired, fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
 }
 
 func TestRequiredWithStopAtToolName(t *testing.T) {
@@ -141,10 +143,12 @@ func TestRequiredWithStopAtToolName(t *testing.T) {
 	secondTool := agentstesting.GetFunctionTool("second_tool", "second tool result")
 
 	agent := &agents.Agent{
-		Name:            "test_agent",
-		Model:           param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:           []agents.Tool{firstTool, secondTool},
-		ModelSettings:   modelsettings.ModelSettings{ToolChoice: "required"},
+		Name:  "test_agent",
+		Model: param.NewOpt(agents.NewAgentModel(fakeModel)),
+		Tools: []agents.Tool{firstTool, secondTool},
+		ModelSettings: modelsettings.ModelSettings{
+			ToolChoice: modelsettings.ToolChoiceRequired,
+		},
 		ToolUseBehavior: agents.StopAtTools("second_tool"),
 	}
 
@@ -171,10 +175,12 @@ func TestSpecificToolChoice(t *testing.T) {
 	tool3 := agentstesting.GetFunctionTool("tool3", "result3")
 
 	agent := &agents.Agent{
-		Name:          "test_agent",
-		Model:         param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:         []agents.Tool{tool1, tool2, tool3},
-		ModelSettings: modelsettings.ModelSettings{ToolChoice: "tool1"}, // Specific tool
+		Name:  "test_agent",
+		Model: param.NewOpt(agents.NewAgentModel(fakeModel)),
+		Tools: []agents.Tool{tool1, tool2, tool3},
+		ModelSettings: modelsettings.ModelSettings{
+			ToolChoice: modelsettings.ToolChoiceString("tool1"), // Specific tool
+		},
 	}
 
 	// Run should complete without infinite loops
@@ -203,10 +209,12 @@ func TestRequiredWithSingleTool(t *testing.T) {
 	// Create agent with a single tool and ToolChoice="required"
 	customTool := agentstesting.GetFunctionTool("custom_tool", "tool result")
 	agent := &agents.Agent{
-		Name:          "test_agent",
-		Model:         param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:         []agents.Tool{customTool},
-		ModelSettings: modelsettings.ModelSettings{ToolChoice: "required"},
+		Name:  "test_agent",
+		Model: param.NewOpt(agents.NewAgentModel(fakeModel)),
+		Tools: []agents.Tool{customTool},
+		ModelSettings: modelsettings.ModelSettings{
+			ToolChoice: modelsettings.ToolChoiceRequired,
+		},
 	}
 
 	// Run should complete without infinite loops
@@ -234,14 +242,16 @@ func TestDontResetToolChoiceIfNotRequired(t *testing.T) {
 	// Create agent with a single tool and ToolChoice="required" and ResetToolChoice=False
 	customTool := agentstesting.GetFunctionTool("custom_tool", "tool result")
 	agent := &agents.Agent{
-		Name:            "test_agent",
-		Model:           param.NewOpt(agents.NewAgentModel(fakeModel)),
-		Tools:           []agents.Tool{customTool},
-		ModelSettings:   modelsettings.ModelSettings{ToolChoice: "required"},
+		Name:  "test_agent",
+		Model: param.NewOpt(agents.NewAgentModel(fakeModel)),
+		Tools: []agents.Tool{customTool},
+		ModelSettings: modelsettings.ModelSettings{
+			ToolChoice: modelsettings.ToolChoiceRequired,
+		},
 		ResetToolChoice: param.NewOpt(false),
 	}
 
 	_, err := agents.Runner{}.Run(t.Context(), agent, "run test")
 	require.NoError(t, err)
-	assert.Equal(t, "required", fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
+	assert.Equal(t, modelsettings.ToolChoiceRequired, fakeModel.LastTurnArgs.ModelSettings.ToolChoice)
 }

@@ -56,7 +56,9 @@ func run(ctx context.Context, mcpServer agents.MCPServer) error {
 	agent := agents.New("Assistant").
 		WithInstructions("Use the tools to answer the questions.").
 		AddMCPServer(mcpServer).
-		WithModelSettings(modelsettings.ModelSettings{ToolChoice: "required"}).
+		WithModelSettings(modelsettings.ModelSettings{
+			ToolChoice: modelsettings.ToolChoiceRequired,
+		}).
 		WithModel("gpt-4o")
 
 	// Use the `add` tool to add two numbers

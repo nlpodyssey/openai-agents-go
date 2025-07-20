@@ -47,7 +47,7 @@ func TestModelSettings_BasicSerialization(t *testing.T) {
 		"top_p":               json.Number("0.9"),
 		"frequency_penalty":   nil,
 		"presence_penalty":    nil,
-		"tool_choice":         "",
+		"tool_choice":         nil,
 		"parallel_tool_calls": nil,
 		"truncation":          nil,
 		"max_tokens":          json.Number("100"),
@@ -69,7 +69,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		TopP:              param.NewOpt(0.9),
 		FrequencyPenalty:  param.NewOpt(0.0),
 		PresencePenalty:   param.NewOpt(0.0),
-		ToolChoice:        "auto",
+		ToolChoice:        ToolChoiceAuto,
 		ParallelToolCalls: param.NewOpt(true),
 		Truncation:        param.NewOpt(TruncationAuto),
 		MaxTokens:         param.NewOpt[int64](100),
@@ -108,6 +108,44 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
+func TestModelSettings_ToolChoiceMCPSerialization(t *testing.T) {
+	modelSettings := ModelSettings{
+		Temperature: param.NewOpt(0.5),
+		ToolChoice: ToolChoiceMCP{
+			ServerLabel: "mcp",
+			Name:        "mcp_tool",
+		},
+	}
+	res, err := json.Marshal(modelSettings)
+	require.NoError(t, err)
+
+	var got any
+	err = unmarshal(res, &got)
+	require.NoError(t, err)
+
+	var want any = map[string]any{
+		"temperature":       json.Number("0.5"),
+		"top_p":             nil,
+		"frequency_penalty": nil,
+		"presence_penalty":  nil,
+		"tool_choice": map[string]any{
+			"server_label": "mcp",
+			"name":         "mcp_tool",
+		},
+		"parallel_tool_calls": nil,
+		"truncation":          nil,
+		"max_tokens":          nil,
+		"reasoning":           map[string]any{},
+		"metadata":            nil,
+		"store":               nil,
+		"include_usage":       nil,
+		"response_include":    nil,
+		"extra_query":         nil,
+		"extra_headers":       nil,
+	}
+	assert.Equal(t, want, got)
+}
+
 func unmarshal(data []byte, v any) error {
 	d := json.NewDecoder(bytes.NewReader(data))
 	d.UseNumber()
@@ -121,7 +159,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		TopP:              param.NewOpt(0.9),
 		FrequencyPenalty:  param.NewOpt(0.0),
 		PresencePenalty:   param.NewOpt[float64](0.0),
-		ToolChoice:        "auto",
+		ToolChoice:        ToolChoiceAuto,
 		ParallelToolCalls: param.NewOpt(true),
 		Truncation:        param.NewOpt(TruncationAuto),
 		MaxTokens:         param.NewOpt[int64](100),
@@ -143,7 +181,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		override := ModelSettings{
 			Temperature:      param.NewOpt(0.4),
 			FrequencyPenalty: param.NewOpt(0.1),
-			ToolChoice:       "required",
+			ToolChoice:       ToolChoiceRequired,
 			Truncation:       param.NewOpt(TruncationDisabled),
 			Reasoning: openai.ReasoningParam{
 				Effort:  openai.ReasoningEffortMedium,
@@ -162,7 +200,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		assert.Equal(t, param.NewOpt(0.9), resolved.TopP)
 		assert.Equal(t, param.NewOpt(0.1), resolved.FrequencyPenalty)
 		assert.Equal(t, param.NewOpt(0.0), resolved.PresencePenalty)
-		assert.Equal(t, "required", resolved.ToolChoice)
+		assert.Equal(t, ToolChoiceRequired, resolved.ToolChoice)
 		assert.Equal(t, param.NewOpt(true), resolved.ParallelToolCalls)
 		assert.Equal(t, param.NewOpt(TruncationDisabled), resolved.Truncation)
 		assert.Equal(t, param.NewOpt[int64](100), resolved.MaxTokens)
@@ -201,7 +239,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		assert.Equal(t, param.NewOpt(0.8), resolved.TopP)
 		assert.Equal(t, param.NewOpt(0.0), resolved.FrequencyPenalty)
 		assert.Equal(t, param.NewOpt(0.2), resolved.PresencePenalty)
-		assert.Equal(t, "auto", resolved.ToolChoice)
+		assert.Equal(t, ToolChoiceAuto, resolved.ToolChoice)
 		assert.Equal(t, param.NewOpt(false), resolved.ParallelToolCalls)
 		assert.Equal(t, param.NewOpt(TruncationAuto), resolved.Truncation)
 		assert.Equal(t, param.NewOpt[int64](42), resolved.MaxTokens)

@@ -17,6 +17,6 @@ var SearchAgent = agents.New("FinancialSearchAgent").
 	WithInstructions(SearchInstructions).
 	WithTools(agents.WebSearchTool{}).
 	WithModelSettings(modelsettings.ModelSettings{
-		ToolChoice: "required",
+		ToolChoice: modelsettings.ToolChoiceRequired,
 	}).
 	WithModel("gpt-4o")

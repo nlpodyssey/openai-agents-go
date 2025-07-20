@@ -22,6 +22,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
@@ -33,23 +34,32 @@ type chatCmplConverter struct{}
 
 func ChatCmplConverter() chatCmplConverter { return chatCmplConverter{} }
 
-func (chatCmplConverter) ConvertToolChoice(toolChoice string) (openai.ChatCompletionToolChoiceOptionUnionParam, bool) {
-	switch toolChoice {
-	case "":
-		return openai.ChatCompletionToolChoiceOptionUnionParam{}, false
-	case "auto", "required", "none":
-		return openai.ChatCompletionToolChoiceOptionUnionParam{
-			OfAuto: param.NewOpt(toolChoice),
-		}, true
-	default:
-		return openai.ChatCompletionToolChoiceOptionUnionParam{
-			OfChatCompletionNamedToolChoice: &openai.ChatCompletionNamedToolChoiceParam{
-				Function: openai.ChatCompletionNamedToolChoiceFunctionParam{
-					Name: toolChoice,
+func (chatCmplConverter) ConvertToolChoice(toolChoice modelsettings.ToolChoice) (openai.ChatCompletionToolChoiceOptionUnionParam, error) {
+	switch toolChoice := toolChoice.(type) {
+	case nil:
+		return openai.ChatCompletionToolChoiceOptionUnionParam{}, nil
+	case modelsettings.ToolChoiceString:
+		switch toolChoice {
+		case "auto", "required", "none":
+			return openai.ChatCompletionToolChoiceOptionUnionParam{
+				OfAuto: param.NewOpt(toolChoice.String()),
+			}, nil
+		default:
+			return openai.ChatCompletionToolChoiceOptionUnionParam{
+				OfChatCompletionNamedToolChoice: &openai.ChatCompletionNamedToolChoiceParam{
+					Function: openai.ChatCompletionNamedToolChoiceFunctionParam{
+						Name: toolChoice.String(),
+					},
+					Type: constant.ValueOf[constant.Function](),
 				},
-				Type: constant.ValueOf[constant.Function](),
-			},
-		}, true
+			}, nil
+		}
+	case modelsettings.ToolChoiceMCP:
+		return openai.ChatCompletionToolChoiceOptionUnionParam{},
+			NewUserError("ToolChoiceMCP is not supported for Chat Completions models")
+	default:
+		// This would be an unrecoverable implementation bug, so a panic is appropriate.
+		panic(fmt.Errorf("unexpected ToolChoice type %T", toolChoice))
 	}
 }
 

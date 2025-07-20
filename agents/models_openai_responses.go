@@ -298,28 +298,50 @@ type responsesConverter struct{}
 
 func ResponsesConverter() responsesConverter { return responsesConverter{} }
 
-func (responsesConverter) ConvertToolChoice(toolChoice string) responses.ResponseNewParamsToolChoiceUnion {
-	switch toolChoice {
-	case "":
+func (responsesConverter) ConvertToolChoice(toolChoice modelsettings.ToolChoice) responses.ResponseNewParamsToolChoiceUnion {
+	switch toolChoice := toolChoice.(type) {
+	case nil:
 		return responses.ResponseNewParamsToolChoiceUnion{}
-	case "none", "auto", "required":
-		return responses.ResponseNewParamsToolChoiceUnion{
-			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptions(toolChoice)),
+	case modelsettings.ToolChoiceString:
+		switch toolChoice {
+		case "none", "auto", "required":
+			return responses.ResponseNewParamsToolChoiceUnion{
+				OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptions(toolChoice)),
+			}
+		case "file_search", "web_search_preview", "web_search_preview_2025_03_11",
+			"computer_use_preview", "image_generation", "code_interpreter":
+			return responses.ResponseNewParamsToolChoiceUnion{
+				OfHostedTool: &responses.ToolChoiceTypesParam{
+					Type: responses.ToolChoiceTypesType(toolChoice),
+				},
+			}
+		case "mcp":
+			// Note that this is still here for backwards compatibility,
+			// but migrating to ToolChoiceMCP is recommended.
+			return responses.ResponseNewParamsToolChoiceUnion{
+				OfMcpTool: &responses.ToolChoiceMcpParam{
+					Type: constant.ValueOf[constant.Mcp](),
+				},
+			}
+		default:
+			return responses.ResponseNewParamsToolChoiceUnion{
+				OfFunctionTool: &responses.ToolChoiceFunctionParam{
+					Name: toolChoice.String(),
+					Type: constant.ValueOf[constant.Function](),
+				},
+			}
 		}
-	case "file_search", "web_search_preview", "web_search_preview_2025_03_11",
-		"computer_use_preview", "image_generation", "code_interpreter":
+	case modelsettings.ToolChoiceMCP:
 		return responses.ResponseNewParamsToolChoiceUnion{
-			OfHostedTool: &responses.ToolChoiceTypesParam{
-				Type: responses.ToolChoiceTypesType(toolChoice),
+			OfMcpTool: &responses.ToolChoiceMcpParam{
+				ServerLabel: toolChoice.ServerLabel,
+				Name:        param.NewOpt(toolChoice.Name),
+				Type:        constant.ValueOf[constant.Mcp](),
 			},
 		}
 	default:
-		return responses.ResponseNewParamsToolChoiceUnion{
-			OfFunctionTool: &responses.ToolChoiceFunctionParam{
-				Name: toolChoice,
-				Type: constant.ValueOf[constant.Function](),
-			},
-		}
+		// This would be an unrecoverable implementation bug, so a panic is appropriate.
+		panic(fmt.Errorf("unexpected ToolChoice type %T", toolChoice))
 	}
 }
 

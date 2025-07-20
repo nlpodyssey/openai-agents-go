@@ -348,7 +348,7 @@ func (ri runImpl) ExecuteToolsAndSideEffects(
 	}
 }
 
-// MaybeResetToolChoice resets tool choice to "" if the agent has used tools
+// MaybeResetToolChoice resets tool choice to nil if the agent has used tools
 // and the agent's ResetToolChoice flag is true.
 func (runImpl) MaybeResetToolChoice(
 	agent *Agent,
@@ -358,7 +358,7 @@ func (runImpl) MaybeResetToolChoice(
 	resetToolChoice := agent.ResetToolChoice.Or(true)
 	if resetToolChoice && toolUseTracker.HasUsedTools(agent) {
 		newSettings := modelSettings
-		newSettings.ToolChoice = ""
+		newSettings.ToolChoice = nil
 		return newSettings
 	}
 	return modelSettings

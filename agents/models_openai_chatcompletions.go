@@ -299,7 +299,10 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 		}
 	}
 
-	toolChoice, _ := ChatCmplConverter().ConvertToolChoice(modelSettings.ToolChoice)
+	toolChoice, err := ChatCmplConverter().ConvertToolChoice(modelSettings.ToolChoice)
+	if err != nil {
+		return nil, nil, err
+	}
 	responseFormat, _, err := ChatCmplConverter().ConvertResponseFormat(outputType)
 	if err != nil {
 		return nil, nil, err

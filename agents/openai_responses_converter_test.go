@@ -17,10 +17,12 @@ package agents_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/computer"
+	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
 	"github.com/openai/openai-go/shared/constant"
@@ -36,29 +38,71 @@ func TestConvertToolChoiceStandardValues(t *testing.T) {
 	type R = responses.ResponseNewParamsToolChoiceUnion
 
 	testCases := []struct {
-		toolChoice string
+		toolChoice modelsettings.ToolChoice
 		want       R
 	}{
-		{"", R{}},
-		{"auto", R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsAuto)}},
-		{"required", R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsRequired)}},
-		{"none", R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsNone)}},
-		{"file_search", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeFileSearch}}},
-		{"web_search_preview", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeWebSearchPreview}}},
-		{"web_search_preview_2025_03_11", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeWebSearchPreview2025_03_11}}},
-		{"computer_use_preview", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeComputerUsePreview}}},
-		{"image_generation", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeImageGeneration}}},
-		{"code_interpreter", R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeCodeInterpreter}}},
-		{"my_function", R{ // Arbitrary string should be interpreted as a function name.
-			OfFunctionTool: &responses.ToolChoiceFunctionParam{
-				Name: "my_function",
-				Type: constant.ValueOf[constant.Function](),
+		{nil, R{}},
+		{
+			modelsettings.ToolChoiceAuto,
+			R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsAuto)},
+		},
+		{
+			modelsettings.ToolChoiceRequired,
+			R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsRequired)},
+		},
+		{
+			modelsettings.ToolChoiceNone,
+			R{OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsNone)},
+		},
+		{
+			modelsettings.ToolChoiceString("file_search"),
+			R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeFileSearch}},
+		},
+		{
+			modelsettings.ToolChoiceString("web_search_preview"),
+			R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeWebSearchPreview}},
+		},
+		{
+			modelsettings.ToolChoiceString("web_search_preview_2025_03_11"),
+			R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeWebSearchPreview2025_03_11}},
+		},
+		{
+			modelsettings.ToolChoiceString("computer_use_preview"),
+			R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeComputerUsePreview}},
+		},
+		{
+			modelsettings.ToolChoiceString("image_generation"),
+			R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeImageGeneration}},
+		},
+		{
+			modelsettings.ToolChoiceString("code_interpreter"),
+			R{OfHostedTool: &responses.ToolChoiceTypesParam{Type: responses.ToolChoiceTypesTypeCodeInterpreter}},
+		},
+		{
+			modelsettings.ToolChoiceString("my_function"),
+			R{ // Arbitrary string should be interpreted as a function name.
+				OfFunctionTool: &responses.ToolChoiceFunctionParam{
+					Name: "my_function",
+					Type: constant.ValueOf[constant.Function](),
+				},
 			},
-		}},
+		},
+		{
+			modelsettings.ToolChoiceString("mcp"),
+			R{OfMcpTool: &responses.ToolChoiceMcpParam{Type: constant.ValueOf[constant.Mcp]()}},
+		},
+		{
+			modelsettings.ToolChoiceMCP{ServerLabel: "foo", Name: "bar"},
+			R{OfMcpTool: &responses.ToolChoiceMcpParam{
+				ServerLabel: "foo",
+				Name:        param.NewOpt("bar"),
+				Type:        constant.ValueOf[constant.Mcp](),
+			}},
+		},
 	}
 
 	for _, tc := range testCases {
-		t.Run("toolChoice = "+tc.toolChoice, func(t *testing.T) {
+		t.Run(fmt.Sprintf("toolChoice %#v", tc.toolChoice), func(t *testing.T) {
 			v := agents.ResponsesConverter().ConvertToolChoice(tc.toolChoice)
 			assert.Equal(t, tc.want, v)
 		})

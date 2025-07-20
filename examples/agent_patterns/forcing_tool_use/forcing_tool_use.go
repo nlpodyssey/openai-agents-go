@@ -86,18 +86,18 @@ func main() {
 	flag.Parse()
 
 	var behavior agents.ToolUseBehavior
-	var toolChoice string
+	var toolChoice modelsettings.ToolChoice
 
 	switch *toolUseBehavior {
 	case "default":
 		behavior = agents.RunLLMAgain()
-		toolChoice = ""
+		toolChoice = nil
 	case "first_tool":
 		behavior = agents.StopOnFirstTool()
-		toolChoice = "required"
+		toolChoice = modelsettings.ToolChoiceRequired
 	case "custom":
 		behavior = agents.ToolsToFinalOutputFunction(CustomToolUseBehavior)
-		toolChoice = "required"
+		toolChoice = modelsettings.ToolChoiceRequired
 	default:
 		fmt.Printf("Error: invalid tool behavior: %q\n", *toolUseBehavior)
 		syscall.Exit(1)

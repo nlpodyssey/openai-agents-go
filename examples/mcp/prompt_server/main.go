@@ -84,7 +84,9 @@ func demoCodeReview(ctx context.Context, mcpServer agents.MCPServer) error {
 
 	agent := agents.New("Code Reviewer Agent").
 		WithInstructions(instructions). // Instructions from MCP prompt
-		WithModelSettings(modelsettings.ModelSettings{ToolChoice: "auto"}).
+		WithModelSettings(modelsettings.ModelSettings{
+			ToolChoice: modelsettings.ToolChoiceAuto,
+		}).
 		WithModel("gpt-4o")
 
 	message := `Please review this code:
