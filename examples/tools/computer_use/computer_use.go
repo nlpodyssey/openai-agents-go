@@ -31,6 +31,9 @@ import (
 )
 
 func main() {
+	// Uncomment to see very verbose logs
+	//agents.EnableVerboseStdoutLogging()
+
 	err := WithLocalPlaywrightComputer(func(comp *LocalPlaywrightComputer) error {
 		return tracing.RunTrace(
 			context.Background(), tracing.TraceParams{WorkflowName: "Computer use example"},
