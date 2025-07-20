@@ -59,6 +59,7 @@ func (s *FakeMCPPromptServer) SetPromptResult(name, result string) {
 func (s *FakeMCPPromptServer) Connect(context.Context) error { return nil }
 func (s *FakeMCPPromptServer) Cleanup(context.Context) error { return nil }
 func (s *FakeMCPPromptServer) Name() string                  { return s.serverName }
+func (s *FakeMCPPromptServer) UseStructuredContent() bool    { return false }
 
 func (s *FakeMCPPromptServer) ListTools(context.Context, *agents.Agent) ([]*mcp.Tool, error) {
 	return nil, nil

@@ -55,6 +55,7 @@ func (s *FakeMCPServer) AddTool(name string, inputSchema *jsonschema.Schema) {
 func (s *FakeMCPServer) Connect(context.Context) error { return nil }
 func (s *FakeMCPServer) Cleanup(context.Context) error { return nil }
 func (s *FakeMCPServer) Name() string                  { return s.name }
+func (s *FakeMCPServer) UseStructuredContent() bool    { return false }
 
 func (s *FakeMCPServer) ListTools(ctx context.Context, agent *agents.Agent) ([]*mcp.Tool, error) {
 	tools := s.Tools

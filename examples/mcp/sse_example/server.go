@@ -39,8 +39,7 @@ func runServer(addr string) {
 			fmt.Printf("[debug-server] add(%d, %d)\n", params.Arguments.A, params.Arguments.B)
 			result := params.Arguments.A + params.Arguments.B
 			return &mcp.CallToolResultFor[int]{
-				Content:           []mcp.Content{&mcp.TextContent{Text: strconv.Itoa(result)}},
-				StructuredContent: result,
+				Content: []mcp.Content{&mcp.TextContent{Text: strconv.Itoa(result)}},
 			}, nil
 		},
 	)
@@ -51,8 +50,7 @@ func runServer(addr string) {
 			fmt.Println("[debug-server] get_secret_word()")
 			choice := []string{"apple", "banana", "cherry"}[rand.Intn(3)]
 			return &mcp.CallToolResultFor[string]{
-				Content:           []mcp.Content{&mcp.TextContent{Text: choice}},
-				StructuredContent: choice,
+				Content: []mcp.Content{&mcp.TextContent{Text: choice}},
 			}, nil
 		},
 	)
@@ -80,8 +78,7 @@ func runServer(addr string) {
 			}
 
 			return &mcp.CallToolResultFor[string]{
-				Content:           []mcp.Content{&mcp.TextContent{Text: string(body)}},
-				StructuredContent: string(body),
+				Content: []mcp.Content{&mcp.TextContent{Text: string(body)}},
 			}, nil
 		},
 	)

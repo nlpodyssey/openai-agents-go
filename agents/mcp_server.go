@@ -41,6 +41,10 @@ type MCPServer interface {
 	// Name returns a readable name for the server.
 	Name() string
 
+	// UseStructuredContent reports  whether to use a tool result's
+	// `StructuredContent` when calling an MCP tool.
+	UseStructuredContent() bool
+
 	// ListTools lists the tools available on the server.
 	ListTools(context.Context, *Agent) ([]*mcp.Tool, error)
 
@@ -57,19 +61,21 @@ type MCPServer interface {
 // MCPServerWithClientSession is a base type for MCP servers that uses an
 // mcp.ClientSession to communicate with the server.
 type MCPServerWithClientSession struct {
-	transport      mcp.Transport
-	session        *mcp.ClientSession
-	cleanupMu      sync.Mutex
-	cacheToolsList bool
-	cacheDirty     bool
-	toolsList      []*mcp.Tool
-	toolFilter     MCPToolFilter
-	name           string
+	transport            mcp.Transport
+	session              *mcp.ClientSession
+	cleanupMu            sync.Mutex
+	cacheToolsList       bool
+	cacheDirty           bool
+	toolsList            []*mcp.Tool
+	toolFilter           MCPToolFilter
+	name                 string
+	useStructuredContent bool
 }
 
 type MCPServerWithClientSessionParams struct {
 	Name      string
 	Transport mcp.Transport
+
 	// Whether to cache the tools list. If `true`, the tools list will be
 	// cached and only fetched from the server once. If `false`, the tools list will be
 	// fetched from the server on each call to `ListTools()`. The cache can be invalidated
@@ -77,8 +83,16 @@ type MCPServerWithClientSessionParams struct {
 	// server will not change its tools list, because it can drastically improve latency
 	// (by avoiding a round-trip to the server every time).
 	CacheToolsList bool
+
 	// The tool filter to use for filtering tools.
 	ToolFilter MCPToolFilter
+
+	// Whether to use `StructuredContent` when calling an MCP tool.
+	// Defaults to false for backwards compatibility - most MCP servers still include
+	// the structured content in `Content`, and using it by default will cause duplicate
+	// content. You can set this to true if you know the server will not duplicate
+	// the structured content in `Content`.
+	UseStructuredContent bool
 }
 
 func NewMCPServerWithClientSession(params MCPServerWithClientSessionParams) *MCPServerWithClientSession {
@@ -86,9 +100,10 @@ func NewMCPServerWithClientSession(params MCPServerWithClientSessionParams) *MCP
 		transport:      params.Transport,
 		cacheToolsList: params.CacheToolsList,
 		// The cache is always dirty at startup, so that we fetch tools at least once
-		cacheDirty: true,
-		toolFilter: params.ToolFilter,
-		name:       params.Name,
+		cacheDirty:           true,
+		toolFilter:           params.ToolFilter,
+		name:                 params.Name,
+		useStructuredContent: params.UseStructuredContent,
 	}
 }
 
@@ -130,6 +145,10 @@ func (s *MCPServerWithClientSession) Cleanup(context.Context) error {
 
 func (s *MCPServerWithClientSession) Name() string {
 	return s.name
+}
+
+func (s *MCPServerWithClientSession) UseStructuredContent() bool {
+	return s.useStructuredContent
 }
 
 func (s *MCPServerWithClientSession) ListTools(ctx context.Context, agent *Agent) ([]*mcp.Tool, error) {
@@ -227,6 +246,13 @@ type MCPServerStdioParams struct {
 
 	// Optional tool filter to use for filtering tools
 	ToolFilter MCPToolFilter
+
+	// Whether to use `StructuredContent` when calling an MCP tool.
+	// Defaults to false for backwards compatibility - most MCP servers still include
+	// the structured content in `Content`, and using it by default will cause duplicate
+	// content. You can set this to true if you know the server will not duplicate
+	// the structured content in `Content`.
+	UseStructuredContent bool
 }
 
 // MCPServerStdio is an MCP server implementation that uses the stdio transport.
@@ -245,10 +271,11 @@ func NewMCPServerStdio(params MCPServerStdioParams) *MCPServerStdio {
 
 	return &MCPServerStdio{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
-			Name:           name,
-			Transport:      mcp.NewCommandTransport(params.Command),
-			CacheToolsList: params.CacheToolsList,
-			ToolFilter:     params.ToolFilter,
+			Name:                 name,
+			Transport:            mcp.NewCommandTransport(params.Command),
+			CacheToolsList:       params.CacheToolsList,
+			ToolFilter:           params.ToolFilter,
+			UseStructuredContent: params.UseStructuredContent,
 		}),
 	}
 }
@@ -270,6 +297,13 @@ type MCPServerSSEParams struct {
 
 	// Optional tool filter to use for filtering tools
 	ToolFilter MCPToolFilter
+
+	// Whether to use `StructuredContent` when calling an MCP tool.
+	// Defaults to false for backwards compatibility - most MCP servers still include
+	// the structured content in `Content`, and using it by default will cause duplicate
+	// content. You can set this to true if you know the server will not duplicate
+	// the structured content in `Content`.
+	UseStructuredContent bool
 }
 
 // MCPServerSSE is an MCP server implementation that uses the HTTP with SSE transport.
@@ -296,10 +330,11 @@ func NewMCPServerSSE(params MCPServerSSEParams) *MCPServerSSE {
 
 	return &MCPServerSSE{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
-			Name:           name,
-			Transport:      mcp.NewSSEClientTransport(params.BaseURL, params.TransportOpts),
-			CacheToolsList: params.CacheToolsList,
-			ToolFilter:     params.ToolFilter,
+			Name:                 name,
+			Transport:            mcp.NewSSEClientTransport(params.BaseURL, params.TransportOpts),
+			CacheToolsList:       params.CacheToolsList,
+			ToolFilter:           params.ToolFilter,
+			UseStructuredContent: params.UseStructuredContent,
 		}),
 	}
 }
@@ -321,6 +356,13 @@ type MCPServerStreamableHTTPParams struct {
 
 	// Optional tool filter to use for filtering tools
 	ToolFilter MCPToolFilter
+
+	// Whether to use `StructuredContent` when calling an MCP tool.
+	// Defaults to false for backwards compatibility - most MCP servers still include
+	// the structured content in `Content`, and using it by default will cause duplicate
+	// content. You can set this to true if you know the server will not duplicate
+	// the structured content in `Content`.
+	UseStructuredContent bool
 }
 
 // MCPServerStreamableHTTP is an MCP server implementation that uses the Streamable HTTP transport.
@@ -338,10 +380,11 @@ func NewMCPServerStreamableHTTP(params MCPServerStreamableHTTPParams) *MCPServer
 
 	return &MCPServerStreamableHTTP{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
-			Name:           name,
-			Transport:      mcp.NewStreamableClientTransport(params.URL, params.TransportOpts),
-			CacheToolsList: params.CacheToolsList,
-			ToolFilter:     params.ToolFilter,
+			Name:                 name,
+			Transport:            mcp.NewStreamableClientTransport(params.URL, params.TransportOpts),
+			CacheToolsList:       params.CacheToolsList,
+			ToolFilter:           params.ToolFilter,
+			UseStructuredContent: params.UseStructuredContent,
 		}),
 	}
 }
