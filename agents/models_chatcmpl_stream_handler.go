@@ -253,7 +253,9 @@ func (chatCmplStreamHandler) HandleStream(
 
 			tc.Arguments += tcFunction.Arguments
 			tc.Name += tcFunction.Name
-			tc.CallID = tcDelta.ID
+			if len(tcDelta.ID) > 0 {
+				tc.CallID = tcDelta.ID
+			}
 		}
 	}
 
