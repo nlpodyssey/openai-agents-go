@@ -237,8 +237,7 @@ func TestNewFunctionTool_EmptyStructArgs(t *testing.T) {
 		properties, ok := schema["properties"].(map[string]any)
 		require.True(t, ok)
 		assert.Len(t, properties, 0)
-		_, hasRequired := schema["required"]
-		assert.False(t, hasRequired)
+		assert.Equal(t, []any{}, schema["required"]) // strict is enforced
 	})
 
 	t.Run("Invocation", func(t *testing.T) {
