@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"github.com/invopop/jsonschema"
+	"github.com/nlpodyssey/openai-agents-go/util"
 	"github.com/openai/openai-go/packages/param"
 )
 
@@ -105,6 +106,8 @@ func (f FunctionToolEnablerFunc) IsEnabled(ctx context.Context, agent *Agent) (b
 // JSON schema from the Go types T (input arguments).
 // The schema is generated using struct tags and Go reflection.
 //
+// It panics in case of errors. For a safer version, see SafeNewFunctionTool.
+//
 // Type parameters:
 //   - T: The input argument type (must be JSON-serializable)
 //   - R: The return value type
@@ -144,6 +147,15 @@ func (f FunctionToolEnablerFunc) IsEnabled(ctx context.Context, agent *Agent) (b
 //
 // For more control over the schema, create a FunctionTool manually instead.
 func NewFunctionTool[T, R any](name string, description string, handler func(ctx context.Context, args T) (R, error)) FunctionTool {
+	v, err := SafeNewFunctionTool(name, description, handler)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// SafeNewFunctionTool is like NewFunctionTool but returns an error instead of panicking.
+func SafeNewFunctionTool[T, R any](name string, description string, handler func(ctx context.Context, args T) (R, error)) (FunctionTool, error) {
 	reflector := &jsonschema.Reflector{
 		ExpandedStruct:             true,
 		RequiredFromJSONSchemaTags: false,
@@ -167,9 +179,15 @@ func NewFunctionTool[T, R any](name string, description string, handler func(ctx
 		schema = reflector.Reflect(&zero)
 	}
 
-	schemaBytes, _ := json.Marshal(schema)
-	var schemaMap map[string]any
-	json.Unmarshal(schemaBytes, &schemaMap)
+	schemaMap, err := util.JSONMap(schema)
+	if err != nil {
+		return FunctionTool{}, fmt.Errorf("failed to transform function tool jsonschema.Schema to map: %w", err)
+	}
+
+	schemaMap, err = EnsureStrictJSONSchema(schemaMap)
+	if err != nil {
+		return FunctionTool{}, fmt.Errorf("failed to ensure strictness of function tool json schema: %w", err)
+	}
 
 	// Add description at the top level if provided
 	if description != "" && schemaMap != nil {
@@ -187,5 +205,5 @@ func NewFunctionTool[T, R any](name string, description string, handler func(ctx
 			}
 			return handler(ctx, args)
 		},
-	}
+	}, nil
 }
