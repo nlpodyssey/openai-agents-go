@@ -18,6 +18,7 @@ go 1.24.3
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
 	github.com/invopop/jsonschema v0.13.0
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/modelcontextprotocol/go-sdk v0.2.0
