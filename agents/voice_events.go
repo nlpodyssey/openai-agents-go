@@ -14,6 +14,13 @@
 
 package agents
 
+type AudioDataType byte
+
+const (
+	AudioDataTypeInt16 = iota + 1
+	AudioDataTypeFloat32
+)
+
 type AudioData interface {
 	isAudioData()
 }

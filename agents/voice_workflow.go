@@ -17,7 +17,6 @@ package agents
 import (
 	"context"
 	"iter"
-	"sync/atomic"
 
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/responses"
@@ -67,44 +66,34 @@ func VoiceWorkflowHelper() voiceWorkflowHelper { return voiceWorkflowHelper{} }
 
 // StreamTextFrom wraps a RunResultStreaming object and yields text events from the stream.
 func (voiceWorkflowHelper) StreamTextFrom(result *RunResultStreaming) *VoiceWorkflowHelperStreamTextFromResult {
-	r := &VoiceWorkflowHelperStreamTextFromResult{ch: make(chan string)}
-	go func() {
-		defer close(r.ch)
-
-		err := result.StreamEvents(func(event StreamEvent) error {
-			if e, ok := event.(RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-				r.ch <- e.Data.Delta.OfString
-			}
-			return nil
-		})
-		if err != nil {
-			r.err.Store(&err)
-		}
-	}()
-	return r
+	return &VoiceWorkflowHelperStreamTextFromResult{
+		result: result,
+		err:    nil,
+	}
 }
 
 type VoiceWorkflowHelperStreamTextFromResult struct {
-	ch  chan string
-	err atomic.Pointer[error]
+	result *RunResultStreaming
+	err    error
 }
 
 func (r *VoiceWorkflowHelperStreamTextFromResult) Seq() iter.Seq[string] {
 	return func(yield func(string) bool) {
-		for v := range r.ch {
-			if !yield(v) {
-				return
+		canYield := true // once yield returns false, stop yielding, but finish consuming all events
+		r.err = r.result.StreamEvents(func(event StreamEvent) error {
+			if !canYield {
+				return nil
 			}
-		}
+			if e, ok := event.(RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
+				canYield = yield(e.Data.Delta.OfString)
+			}
+			return nil
+		})
 	}
 }
 
 func (r *VoiceWorkflowHelperStreamTextFromResult) Error() error {
-	p := r.err.Load()
-	if p != nil {
-		return *p
-	}
-	return nil
+	return r.err
 }
 
 type SingleAgentWorkflowCallbacks interface {
@@ -132,51 +121,12 @@ func NewSingleAgentVoiceWorkflow(agent *Agent, callbacks SingleAgentWorkflowCall
 }
 
 func (w *SingleAgentVoiceWorkflow) Run(ctx context.Context, transcription string) VoiceWorkflowBaseRunResult {
-	r := &singleAgentVoiceWorkflowRunResult{ch: make(chan string)}
-	go func() {
-		defer close(r.ch)
-
-		if w.callbacks != nil {
-			err := w.callbacks.OnRun(ctx, w, transcription)
-			if err != nil {
-				r.err.Store(&err)
-				return
-			}
-		}
-
-		// Add the transcription to the input history
-		w.inputHistory = append(w.inputHistory, TResponseInputItem{
-			OfMessage: &responses.EasyInputMessageParam{
-				Content: responses.EasyInputMessageContentUnionParam{
-					OfString: param.NewOpt(transcription),
-				},
-				Role: responses.EasyInputMessageRoleUser,
-				Type: responses.EasyInputMessageTypeMessage,
-			},
-		})
-
-		// Run the agent
-		result, err := RunInputsStreamed(ctx, w.currentAgent, w.inputHistory)
-		if err != nil {
-			r.err.Store(&err)
-			return
-		}
-
-		// Stream the text from the result
-		textStream := VoiceWorkflowHelper().StreamTextFrom(result)
-		for chunk := range textStream.Seq() {
-			r.ch <- chunk
-		}
-		if err = textStream.Error(); err != nil {
-			r.err.Store(&err)
-			return
-		}
-
-		// Update the input history and current agent
-		w.inputHistory = result.ToInputList()
-		w.currentAgent = result.LastAgent()
-	}()
-	return r
+	return &singleAgentVoiceWorkflowRunResult{
+		ctx:           ctx,
+		workflow:      w,
+		transcription: transcription,
+		err:           nil,
+	}
 }
 
 func (w *SingleAgentVoiceWorkflow) OnStart(context.Context) VoiceWorkflowBaseOnStartResult {
@@ -184,24 +134,57 @@ func (w *SingleAgentVoiceWorkflow) OnStart(context.Context) VoiceWorkflowBaseOnS
 }
 
 type singleAgentVoiceWorkflowRunResult struct {
-	ch  chan string
-	err atomic.Pointer[error]
+	ctx           context.Context
+	workflow      *SingleAgentVoiceWorkflow
+	transcription string
+	err           error
 }
 
 func (r *singleAgentVoiceWorkflowRunResult) Seq() iter.Seq[string] {
 	return func(yield func(string) bool) {
-		for v := range r.ch {
-			if !yield(v) {
+		if r.workflow.callbacks != nil {
+			r.err = r.workflow.callbacks.OnRun(r.ctx, r.workflow, r.transcription)
+			if r.err != nil {
 				return
 			}
 		}
+
+		// Add the transcription to the input history
+		r.workflow.inputHistory = append(r.workflow.inputHistory, TResponseInputItem{
+			OfMessage: &responses.EasyInputMessageParam{
+				Content: responses.EasyInputMessageContentUnionParam{
+					OfString: param.NewOpt(r.transcription),
+				},
+				Role: responses.EasyInputMessageRoleUser,
+				Type: responses.EasyInputMessageTypeMessage,
+			},
+		})
+
+		// Run the agent
+		result, err := RunInputsStreamed(r.ctx, r.workflow.currentAgent, r.workflow.inputHistory)
+		if err != nil {
+			r.err = err
+			return
+		}
+
+		// Stream the text from the result
+		textStream := VoiceWorkflowHelper().StreamTextFrom(result)
+		for chunk := range textStream.Seq() {
+			if !yield(chunk) {
+				break
+			}
+		}
+		r.err = textStream.Error()
+		if r.err != nil {
+			return
+		}
+
+		// Update the input history and current agent
+		r.workflow.inputHistory = result.ToInputList()
+		r.workflow.currentAgent = result.LastAgent()
 	}
 }
 
 func (r *singleAgentVoiceWorkflowRunResult) Error() error {
-	p := r.err.Load()
-	if p != nil {
-		return *p
-	}
-	return nil
+	return r.err
 }

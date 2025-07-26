@@ -47,18 +47,12 @@ type TTSModelSettings struct {
 	// Default: 120.
 	BufferSize int
 
-	// TODO:
-	//  """The data type for the audio data to be returned in."""
-	//  dtype: npt.DTypeLike = np.int16
+	// Optional data type for the audio data to be returned in.
+	// Default: AudioDataTypeInt16
+	AudioDataType param.Opt[AudioDataType]
 
-	// TODO:
-	//  """
-	//  A function to transform the data from the TTS model. This is useful if you want the resulting
-	//  audio stream to have the data in a specific shape already.
-	//  """
-	//  transform_data: (
-	//      Callable[[npt.NDArray[np.int16 | np.float32]], npt.NDArray[np.int16 | np.float32]] | None
-	//  ) = None
+	// Optional function to transform the data from the TTS model.
+	TransformData func(context.Context, AudioData) (AudioData, error)
 
 	// Optional instructions to use for the TTS model.
 	// This is useful if you want to control the tone of the audio output.
@@ -71,7 +65,7 @@ type TTSModelSettings struct {
 	// Default: GetTTSSentenceBasedSplitter(20)
 	TextSplitter TTSTextSplitterFunc
 
-	// The speed with which the TTS model will read the text. Between 0.25 and 4.0.
+	// Optional speed with which the TTS model will read the text. Between 0.25 and 4.0.
 	Speed float64
 }
 
@@ -94,7 +88,7 @@ type TTSModel interface {
 }
 
 type TTSModelRunResult interface {
-	Seq() iter.Seq[byte]
+	Seq() iter.Seq[[]byte]
 	Error() error
 }
 
