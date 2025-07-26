@@ -94,7 +94,7 @@ type TTSModel interface {
 }
 
 type TTSModelRunResult interface {
-	Bytes() iter.Seq[byte]
+	Seq() iter.Seq[byte]
 	Error() error
 }
 
@@ -110,7 +110,7 @@ type StreamedTranscriptionSession interface {
 }
 
 type StreamedTranscriptionSessionTranscribeTurns interface {
-	Transcriptions() iter.Seq[string]
+	Seq() iter.Seq[string]
 	Error() error
 }
 
