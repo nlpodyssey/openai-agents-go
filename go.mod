@@ -19,6 +19,7 @@ go 1.24.3
 require (
 	github.com/google/uuid v1.6.0
 	github.com/invopop/jsonschema v0.13.0
+	github.com/matteo-grella/dwarfreflect v0.0.0-20250730002001-c7f60e256335
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/modelcontextprotocol/go-sdk v0.2.0
 	github.com/openai/openai-go v1.11.0
