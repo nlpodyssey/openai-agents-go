@@ -25,4 +25,4 @@ type FinancialReportData struct {
 var WriterAgent = agents.New("FinancialWriterAgent").
 	WithInstructions(WriterPrompt).
 	WithOutputType(agents.OutputType[FinancialReportData]()).
-	WithModel("gpt-4.5-preview-2025-02-27")
+	WithModel("gpt-4.1")
