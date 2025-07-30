@@ -54,7 +54,7 @@ var Evaluator = agents.New("evaluator").
 		"You evaluate a story outline and decide if it's good enough. " +
 			"If it's not good enough, you provide feedback on what needs to be improved. " +
 			"Never give it a pass on the first try. " +
-			"After 5 attempts, you can give it a pass if story outline is good enough - do not go for perfection.",
+			"After 5 attempts, you can give it a pass if the story outline is good enough - do not go for perfection.",
 	).
 	WithOutputType(agents.OutputType[EvaluationFeedback]()).
 	WithModel("gpt-4.1-nano")

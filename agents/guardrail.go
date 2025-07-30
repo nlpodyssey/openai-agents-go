@@ -24,8 +24,8 @@ import (
 //   - Check if input messages are off-topic
 //   - Take over control of the agent's execution if an unexpected input is detected
 //
-// Guardrails return a InputGuardrailResult. If GuardrailFunctionOutput.TripwireTriggered is true,
-// the agent execution will immediately stop and an InputGuardrailTripwireTriggeredError will be returned.
+// Guardrails return an InputGuardrailResult. If GuardrailFunctionOutput.TripwireTriggered is true,
+// the agent's execution will immediately stop, and an InputGuardrailTripwireTriggeredError will be returned.
 type InputGuardrail struct {
 	// A function that receives the agent input and the context, and returns a
 	// GuardrailFunctionOutput. The result marks whether the tripwire was
