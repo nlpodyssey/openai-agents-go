@@ -281,7 +281,7 @@ func NewBatchTraceProcessor(params BatchTraceProcessorParams) *BatchTraceProcess
 		maxQueueSize:      maxQueueSize,
 		maxBatchSize:      params.MaxBatchSize.Or(128),
 		scheduleDelay:     scheduleDelay,
-		exportTriggerSize: int(float64(maxQueueSize) * exportTriggerRatio),
+		exportTriggerSize: max(1, int(float64(maxQueueSize)*exportTriggerRatio)),
 		nextExportTime:    time.Now().Add(scheduleDelay),
 		queueChan:         make(chan any, maxQueueSize),
 		queueSize:         0,
