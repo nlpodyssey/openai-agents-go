@@ -409,8 +409,7 @@ func (b *BatchTraceProcessor) run(ctx context.Context) error {
 }
 
 // exportBatches drains the queue and exports in batches. If force=true, export everything.
-// Otherwise, export up to `maxBatchSize` repeatedly until the queue is empty or below a
-// certain threshold.
+// Otherwise, export up to `maxBatchSize` repeatedly until the queue is completely empty.
 func (b *BatchTraceProcessor) exportBatches(ctx context.Context, force bool) error {
 	for {
 		var itemsToExport []any
