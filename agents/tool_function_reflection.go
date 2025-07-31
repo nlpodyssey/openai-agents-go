@@ -31,7 +31,7 @@ import (
 type resultExtractor func(results []reflect.Value) (any, error)
 
 // NewFunctionToolAny creates a FunctionTool from any function signature.
-// Requires DWARF debug info (default). Panics if stripped with -ldflags="-w" or go run.
+// Requires DWARF debug info (go build default). Returns an error if stripped with -ldflags="-w" or go run.
 //
 // This function automatically extracts parameter names and types from any function,
 // creates a dynamic struct for arguments, and generates JSON schema automatically.
@@ -49,8 +49,11 @@ type resultExtractor func(results []reflect.Value) (any, error)
 //   - name: The tool name as shown to the LLM. If empty (""), automatically deduced from function name.
 //   - description: Optional tool description
 //   - handler: Any function (context.Context is optional)
-func NewFunctionToolAny(name string, description string, handler any) FunctionTool {
-	tool := dwarfreflect.NewFunction(handler)
+func NewFunctionToolAny(name string, description string, handler any) (FunctionTool, error) {
+	tool, err := dwarfreflect.NewFunction(handler)
+	if err != nil {
+		return FunctionTool{}, err
+	}
 
 	if name == "" {
 		name = transforms.ToCase(tool.GetBaseFunctionName())
@@ -79,7 +82,10 @@ func NewFunctionToolAny(name string, description string, handler any) FunctionTo
 		StrictJSONSchema: param.NewOpt(true),
 		OnInvokeTool: func(ctx context.Context, arguments string) (any, error) {
 			if len(argParamNames) == 0 {
-				results := tool.CallWithContext(ctx)
+				results, err := tool.CallWithContext(ctx)
+				if err != nil {
+					return nil, err
+				}
 				return extractResult(results)
 			}
 
@@ -89,10 +95,13 @@ func NewFunctionToolAny(name string, description string, handler any) FunctionTo
 				return nil, fmt.Errorf("failed to parse arguments: %w", err)
 			}
 
-			results := tool.CallWithNonContextStructAndContext(ctx, argStructPtr.Elem().Interface())
+			results, err := tool.CallWithNonContextStructAndContext(ctx, argStructPtr.Elem().Interface())
+			if err != nil {
+				return nil, err
+			}
 			return extractResult(results)
 		},
-	}
+	}, nil
 }
 
 // createStructOptions creates StructOptions for JSON schema generation

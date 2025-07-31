@@ -20,6 +20,7 @@ import (
 	"errors"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -78,8 +79,20 @@ func functionWithUint(count uint32) uint32 {
 	return count + 1
 }
 
+func mustNewFunctionTool(t *testing.T, name string, description string, fn any) FunctionTool {
+	t.Helper()
+	f, err := NewFunctionToolAny(name, description, fn)
+	if err != nil {
+		if strings.Contains(err.Error(), "DWARF") {
+			t.Skipf("DWARF not available: %v", err)
+		}
+		t.Fatalf("unexpected error: %v", err)
+	}
+	return f
+}
+
 func TestNewFunctionToolAny_BasicFunction(t *testing.T) {
-	tool := NewFunctionToolAny("", "Simple string function", simpleFunction)
+	tool := mustNewFunctionTool(t, "", "Simple string function", simpleFunction)
 
 	// Check that the name was transformed according to the current convention
 	// We don't know which convention is set, so we check both possibilities
@@ -133,7 +146,7 @@ func TestNewFunctionToolAny_BasicFunction(t *testing.T) {
 }
 
 func TestNewFunctionToolAny_WithContext(t *testing.T) {
-	tool := NewFunctionToolAny("process_message", "Function with context", functionWithContext)
+	tool := mustNewFunctionTool(t, "process_message", "Function with context", functionWithContext)
 
 	// Test invocation
 	ctx := context.Background()
@@ -162,7 +175,7 @@ func TestNewFunctionToolAny_WithContext(t *testing.T) {
 }
 
 func TestNewFunctionToolAny_NoParameters(t *testing.T) {
-	tool := NewFunctionToolAny("", "", functionNoParams)
+	tool := mustNewFunctionTool(t, "", "", functionNoParams)
 
 	// Check schema for no parameters
 	properties, ok := tool.ParamsJSONSchema["properties"].(map[string]any)
@@ -187,7 +200,7 @@ func TestNewFunctionToolAny_NoParameters(t *testing.T) {
 }
 
 func TestNewFunctionToolAny_WithError(t *testing.T) {
-	tool := NewFunctionToolAny("", "", functionWithError)
+	tool := mustNewFunctionTool(t, "", "", functionWithError)
 
 	ctx := context.Background()
 
@@ -211,7 +224,7 @@ func TestNewFunctionToolAny_WithError(t *testing.T) {
 }
 
 func TestNewFunctionToolAny_MultipleReturns(t *testing.T) {
-	tool := NewFunctionToolAny("", "", functionMultipleReturns)
+	tool := mustNewFunctionTool(t, "", "", functionMultipleReturns)
 
 	ctx := context.Background()
 	result, err := tool.OnInvokeTool(ctx, `{"a": 3, "b": 4}`)
@@ -238,7 +251,7 @@ func TestNewFunctionToolAny_MultipleReturns(t *testing.T) {
 }
 
 func TestNewFunctionToolAny_OnlyError(t *testing.T) {
-	tool := NewFunctionToolAny("", "", functionOnlyError)
+	tool := mustNewFunctionTool(t, "", "", functionOnlyError)
 
 	ctx := context.Background()
 	result, err := tool.OnInvokeTool(ctx, "")
@@ -296,7 +309,7 @@ func TestNewFunctionToolAny_TypeConstraints(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tool := NewFunctionToolAny("", "", tt.function)
+			tool := mustNewFunctionTool(t, "", "", tt.function)
 
 			properties, ok := tool.ParamsJSONSchema["properties"].(map[string]any)
 			if !ok {
@@ -323,7 +336,7 @@ func TestNewFunctionToolAny_TypeConstraints(t *testing.T) {
 }
 
 func TestNewFunctionToolAny_CustomName(t *testing.T) {
-	tool := NewFunctionToolAny("custom_tool_name", "Custom description", simpleFunction)
+	tool := mustNewFunctionTool(t, "custom_tool_name", "Custom description", simpleFunction)
 
 	if tool.Name != "custom_tool_name" {
 		t.Errorf("Expected tool name 'custom_tool_name', got '%s'", tool.Name)
@@ -331,7 +344,7 @@ func TestNewFunctionToolAny_CustomName(t *testing.T) {
 }
 
 func TestNewFunctionToolAny_InvalidJSON(t *testing.T) {
-	tool := NewFunctionToolAny("", "", simpleFunction)
+	tool := mustNewFunctionTool(t, "", "", simpleFunction)
 
 	ctx := context.Background()
 	_, err := tool.OnInvokeTool(ctx, `{"name": "test", "age": "not a number"}`)
@@ -371,7 +384,7 @@ func TestNamingConventionIntegration(t *testing.T) {
 	// Note: Since the naming convention is loaded at init time,
 	// we can only test against what's currently set
 
-	tool := NewFunctionToolAny("", "", simpleFunction)
+	tool := mustNewFunctionTool(t, "", "", simpleFunction)
 
 	// Get the current convention from environment
 	convention := os.Getenv("OPENAI_AGENTS_NAMING_CONVENTION")
@@ -423,7 +436,7 @@ func complexFunction(ctx context.Context, id int, data map[string][]float64, opt
 }
 
 func TestNewFunctionToolAny_ComplexFunction(t *testing.T) {
-	tool := NewFunctionToolAny("", "Complex function test", complexFunction)
+	tool := mustNewFunctionTool(t, "", "Complex function test", complexFunction)
 
 	// Verify schema has correct parameters (excluding context)
 	properties, ok := tool.ParamsJSONSchema["properties"].(map[string]any)
