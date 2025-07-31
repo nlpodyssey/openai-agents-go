@@ -21,10 +21,6 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 )
 
-// Requirements: Binary must contain DWARF debug info (default for `go build`).
-// Panics if debug info is stripped (e.g., with `-ldflags="-w"`).
-// Do not run with `go run`, as it strips debug information.
-
 func CountAllOccurrences(s, substr string) int {
 	fmt.Printf("🔧 CountAllOccurrences(%s, %s)\n", s, substr)
 
@@ -37,12 +33,19 @@ func CountAllOccurrences(s, substr string) int {
 	return count
 }
 
-var CountSubstringTool = agents.NewFunctionToolAny("", "", CountAllOccurrences)
-
 func main() {
+
+	// Requirements for agents.NewFunctionToolAny: Binary must contain DWARF debug info (default for `go build`).
+	// Returns an error if debug info is stripped (e.g., with `-ldflags="-w"`).
+	// Do not run with `go run`, as it strips debug information.
+	countSubstringTool, err := agents.NewFunctionToolAny("", "", CountAllOccurrences)
+	if err != nil {
+		panic(err)
+	}
+
 	agent := agents.New("Assistant").
 		WithInstructions("You're a helpful agent that can now count all occurrences of a substring in a string using the provided tool.").
-		WithTools(CountSubstringTool).
+		WithTools(countSubstringTool).
 		WithModel("gpt-4.1-nano")
 
 	// Try using the tool first to see how it handles the request.
