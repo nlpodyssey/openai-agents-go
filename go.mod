@@ -17,7 +17,10 @@ module github.com/nlpodyssey/openai-agents-go
 go 1.24.3
 
 require (
+	github.com/go-audio/audio v1.0.0
+	github.com/go-audio/wav v1.1.0
 	github.com/google/uuid v1.6.0
+	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
 	github.com/invopop/jsonschema v0.13.0
 	github.com/matteo-grella/dwarfreflect v0.1.0-alpha
 	github.com/mattn/go-sqlite3 v1.14.30
@@ -33,6 +36,7 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.8.0 // indirect
+	github.com/go-audio/riff v1.0.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/kr/text v0.2.0 // indirect

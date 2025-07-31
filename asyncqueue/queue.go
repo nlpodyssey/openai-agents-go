@@ -14,7 +14,10 @@
 
 package asyncqueue
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type Queue[T any] struct {
 	cond   *sync.Cond
@@ -42,6 +45,29 @@ func (q *Queue[T]) Get() T {
 	return q.get()
 }
 
+func (q *Queue[T]) GetTimeout(timeout time.Duration) (T, bool) {
+	timedOut := false
+	timer := time.AfterFunc(timeout, func() {
+		q.cond.L.Lock()
+		timedOut = true
+		q.cond.L.Unlock()
+		q.cond.Broadcast()
+	})
+	defer timer.Stop()
+
+	q.cond.L.Lock()
+	defer q.cond.L.Unlock()
+	for len(q.values) == 0 && !timedOut {
+		q.cond.Wait()
+	}
+
+	if timedOut {
+		var zero T
+		return zero, false
+	}
+	return q.get(), true
+}
+
 func (q *Queue[T]) GetNoWait() (T, bool) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
@@ -62,7 +88,7 @@ func (q *Queue[T]) IsEmpty() bool {
 
 func (q *Queue[T]) put(v T) {
 	q.values = append(q.values, v)
-	q.cond.Signal()
+	q.cond.Broadcast()
 }
 
 func (q *Queue[T]) get() T {
@@ -70,6 +96,6 @@ func (q *Queue[T]) get() T {
 	copy(q.values[:len(q.values)-1], q.values[1:])
 	clear(q.values[len(q.values)-1:]) // helps GC
 	q.values = q.values[:len(q.values)-1]
-	q.cond.Signal()
+	q.cond.Broadcast()
 	return v
 }
