@@ -14,7 +14,14 @@
 
 package main
 
-import "time"
+import (
+	"context"
+	"fmt"
+	"math/rand"
+
+	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_prompt"
+)
 
 /*
 This is a simple example that uses a recorded audio buffer.
@@ -30,78 +37,96 @@ Try examples like:
 - Hola, como estas? (will handoff to the spanish agent)
 */
 
+type GetWeatherArgs struct {
+	City string `json:"city"`
+}
+
+// GetWeather returns the weather for a given city.
+func GetWeather(_ context.Context, args GetWeatherArgs) (string, error) {
+	fmt.Printf("[debug] GetWeather called with city: %s\n", args.City)
+	choices := []string{"sunny", "cloudy", "rainy", "snowy"}
+	choice := choices[rand.Intn(len(choices))]
+	return fmt.Sprintf("The weather in %s is %s.", args.City, choice), nil
+}
+
+var GetWeatherTool = agents.NewFunctionTool(
+	"get_weather",
+	"GetWeather returns the weather for a given city.",
+	GetWeather,
+)
+
+var (
+	SpanishAgent = agents.New("Spanish").
+			WithHandoffDescription("A spanish speaking agent.").
+			WithInstructions(handoff_prompt.PromptWithHandoffInstructions(
+			"You're speaking to a human, so be polite and concise. Speak in Spanish.",
+		)).
+		WithModel("gpt-4o-mini")
+
+	Agent = agents.New("Assistant").
+		WithInstructions(handoff_prompt.PromptWithHandoffInstructions(
+			"You're speaking to a human, so be polite and concise. If the user speaks in Spanish, handoff to the spanish agent.",
+		)).
+		WithModel("gpt-4o-mini").
+		WithAgentHandoffs(SpanishAgent).
+		AddTool(GetWeatherTool)
+)
+
+type WorkflowCallbacks struct{}
+
+func (WorkflowCallbacks) OnRun(_ context.Context, _ *agents.SingleAgentVoiceWorkflow, transcription string) error {
+	fmt.Printf("[debug] on_run called with transcription: %s\n", transcription)
+	return nil
+}
+
+var _ agents.SingleAgentWorkflowCallbacks = WorkflowCallbacks{}
+
 func main() {
+	ctx := context.Background()
+
 	err := usingPortaudio(func() error {
-		buffer, err := recordAudio()
-		if err != nil {
-			return err
-		}
-
-		//    pipeline = VoicePipeline(
-		//        workflow=SingleAgentVoiceWorkflow(agent, callbacks=WorkflowCallbacks())
-		//    )
-		//
-		//    audio_input = AudioInput(buffer=record_audio())
-		//
-		//    result = await pipeline.run(audio_input)
-		//
-		//    with AudioPlayer() as player:
-		//        async for event in result.stream():
-		//            if event.type == "voice_stream_event_audio":
-		//                player.add_audio(event.data)
-		//                print("Received audio")
-		//            elif event.type == "voice_stream_event_lifecycle":
-		//                print(f"Received lifecycle event: {event.event}")
-		//
-		//        # Add 1 second of silence to the end of the stream to avoid cutting off the last audio.
-		//        player.add_audio(np.zeros(24000 * 1, dtype=np.int16))
-
-		err = usingAudioPlayer(func(player *AudioPlayer) error {
-			return player.AddAudio(buffer)
+		pipeline, err := agents.NewVoicePipeline(agents.VoicePipelineParams{
+			Workflow: agents.NewSingleAgentVoiceWorkflow(Agent, WorkflowCallbacks{}),
 		})
 		if err != nil {
 			return err
 		}
 
-		time.Sleep(2 * time.Second)
+		buffer, err := recordAudio()
+		if err != nil {
+			return err
+		}
+		audioInput := agents.AudioInput{
+			Buffer: agents.AudioDataFloat32(buffer),
+		}
 
-		return nil
+		result, err := pipeline.Run(ctx, audioInput)
+		if err != nil {
+			return err
+		}
+		stream := result.Stream(ctx)
+
+		return usingAudioPlayer(func(player *AudioPlayer) error {
+			for event := range stream.Seq() {
+				switch e := event.(type) {
+				case agents.VoiceStreamEventAudio:
+					if err = player.AddAudio(e.Data.Int16()); err != nil {
+						return err
+					}
+					fmt.Println("Received audio")
+				case agents.VoiceStreamEventLifecycle:
+					fmt.Printf("Received lifecycle event: %s\n", e.Event)
+				}
+			}
+			if err = stream.Error(); err != nil {
+				return err
+			}
+
+			// Add 1 second of silence to the end of the stream to avoid cutting off the last audio.
+			return player.AddAudio(make([]int16, 24000))
+		})
 	})
 	if err != nil {
 		panic(err)
 	}
 }
-
-//@function_tool
-//def get_weather(city: str) -> str:
-//    """Get the weather for a given city."""
-//    print(f"[debug] get_weather called with city: {city}")
-//    choices = ["sunny", "cloudy", "rainy", "snowy"]
-//    return f"The weather in {city} is {random.choice(choices)}."
-//
-//
-//spanish_agent = Agent(
-//    name="Spanish",
-//    handoff_description="A spanish speaking agent.",
-//    instructions=prompt_with_handoff_instructions(
-//        "You're speaking to a human, so be polite and concise. Speak in Spanish.",
-//    ),
-//    model="gpt-4o-mini",
-//)
-//
-//agent = Agent(
-//    name="Assistant",
-//    instructions=prompt_with_handoff_instructions(
-//        "You're speaking to a human, so be polite and concise. If the user speaks in Spanish, handoff to the spanish agent.",
-//    ),
-//    model="gpt-4o-mini",
-//    handoffs=[spanish_agent],
-//    tools=[get_weather],
-//)
-//
-//
-//class WorkflowCallbacks(SingleAgentWorkflowCallbacks):
-//    def on_run(self, workflow: SingleAgentVoiceWorkflow, transcription: str) -> None:
-//        print(f"[debug] on_run called with transcription: {transcription}")
-//
-//

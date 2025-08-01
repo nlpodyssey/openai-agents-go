@@ -21,6 +21,7 @@ require (
 	github.com/go-audio/wav v1.1.0
 	github.com/google/uuid v1.6.0
 	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
+	github.com/gorilla/websocket v1.5.3
 	github.com/invopop/jsonschema v0.13.0
 	github.com/matteo-grella/dwarfreflect v0.1.0-alpha
 	github.com/mattn/go-sqlite3 v1.14.30

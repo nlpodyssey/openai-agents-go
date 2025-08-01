@@ -98,12 +98,12 @@ loop:
 }
 
 type AudioPlayer struct {
-	out    []float32
+	out    []int16
 	stream *portaudio.Stream
 }
 
 func usingAudioPlayer(fn func(*AudioPlayer) error) (err error) {
-	out := make([]float32, 8192)
+	out := make([]int16, 8192)
 	stream, err := portaudio.OpenDefaultStream(0, 1, 24000, len(out), &out)
 	if err != nil {
 		return fmt.Errorf("error opening audio stream: %w", err)
@@ -130,7 +130,7 @@ func usingAudioPlayer(fn func(*AudioPlayer) error) (err error) {
 	return fn(ap)
 }
 
-func (ap *AudioPlayer) AddAudio(buffer []float32) error {
+func (ap *AudioPlayer) AddAudio(buffer []int16) error {
 	stream := ap.stream
 	out := ap.out
 	for chunk := range slices.Chunk(buffer, len(out)) {

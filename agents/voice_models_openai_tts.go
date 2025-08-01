@@ -78,10 +78,9 @@ func (r *openAITTSModelRunResult) Seq() iter.Seq[[]byte] {
 			}
 		}()
 
-		chunk := make([]byte, 1024)
-
 		eof := false
 		for !eof {
+			chunk := make([]byte, 1024)
 			n, err := r.resp.Body.Read(chunk)
 
 			eof = errors.Is(err, io.EOF)

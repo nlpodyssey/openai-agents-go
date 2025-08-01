@@ -14,28 +14,6 @@
 
 package agents
 
-type AudioDataType byte
-
-const (
-	AudioDataTypeInt16 = iota + 1
-	AudioDataTypeFloat32
-)
-
-type AudioData interface {
-	isAudioData()
-	Len() int
-}
-
-type AudioDataInt16 []int16
-
-func (AudioDataInt16) isAudioData() {}
-func (d AudioDataInt16) Len() int   { return len(d) }
-
-type AudioDataFloat32 []float32
-
-func (AudioDataFloat32) isAudioData() {}
-func (d AudioDataFloat32) Len() int   { return len(d) }
-
 // VoiceStreamEvent is an event from the VoicePipeline, streamed via StreamedAudioResult.Stream.
 type VoiceStreamEvent interface {
 	isVoiceStreamEvent()

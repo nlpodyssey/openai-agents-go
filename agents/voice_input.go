@@ -16,7 +16,6 @@ package agents
 
 import (
 	"encoding/base64"
-	"encoding/binary"
 	"fmt"
 
 	"github.com/go-audio/audio"
@@ -57,22 +56,7 @@ func bufferToAudioFile(buffer AudioData, sampleRate, sampleWidth, channels int) 
 		1, // PCM
 	)
 
-	var intData []int
-	switch buf := buffer.(type) {
-	case AudioDataInt16:
-		intData = make([]int, len(buf))
-		for i, v := range buf {
-			intData[i] = int(v)
-		}
-	case AudioDataFloat32:
-		intData = make([]int, len(buf))
-		for i, v := range buf {
-			intData[i] = int(min(1, max(-1, v)) * 32767)
-		}
-	default:
-		// This would be an unrecoverable implementation bug, so a panic is appropriate.
-		panic(fmt.Errorf("unexpected AudioData type %T", buf))
-	}
+	intData := buffer.Int()
 
 	err := enc.Write(&audio.IntBuffer{
 		Format: &audio.Format{
@@ -118,25 +102,7 @@ func (ai AudioInput) ToAudioFile() (*AudioFile, error) {
 
 // ToBase64 returns the audio data as a base64 encoded string.
 func (ai AudioInput) ToBase64() string {
-	var buf []byte
-	switch b := ai.Buffer.(type) {
-	case AudioDataInt16:
-		buf = make([]byte, len(b)*2)
-		for i, v := range b {
-			binary.LittleEndian.PutUint16(buf[i*2:], uint16(v))
-		}
-	case AudioDataFloat32:
-		buf = make([]byte, len(b)*2)
-		for i, v := range b {
-			y := int16(min(1, max(-1, v)) * 32767)
-			binary.LittleEndian.PutUint16(buf[i*2:], uint16(y))
-		}
-	default:
-		// This would be an unrecoverable implementation bug, so a panic is appropriate.
-		panic(fmt.Errorf("unexpected AudioData type %T", buf))
-	}
-
-	return base64.StdEncoding.EncodeToString(buf)
+	return base64.StdEncoding.EncodeToString(ai.Buffer.Int16().Bytes())
 }
 
 // StreamedAudioInput is an audio input represented as a stream of audio data.

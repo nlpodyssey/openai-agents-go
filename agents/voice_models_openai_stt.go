@@ -1,17 +1,23 @@
 package agents
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/binary"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
+	"log/slog"
+	"net/http"
 	"slices"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
 	"github.com/nlpodyssey/openai-agents-go/tracing"
+	"github.com/openai/openai-go"
 )
 
 const (
@@ -33,33 +39,22 @@ type voiceModelsOpenAISessionCompleteSentinel struct{}
 type voiceModelsOpenAIWebsocketDoneSentinel struct{}
 
 func voiceModelsOpenAIAudioToBase64(audioData []AudioData) string {
-	flatLen := 0
+	totalLen := 0
 	for _, v := range audioData {
-		flatLen += v.Len()
+		totalLen += v.Len()
 	}
 
-	concatenatedAudio := make([]int16, 0, flatLen)
+	concatenatedAudio := make(AudioDataInt16, 0, totalLen)
 	for _, data := range audioData {
-		switch d := data.(type) {
-		case AudioDataInt16:
-			concatenatedAudio = append(concatenatedAudio, d...)
-		case AudioDataFloat32:
-			for _, v := range d {
-				concatenatedAudio = append(concatenatedAudio, int16(min(1, max(-1, v))*32767))
-			}
-		default:
-			// This would be an unrecoverable implementation bug, so a panic is appropriate.
-			panic(fmt.Errorf("unexpected AudioData type %T", d))
-		}
+		concatenatedAudio = append(concatenatedAudio, data.Int16()...)
 	}
 
-	audioBytes := make([]byte, len(concatenatedAudio)*2)
-	for i, v := range concatenatedAudio {
-		binary.LittleEndian.PutUint16(audioBytes[i*2:], uint16(v))
-	}
+	audioBytes := concatenatedAudio.Bytes()
 
 	return base64.StdEncoding.EncodeToString(audioBytes)
 }
+
+type voiceModelsOpenAITimeoutError struct{ error }
 
 // Wait for an event from eventQueue whose type is in expectedTypes within the specified timeout.
 func voiceModelsOpenAIWaitForEvent(
@@ -71,7 +66,7 @@ func voiceModelsOpenAIWaitForEvent(
 	for {
 		remaining := timeout - (time.Now().Sub(startTime))
 		if remaining <= 0 {
-			return nil, fmt.Errorf("timeout waiting for event(s): %v", expectedTypes)
+			return nil, voiceModelsOpenAITimeoutError{error: fmt.Errorf("timeout waiting for event(s): %v", expectedTypes)}
 		}
 		event, ok := eventQueue.GetTimeout(remaining)
 		if !ok {
@@ -89,6 +84,7 @@ func voiceModelsOpenAIWaitForEvent(
 
 // OpenAISTTTranscriptionSession is a transcription session for OpenAI's STT model.
 type OpenAISTTTranscriptionSession struct {
+	connected                      bool
 	client                         OpenaiClient
 	model                          string
 	settings                       STTModelSettings
@@ -96,9 +92,9 @@ type OpenAISTTTranscriptionSession struct {
 	traceIncludeSensitiveData      bool
 	traceIncludeSensitiveAudioData bool
 
-	inputQueue  *asyncqueue.Queue[AudioData]
-	outputQueue *asyncqueue.Queue[openAISTTTranscriptionSessionOutputQueueValue]
-	// TODO: self._websocket: websockets.ClientConnection | None = None
+	inputQueue      *asyncqueue.Queue[AudioData]
+	outputQueue     *asyncqueue.Queue[openAISTTTranscriptionSessionOutputQueueValue]
+	websocket       *websocket.Conn
 	eventQueue      *asyncqueue.Queue[openAISTTTranscriptionSessionEventQueueValue]
 	stateQueue      *asyncqueue.Queue[map[string]any]
 	turnAudioBuffer []AudioData
@@ -150,6 +146,7 @@ func NewOpenAISTTTranscriptionSession(params OpenAISTTTranscriptionSessionParams
 	}
 
 	return &OpenAISTTTranscriptionSession{
+		connected:                      false,
 		client:                         params.Client,
 		model:                          params.Model,
 		settings:                       params.Settings,
@@ -159,6 +156,7 @@ func NewOpenAISTTTranscriptionSession(params OpenAISTTTranscriptionSessionParams
 
 		inputQueue:      params.Input.Queue,
 		outputQueue:     asyncqueue.New[openAISTTTranscriptionSessionOutputQueueValue](),
+		websocket:       nil,
 		eventQueue:      asyncqueue.New[openAISTTTranscriptionSessionEventQueueValue](),
 		stateQueue:      asyncqueue.New[map[string]any](),
 		turnAudioBuffer: nil,
@@ -200,7 +198,7 @@ func (s *OpenAISTTTranscriptionSession) endTurn(ctx context.Context, transcript 
 		spanData.Input = voiceModelsOpenAIAudioToBase64(s.turnAudioBuffer)
 	}
 
-	spanData.InputFormat = "PCM"
+	spanData.InputFormat = "pcm"
 
 	if s.traceIncludeSensitiveData {
 		spanData.Output = transcript
@@ -215,140 +213,187 @@ func (s *OpenAISTTTranscriptionSession) endTurn(ctx context.Context, transcript 
 	return nil
 }
 
-//    async def _event_listener(self) -> None:
-//        assert self._websocket is not None, "Websocket not initialized"
-//
-//        async for message in self._websocket:
-//            try:
-//                event = json.loads(message)
-//
-//                if event.get("type") == "error":
-//                    raise STTWebsocketConnectionError(f"Error event: {event.get('error')}")
-//
-//                if event.get("type") in [
-//                    "session.updated",
-//                    "transcription_session.updated",
-//                    "session.created",
-//                    "transcription_session.created",
-//                ]:
-//                    await self._state_queue.put(event)
-//
-//                await self._event_queue.put(event)
-//            except Exception as e:
-//                await self._output_queue.put(ErrorSentinel(e))
-//                raise STTWebsocketConnectionError("Error parsing events") from e
-//        await self._event_queue.put(WebsocketDoneSentinel())
+func (s *OpenAISTTTranscriptionSession) eventListener(ctx context.Context) (err error) {
+	if s.websocket == nil {
+		return fmt.Errorf("websocket not initialized")
+	}
 
-//    async def _configure_session(self) -> None:
-//        assert self._websocket is not None, "Websocket not initialized"
-//        await self._websocket.send(
-//            json.dumps(
-//                {
-//                    "type": "transcription_session.update",
-//                    "session": {
-//                        "input_audio_format": "pcm16",
-//                        "input_audio_transcription": {"model": self._model},
-//                        "turn_detection": self._turn_detection,
-//                    },
-//                }
-//            )
-//        )
+	defer func() {
+		if err != nil {
+			s.outputQueue.Put(voiceModelsOpenAIErrorSentinel{err: err})
+			err = STTWebsocketConnectionErrorf("error parsing events: %w", err)
+		}
+	}()
 
-//    async def _setup_connection(self, ws: websockets.ClientConnection) -> None:
-//        self._websocket = ws
-//        self._listener_task = asyncio.create_task(self._event_listener())
-//
-//        try:
-//            event = await _wait_for_event(
-//                self._state_queue,
-//                ["session.created", "transcription_session.created"],
-//                SESSION_CREATION_TIMEOUT,
-//            )
-//        except TimeoutError as e:
-//            wrapped_err = STTWebsocketConnectionError(
-//                "Timeout waiting for transcription_session.created event"
-//            )
-//            await self._output_queue.put(ErrorSentinel(wrapped_err))
-//            raise wrapped_err from e
-//        except Exception as e:
-//            await self._output_queue.put(ErrorSentinel(e))
-//            raise e
-//
-//        await self._configure_session()
-//
-//        try:
-//            event = await _wait_for_event(
-//                self._state_queue,
-//                ["session.updated", "transcription_session.updated"],
-//                SESSION_UPDATE_TIMEOUT,
-//            )
-//            if _debug.DONT_LOG_MODEL_DATA:
-//                logger.debug("Session updated")
-//            else:
-//                logger.debug(f"Session updated: {event}")
-//        except TimeoutError as e:
-//            wrapped_err = STTWebsocketConnectionError(
-//                "Timeout waiting for transcription_session.updated event"
-//            )
-//            await self._output_queue.put(ErrorSentinel(wrapped_err))
-//            raise wrapped_err from e
-//        except Exception as e:
-//            await self._output_queue.put(ErrorSentinel(e))
-//            raise
+	for {
+		_, message, err := s.websocket.ReadMessage()
+		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				break
+			}
+			return fmt.Errorf("error reading websocket message: %w", err)
+		}
 
-//    async def _handle_events(self) -> None:
-//        while True:
-//            try:
-//                event = await asyncio.wait_for(
-//                    self._event_queue.get(), timeout=EVENT_INACTIVITY_TIMEOUT
-//                )
-//                if isinstance(event, WebsocketDoneSentinel):
-//                    # processed all events and websocket is done
-//                    break
-//
-//                event_type = event.get("type", "unknown")
-//                if event_type == "input_audio_transcription_completed":
-//                    transcript = cast(str, event.get("transcript", ""))
-//                    if len(transcript) > 0:
-//                        self._end_turn(transcript)
-//                        self._start_turn()
-//                        await self._output_queue.put(transcript)
-//                await asyncio.sleep(0)  # yield control
-//            except asyncio.TimeoutError:
-//                # No new events for a while. Assume the session is done.
-//                break
-//            except Exception as e:
-//                await self._output_queue.put(ErrorSentinel(e))
-//                raise e
-//        await self._output_queue.put(SessionCompleteSentinel())
+		var event map[string]any
+		err = json.Unmarshal(message, &event)
+		if err != nil {
+			return fmt.Errorf("error JSON-unmarshaling websocket message: %w", err)
+		}
 
-//    async def _stream_audio(
-//        self, audio_queue: asyncio.Queue[npt.NDArray[np.int16 | np.float32]]
-//    ) -> None:
-//        assert self._websocket is not None, "Websocket not initialized"
-//        self._start_turn()
-//        while True:
-//            buffer = await audio_queue.get()
-//            if buffer is None:
-//                break
-//
-//            self._turn_audio_buffer.append(buffer)
-//            try:
-//                await self._websocket.send(
-//                    json.dumps(
-//                        {
-//                            "type": "input_audio_buffer.append",
-//                            "audio": base64.b64encode(buffer.tobytes()).decode("utf-8"),
-//                        }
-//                    )
-//                )
-//            except websockets.ConnectionClosed:
-//                break
-//            except Exception as e:
-//                await self._output_queue.put(ErrorSentinel(e))
-//                raise e
-//
-//            await asyncio.sleep(0)  # yield control
+		eventType, _ := event["type"].(string)
+		if eventType == "error" {
+			return STTWebsocketConnectionErrorf("error event: %v", event["error"])
+		}
+		if slices.Contains([]string{
+			"session.updated",
+			"transcription_session.updated",
+			"session.created",
+			"transcription_session.created",
+		}, eventType) {
+			s.stateQueue.Put(event)
+		}
+
+		s.eventQueue.Put(openAISTTTranscriptionSessionEventQueueValueMap(event))
+	}
+
+	s.eventQueue.Put(voiceModelsOpenAIWebsocketDoneSentinel{})
+	return nil
+}
+
+func (s *OpenAISTTTranscriptionSession) configureSession() error {
+	if s.websocket == nil {
+		return fmt.Errorf("websocket not initialized")
+	}
+	return s.websocket.WriteJSON(map[string]any{
+		"type": "transcription_session.update",
+		"session": map[string]any{
+			"input_audio_format":        "pcm16",
+			"input_audio_transcription": map[string]any{"model": s.model},
+			"turn_detection":            s.turnDetection,
+		},
+	})
+}
+
+func (s *OpenAISTTTranscriptionSession) setupConnection(ctx context.Context, c *websocket.Conn) (err error) {
+	s.websocket = c
+	s.listenerTask = asynctask.CreateTaskNoValue(ctx, s.eventListener)
+
+	defer func() {
+		if err != nil {
+			s.outputQueue.Put(voiceModelsOpenAIErrorSentinel{err: err})
+		}
+	}()
+
+	_, err = voiceModelsOpenAIWaitForEvent(
+		s.stateQueue,
+		[]string{"session.created", "transcription_session.created"},
+		VoiceModelsOpenAISessionCreationTimeout,
+	)
+	if err != nil {
+		if errors.As(err, &voiceModelsOpenAITimeoutError{}) {
+			err = STTWebsocketConnectionErrorf("timeout waiting for transcription_session.created event: %w", err)
+		}
+		return err
+	}
+
+	if err = s.configureSession(); err != nil {
+		return err
+	}
+
+	event, err := voiceModelsOpenAIWaitForEvent(
+		s.stateQueue,
+		[]string{"session.updated", "transcription_session.updated"},
+		VoiceModelsOpenAISessionUpdateTimeout,
+	)
+	if err != nil {
+		if errors.As(err, &voiceModelsOpenAITimeoutError{}) {
+			err = STTWebsocketConnectionErrorf("timeout waiting for transcription_session.updated event: %w", err)
+		}
+		return err
+	}
+	if DontLogModelData {
+		Logger().Debug("Session updated")
+	} else {
+		Logger().Debug("Session updated", slog.Any("event", event))
+	}
+	return nil
+}
+
+func (s *OpenAISTTTranscriptionSession) handleEvents(ctx context.Context) (err error) {
+	defer func() {
+		if err != nil {
+			s.outputQueue.Put(voiceModelsOpenAIErrorSentinel{err: err})
+		}
+	}()
+
+loop:
+	for {
+		event, ok := s.eventQueue.GetTimeout(VoiceModelsOpenAIEventInactivityTimeout)
+		if !ok {
+			// No new events for a while. Assume the session is done.
+			break
+		}
+
+		switch event := event.(type) {
+		case voiceModelsOpenAIWebsocketDoneSentinel:
+			// processed all events and websocket is done
+			break loop
+		case openAISTTTranscriptionSessionEventQueueValueMap:
+			eventType, _ := event["type"].(string)
+			if eventType == "input_audio_transcription_completed" {
+				transcript, _ := event["transcript"].(string)
+				if transcript != "" {
+					if err = s.endTurn(ctx, transcript); err != nil {
+						return err
+					}
+					if err = s.startTurn(ctx); err != nil {
+						return err
+					}
+					s.outputQueue.Put(openAISTTTranscriptionSessionOutputQueueValueString(transcript))
+				}
+			}
+		default:
+			// This would be an unrecoverable implementation bug, so a panic is appropriate.
+			panic(fmt.Errorf("unexpected openAISTTTranscriptionSessionEventQueueValue type %T", event))
+		}
+	}
+
+	s.outputQueue.Put(voiceModelsOpenAISessionCompleteSentinel{})
+	return nil
+}
+
+func (s *OpenAISTTTranscriptionSession) streamAudio(ctx context.Context, audioQueue *asyncqueue.Queue[AudioData]) error {
+	if s.websocket == nil {
+		return fmt.Errorf("websocket not initialized")
+	}
+	if err := s.startTurn(ctx); err != nil {
+		return err
+	}
+
+	for {
+		buffer := audioQueue.Get()
+		if buffer.Len() == 0 {
+			break
+		}
+
+		s.turnAudioBuffer = append(s.turnAudioBuffer, buffer)
+
+		err := s.websocket.WriteJSON(map[string]any{
+			"type":  "input_audio_buffer.append",
+			"audio": base64.StdEncoding.EncodeToString(buffer.Bytes()),
+		})
+		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				break
+			}
+			err = fmt.Errorf("websocket wiriting error: %w", err)
+			s.outputQueue.Put(voiceModelsOpenAIErrorSentinel{err: err})
+			return err
+		}
+	}
+
+	return nil
+}
 
 func (s *OpenAISTTTranscriptionSession) processWebsocketConnection(ctx context.Context) (err error) {
 	defer func() {
@@ -357,207 +402,222 @@ func (s *OpenAISTTTranscriptionSession) processWebsocketConnection(ctx context.C
 		}
 	}()
 
-	// TODO:
-	//  async with websockets.connect(
-	//      "wss://api.openai.com/v1/realtime?intent=transcription",
-	//      additional_headers={
-	//          "Authorization": f"Bearer {self._client.api_key}",
-	//          "OpenAI-Beta": "realtime=v1",
-	//          "OpenAI-Log-Session": "1",
-	//      },
-	//  ) as ws:
-	//      await self._setup_connection(ws)
-	//      self._process_events_task = asyncio.create_task(self._handle_events())
-	//      self._stream_audio_task = asyncio.create_task(self._stream_audio(self._input_queue))
-	//      self.connected = True
-	//      if self._listener_task:
-	//          await self._listener_task
-	//      else:
-	//          logger.error("Listener task not initialized")
-	//          raise AgentsException("Listener task not initialized")
-	panic("implement me") //TODO implement me
+	header := make(http.Header)
+	if s.client.APIKey.Valid() {
+		header.Set("Authorization", "Bearer "+s.client.APIKey.Value)
+	}
+	header.Set("OpenAI-Beta", "realtime=v1")
+	header.Set("OpenAI-Log-Session", "1")
+	c, _, err := websocket.DefaultDialer.Dial("wss://api.openai.com/v1/realtime?intent=transcription", header)
+	if err != nil {
+		return fmt.Errorf("websocket connection error: %w", err)
+	}
+	defer func() {
+		if e := c.Close(); e != nil {
+			err = errors.Join(err, fmt.Errorf("error closing websocket connection: %w", e))
+		}
+	}()
+
+	if err = s.setupConnection(ctx, c); err != nil {
+		return err
+	}
+
+	s.processEventsTask = asynctask.CreateTaskNoValue(ctx, s.handleEvents)
+	s.streamAudioTask = asynctask.CreateTaskNoValue(ctx, func(ctx context.Context) error {
+		return s.streamAudio(ctx, s.inputQueue)
+	})
+	s.connected = true
+
+	if s.listenerTask == nil {
+		Logger().Error("Listener task not initialized")
+		return NewAgentsError("listener task not initialized")
+	}
+
+	s.listenerTask.Await()
+	return nil
 }
 
-//    def _check_errors(self) -> None:
-//        if self._connection_task and self._connection_task.done():
-//            exc = self._connection_task.exception()
-//            if exc and isinstance(exc, Exception):
-//                self._stored_exception = exc
-//
-//        if self._process_events_task and self._process_events_task.done():
-//            exc = self._process_events_task.exception()
-//            if exc and isinstance(exc, Exception):
-//                self._stored_exception = exc
-//
-//        if self._stream_audio_task and self._stream_audio_task.done():
-//            exc = self._stream_audio_task.exception()
-//            if exc and isinstance(exc, Exception):
-//                self._stored_exception = exc
-//
-//        if self._listener_task and self._listener_task.done():
-//            exc = self._listener_task.exception()
-//            if exc and isinstance(exc, Exception):
-//                self._stored_exception = exc
+func (s *OpenAISTTTranscriptionSession) checkErrors() {
+	tasks := []*asynctask.TaskNoValue{
+		s.connectionTask,
+		s.processEventsTask,
+		s.streamAudioTask,
+		s.listenerTask,
+	}
+	for _, t := range tasks {
+		if t != nil && t.IsDone() {
+			if err := t.Await().Error; err != nil {
+				s.storedError = err
+			}
+		}
+	}
+}
 
-//    def _cleanup_tasks(self) -> None:
-//        if self._listener_task and not self._listener_task.done():
-//            self._listener_task.cancel()
-//
-//        if self._process_events_task and not self._process_events_task.done():
-//            self._process_events_task.cancel()
-//
-//        if self._stream_audio_task and not self._stream_audio_task.done():
-//            self._stream_audio_task.cancel()
-//
-//        if self._connection_task and not self._connection_task.done():
-//            self._connection_task.cancel()
+func (s *OpenAISTTTranscriptionSession) cleanupTasks() {
+	tasks := []*asynctask.TaskNoValue{
+		s.connectionTask,
+		s.processEventsTask,
+		s.streamAudioTask,
+		s.listenerTask,
+	}
+	for _, t := range tasks {
+		if t != nil && !t.IsDone() {
+			t.Cancel()
+		}
+	}
+}
 
 func (s *OpenAISTTTranscriptionSession) TranscribeTurns(ctx context.Context) StreamedTranscriptionSessionTranscribeTurns {
 	return &openAISTTTranscriptionSessionTranscribeTurns{ctx: ctx, s: s}
 }
 
-func (s *OpenAISTTTranscriptionSession) Close(ctx context.Context) error {
-	//async def close(self) -> None:
-	//    if self._websocket:
-	//        await self._websocket.close()
-	//
-	//    self._cleanup_tasks()
-	panic("implement me") //TODO implement me
+func (s *OpenAISTTTranscriptionSession) Close(context.Context) (err error) {
+	if s.websocket != nil {
+		if err = s.websocket.Close(); err != nil {
+			err = fmt.Errorf("error closing websocket connection: %w", err)
+		}
+	}
+
+	s.cleanupTasks()
+	return nil
 }
 
 type openAISTTTranscriptionSessionTranscribeTurns struct {
 	ctx context.Context
 	s   *OpenAISTTTranscriptionSession
+	err error
 }
 
 func (o *openAISTTTranscriptionSessionTranscribeTurns) Seq() iter.Seq[string] {
 	ctx := o.ctx
 	s := o.s
 	return func(yield func(string) bool) {
+		canYield := true // once yield returns false, stop yielding, but finish consuming the queue
+
 		s.connectionTask = asynctask.CreateTaskNoValue(ctx, s.processWebsocketConnection)
 
-		//while True:
-		//    try:
-		//        turn = await self._output_queue.get()
-		//    except asyncio.CancelledError:
-		//        break
-		//
-		//    if (
-		//        turn is None
-		//        or isinstance(turn, ErrorSentinel)
-		//        or isinstance(turn, SessionCompleteSentinel)
-		//    ):
-		//        self._output_queue.task_done()
-		//        break
-		//    yield turn
-		//    self._output_queue.task_done()
-		//
-		//if self._tracing_span:
-		//    self._end_turn("")
-		//
-		//if self._websocket:
-		//    await self._websocket.close()
-		//
-		//self._check_errors()
-		//if self._stored_exception:
-		//    raise self._stored_exception
-		panic("implement me") //TODO implement me
+	loop:
+		for {
+			turn := s.outputQueue.Get()
+
+			switch t := turn.(type) {
+			case openAISTTTranscriptionSessionOutputQueueValueString:
+				if canYield {
+					canYield = yield(string(t))
+				}
+
+			case voiceModelsOpenAIErrorSentinel, voiceModelsOpenAISessionCompleteSentinel:
+				break loop
+			default:
+				// This would be an unrecoverable implementation bug, so a panic is appropriate.
+				panic(fmt.Errorf("unexpected openAISTTTranscriptionSessionOutputQueueValue type %T", t))
+			}
+		}
+
+		if s.tracingSpan != nil {
+			if err := s.endTurn(ctx, ""); err != nil {
+				o.err = errors.Join(o.err, fmt.Errorf("error ending turn: %w", err))
+				return
+			}
+		}
+
+		if s.websocket != nil {
+			if err := s.websocket.Close(); err != nil {
+				o.err = errors.Join(o.err, fmt.Errorf("error closing websocket connection: %w", err))
+			}
+		}
+
+		s.checkErrors()
+		o.err = errors.Join(o.err, s.storedError)
 	}
 }
 
-func (o *openAISTTTranscriptionSessionTranscribeTurns) Error() error {
-	panic("implement me") //TODO implement me
+func (o *openAISTTTranscriptionSessionTranscribeTurns) Error() error { return o.err }
+
+// OpenAISTTModel is a speech-to-text model for OpenAI.
+type OpenAISTTModel struct {
+	model  string
+	client OpenaiClient
 }
 
-//class OpenAISTTModel(STTModel):
-//    """A speech-to-text model for OpenAI."""
-//
-//    def __init__(
-//        self,
-//        model: str,
-//        openai_client: AsyncOpenAI,
-//    ):
-//        """Create a new OpenAI speech-to-text model.
-//
-//        Args:
-//            model: The name of the model to use.
-//            openai_client: The OpenAI client to use.
-//        """
-//        self.model = model
-//        self._client = openai_client
-//
-//    @property
-//    def model_name(self) -> str:
-//        return self.model
-//
-//    def _non_null_or_not_given(self, value: Any) -> Any:
-//        return value if value is not None else None  # NOT_GIVEN
-//
-//    async def transcribe(
-//        self,
-//        input: AudioInput,
-//        settings: STTModelSettings,
-//        trace_include_sensitive_data: bool,
-//        trace_include_sensitive_audio_data: bool,
-//    ) -> str:
-//        """Transcribe an audio input.
-//
-//        Args:
-//            input: The audio input to transcribe.
-//            settings: The settings to use for the transcription.
-//
-//        Returns:
-//            The transcribed text.
-//        """
-//        with transcription_span(
-//            model=self.model,
-//            input=input.to_base64() if trace_include_sensitive_audio_data else "",
-//            input_format="pcm",
-//            model_config={
-//                "temperature": self._non_null_or_not_given(settings.temperature),
-//                "language": self._non_null_or_not_given(settings.language),
-//                "prompt": self._non_null_or_not_given(settings.prompt),
-//            },
-//        ) as span:
-//            try:
-//                response = await self._client.audio.transcriptions.create(
-//                    model=self.model,
-//                    file=input.to_audio_file(),
-//                    prompt=self._non_null_or_not_given(settings.prompt),
-//                    language=self._non_null_or_not_given(settings.language),
-//                    temperature=self._non_null_or_not_given(settings.temperature),
-//                )
-//                if trace_include_sensitive_data:
-//                    span.span_data.output = response.text
-//                return response.text
-//            except Exception as e:
-//                span.span_data.output = ""
-//                span.set_error(SpanError(message=str(e), data={}))
-//                raise e
-//
-//    async def create_session(
-//        self,
-//        input: StreamedAudioInput,
-//        settings: STTModelSettings,
-//        trace_include_sensitive_data: bool,
-//        trace_include_sensitive_audio_data: bool,
-//    ) -> StreamedTranscriptionSession:
-//        """Create a new transcription session.
-//
-//        Args:
-//            input: The audio input to transcribe.
-//            settings: The settings to use for the transcription.
-//            trace_include_sensitive_data: Whether to include sensitive data in traces.
-//            trace_include_sensitive_audio_data: Whether to include sensitive audio data in traces.
-//
-//        Returns:
-//            A new transcription session.
-//        """
-//        return OpenAISTTTranscriptionSession(
-//            input,
-//            self._client,
-//            self.model,
-//            settings,
-//            trace_include_sensitive_data,
-//            trace_include_sensitive_audio_data,
-//        )
+// NewOpenAISTTModel creates a new OpenAI speech-to-text model.
+func NewOpenAISTTModel(model string, openAIClient OpenaiClient) *OpenAISTTModel {
+	return &OpenAISTTModel{
+		model:  model,
+		client: openAIClient,
+	}
+}
+
+func (m *OpenAISTTModel) ModelName() string { return m.model }
+
+func (m *OpenAISTTModel) Transcribe(ctx context.Context, params STTModelTranscribeParams) (string, error) {
+	var spanInput string
+	if params.TraceIncludeSensitiveAudioData {
+		spanInput = params.Input.ToBase64()
+	}
+
+	var result string
+	err := tracing.TranscriptionSpan(
+		ctx,
+		tracing.TranscriptionSpanParams{
+			Model:       m.model,
+			Input:       spanInput,
+			InputFormat: "pcm",
+			ModelConfig: map[string]any{
+				"temperature": params.Settings.Temperature,
+				"language":    params.Settings.Language,
+				"prompt":      params.Settings.Prompt,
+			},
+		},
+		func(ctx context.Context, span tracing.Span) (err error) {
+			spanData := span.SpanData().(*tracing.TranscriptionSpanData)
+
+			defer func() {
+				if err != nil {
+					spanData.Output = ""
+					span.SetError(tracing.SpanError{
+						Message: err.Error(),
+						Data:    nil,
+					})
+				}
+			}()
+
+			audioFile, err := params.Input.ToAudioFile()
+			if err != nil {
+				return err
+			}
+
+			response, err := m.client.Audio.Transcriptions.New(ctx, openai.AudioTranscriptionNewParams{
+				Model:       m.model,
+				File:        openai.File(bytes.NewReader(audioFile.Content), audioFile.Filename, audioFile.ContentType),
+				Prompt:      params.Settings.Prompt,
+				Language:    params.Settings.Language,
+				Temperature: params.Settings.Temperature,
+			})
+			if err != nil {
+				return fmt.Errorf("audio transcription error: %w", err)
+			}
+
+			if params.TraceIncludeSensitiveData {
+				spanData.Output = response.Text
+			}
+			result = response.Text
+			return
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func (m *OpenAISTTModel) CreateSession(ctx context.Context, params STTModelCreateSessionParams) (StreamedTranscriptionSession, error) {
+	return NewOpenAISTTTranscriptionSession(OpenAISTTTranscriptionSessionParams{
+		Input:                          params.Input,
+		Client:                         m.client,
+		Model:                          m.model,
+		Settings:                       params.Settings,
+		TraceIncludeSensitiveData:      params.TraceIncludeSensitiveData,
+		TraceIncludeSensitiveAudioData: params.TraceIncludeSensitiveAudioData,
+	}), nil
+}

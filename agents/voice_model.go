@@ -111,10 +111,10 @@ type StreamedTranscriptionSessionTranscribeTurns interface {
 // STTModelSettings provides settings for a speech-to-text model.
 type STTModelSettings struct {
 	// Optional instructions for the model to follow.
-	Prompt string
+	Prompt param.Opt[string]
 
 	// Optional language of the audio input.
-	Language string
+	Language param.Opt[string]
 
 	// The temperature of the model.
 	Temperature param.Opt[float64]
