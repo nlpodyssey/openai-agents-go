@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 
 	"github.com/gordonklaus/portaudio"
 )
@@ -39,11 +40,6 @@ func usingPortaudio(fn func() error) (err error) {
 func recordAudio() (_ []float32, err error) {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Println("Press <enter> to start recording. Press <enter> again to stop recording.")
-	if _, _, err = reader.ReadRune(); err != nil {
-		return nil, err
-	}
-
 	in := make([]float32, 64)
 	var buffer []float32
 	stream, err := portaudio.OpenDefaultStream(1, 0, 24000, len(in), in)
@@ -59,7 +55,6 @@ func recordAudio() (_ []float32, err error) {
 	if err = stream.Start(); err != nil {
 		return nil, fmt.Errorf("error starting audio stream: %w", err)
 	}
-	fmt.Println("Recording started...")
 
 	keyPressChan := make(chan struct{})
 	var readlineErr error
@@ -184,4 +179,17 @@ func (ap *AudioPlayer) Flush() error {
 		ap.remainder = nil
 	}
 	return nil
+}
+
+func checkForQuit() (input string, quit bool, err error) {
+	reader := bufio.NewReader(os.Stdin)
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		return "", false, err
+	}
+
+	input = strings.TrimSpace(line)
+	quit = strings.ToLower(input) == "quit" || strings.ToLower(input) == "exit"
+
+	return input, quit, nil
 }

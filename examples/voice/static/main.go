@@ -24,17 +24,19 @@ import (
 )
 
 /*
-This is a simple example that uses a recorded audio buffer.
+This is a conversational voice example that maintains context across multiple turns.
 
-1. You can record an audio clip in the terminal.
-2. The pipeline automatically transcribes the audio.
-3. The agent workflow is a simple one that starts at the Assistant agent.
+1. You can have a multi-turn conversation using voice input/output.
+2. The pipeline automatically transcribes your audio input.
+3. The agent maintains conversation history across turns.
 4. The output of the agent is streamed to the audio player.
+5. Type 'quit' or 'exit' to end the conversation.
 
 Try examples like:
 - Tell me a joke (will respond with a joke)
 - What's the weather in Tokyo? (will call the `get_weather` tool and then speak)
 - Hola, como estas? (will handoff to the spanish agent)
+- Follow-up questions that reference previous conversation context
 */
 
 type GetWeatherArgs struct {
@@ -84,52 +86,88 @@ var _ agents.SingleAgentWorkflowCallbacks = WorkflowCallbacks{}
 func main() {
 	ctx := context.Background()
 
+	fmt.Println("=== Conversational Voice Assistant ===")
+	fmt.Println("Press Enter to start recording each turn.")
+	fmt.Println("After the assistant responds, you can:")
+	fmt.Println("- Press Enter again for another voice turn")
+	fmt.Println("- Type 'quit' or 'exit' to end the conversation")
+	fmt.Println()
+
+	// Create a single workflow instance to maintain conversation history
+	workflow := agents.NewSingleAgentVoiceWorkflow(Agent, WorkflowCallbacks{})
+
 	err := usingPortaudio(func() error {
-		pipeline, err := agents.NewVoicePipeline(agents.VoicePipelineParams{
-			Workflow: agents.NewSingleAgentVoiceWorkflow(Agent, WorkflowCallbacks{}),
-		})
-		if err != nil {
-			return err
-		}
+		for {
+			fmt.Print("Press <enter> to record, or type 'quit'/'exit' to end: ")
 
-		buffer, err := recordAudio()
-		if err != nil {
-			return err
-		}
-		audioInput := agents.AudioInput{
-			Buffer: agents.AudioDataFloat32(buffer),
-		}
+			// Check if user wants to quit before recording
+			input, quit, err := checkForQuit()
+			if err != nil {
+				return err
+			}
+			if quit {
+				fmt.Println("Goodbye!")
+				break
+			}
+			if input != "" {
+				fmt.Printf("Text input not supported in voice mode. Press Enter to record audio.\n")
+				continue
+			}
 
-		result, err := pipeline.Run(ctx, audioInput)
-		if err != nil {
-			return err
-		}
-		stream := result.Stream(ctx)
+			fmt.Println("Recording started... Press <enter> to stop recording.")
 
-		return usingAudioPlayer(func(player *AudioPlayer) error {
-			for event := range stream.Seq() {
-				switch e := event.(type) {
-				case agents.VoiceStreamEventAudio:
-					if err = player.AddAudio(e.Data.Int16()); err != nil {
-						return err
+			pipeline, err := agents.NewVoicePipeline(agents.VoicePipelineParams{
+				Workflow: workflow,
+			})
+			if err != nil {
+				return err
+			}
+
+			buffer, err := recordAudio()
+			if err != nil {
+				return err
+			}
+			audioInput := agents.AudioInput{
+				Buffer: agents.AudioDataFloat32(buffer),
+			}
+
+			result, err := pipeline.Run(ctx, audioInput)
+			if err != nil {
+				return err
+			}
+			stream := result.Stream(ctx)
+
+			err = usingAudioPlayer(func(player *AudioPlayer) error {
+				for event := range stream.Seq() {
+					switch e := event.(type) {
+					case agents.VoiceStreamEventAudio:
+						if err = player.AddAudio(e.Data.Int16()); err != nil {
+							return err
+						}
+						fmt.Println("Received audio")
+					case agents.VoiceStreamEventLifecycle:
+						fmt.Printf("Received lifecycle event: %s\n", e.Event)
 					}
-					fmt.Println("Received audio")
-				case agents.VoiceStreamEventLifecycle:
-					fmt.Printf("Received lifecycle event: %s\n", e.Event)
 				}
-			}
-			if err = stream.Error(); err != nil {
+				if err = stream.Error(); err != nil {
+					return err
+				}
+
+				// Flush any remaining audio data
+				if err = player.Flush(); err != nil {
+					return err
+				}
+
+				// Add 1 second of silence to the end of the stream to avoid cutting off the last audio.
+				return player.AddAudio(make([]int16, 24000))
+			})
+			if err != nil {
 				return err
 			}
 
-			// Flush any remaining audio data
-			if err = player.Flush(); err != nil {
-				return err
-			}
-
-			// Add 1 second of silence to the end of the stream to avoid cutting off the last audio.
-			return player.AddAudio(make([]int16, 24000))
-		})
+			fmt.Printf("Turn completed.\n\n")
+		}
+		return nil
 	})
 	if err != nil {
 		panic(err)
