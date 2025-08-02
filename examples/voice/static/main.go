@@ -122,6 +122,11 @@ func main() {
 				return err
 			}
 
+			// Flush any remaining audio data
+			if err = player.Flush(); err != nil {
+				return err
+			}
+
 			// Add 1 second of silence to the end of the stream to avoid cutting off the last audio.
 			return player.AddAudio(make([]int16, 24000))
 		})
