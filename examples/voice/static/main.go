@@ -53,7 +53,7 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (string, error) {
 
 var GetWeatherTool = agents.NewFunctionTool(
 	"get_weather",
-	"GetWeather returns the weather for a given city.",
+	"Get the weather for a given city.",
 	GetWeather,
 )
 
