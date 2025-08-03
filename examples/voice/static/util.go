@@ -118,6 +118,9 @@ func usingAudioPlayer(fn func(*AudioPlayer) error) (err error) {
 	}
 
 	defer func() {
+		if e := ap.Flush(); e != nil {
+			err = errors.Join(err, fmt.Errorf("error flushing audio player: %w", e))
+		}
 		if ap.started {
 			if e := stream.Stop(); e != nil {
 				err = errors.Join(err, fmt.Errorf("error stopping audio stream: %w", e))
