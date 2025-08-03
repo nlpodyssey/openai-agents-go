@@ -25,7 +25,7 @@ import (
 	"github.com/gordonklaus/portaudio"
 )
 
-func usingPortaudio(fn func() error) (err error) {
+func UsingPortaudio(fn func() error) (err error) {
 	if err = portaudio.Initialize(); err != nil {
 		return fmt.Errorf("error initializing portaudio: %w", err)
 	}
@@ -94,12 +94,12 @@ loop:
 
 type AudioPlayer struct {
 	out       []int16
-	stream    *portaudio.Stream
 	remainder []int16
+	stream    *portaudio.Stream
 	started   bool
 }
 
-func usingAudioPlayer(fn func(*AudioPlayer) error) (err error) {
+func UsingAudioPlayer(fn func(*AudioPlayer) error) (err error) {
 	out := make([]int16, 8192)
 	stream, err := portaudio.OpenDefaultStream(0, 1, 24000, len(out), &out)
 	if err != nil {
@@ -112,9 +112,10 @@ func usingAudioPlayer(fn func(*AudioPlayer) error) (err error) {
 	}()
 
 	ap := &AudioPlayer{
-		out:     out,
-		stream:  stream,
-		started: false,
+		out:       out,
+		remainder: make([]int16, 0, len(out)),
+		stream:    stream,
+		started:   false,
 	}
 
 	defer func() {
@@ -132,27 +133,28 @@ func usingAudioPlayer(fn func(*AudioPlayer) error) (err error) {
 }
 
 func (ap *AudioPlayer) AddAudio(buffer []int16) error {
+	if len(buffer) == 0 {
+		return nil
+	}
+
 	// Start stream on first audio data
-	if !ap.started && len(buffer) > 0 {
+	if !ap.started {
 		if err := ap.stream.Start(); err != nil {
 			return fmt.Errorf("error starting audio stream: %w", err)
 		}
 		ap.started = true
 	}
 
-	// If no audio data and stream not started, do nothing
-	if len(buffer) == 0 && !ap.started {
-		return nil
-	}
-
 	stream := ap.stream
 	out := ap.out
 
 	// Combine any remainder from previous calls with new buffer
-	combinedBuffer := append(ap.remainder, buffer...)
-	ap.remainder = nil
+	if len(ap.remainder) > 0 {
+		buffer = append(ap.remainder, buffer...)
+		ap.remainder = ap.remainder[:0]
+	}
 
-	for chunk := range slices.Chunk(combinedBuffer, len(out)) {
+	for chunk := range slices.Chunk(buffer, len(out)) {
 		if len(chunk) == len(out) {
 			copy(out, chunk)
 			if err := stream.Write(); err != nil {
@@ -160,7 +162,7 @@ func (ap *AudioPlayer) AddAudio(buffer []int16) error {
 			}
 		} else {
 			// Store partial chunk for next call
-			ap.remainder = make([]int16, len(chunk))
+			ap.remainder = ap.remainder[:len(chunk)]
 			copy(ap.remainder, chunk)
 		}
 	}
@@ -169,17 +171,14 @@ func (ap *AudioPlayer) AddAudio(buffer []int16) error {
 
 func (ap *AudioPlayer) Flush() error {
 	if len(ap.remainder) > 0 && ap.started {
-		stream := ap.stream
-		out := ap.out
-
 		// Pad remainder with zeros to fill buffer
-		copy(out[:len(ap.remainder)], ap.remainder)
-		clear(out[len(ap.remainder):])
+		copy(ap.out[:len(ap.remainder)], ap.remainder)
+		clear(ap.out[len(ap.remainder):])
 
-		if err := stream.Write(); err != nil {
+		if err := ap.stream.Write(); err != nil {
 			return fmt.Errorf("error writing remaining audio stream: %w", err)
 		}
-		ap.remainder = nil
+		ap.remainder = ap.remainder[:0]
 	}
 	return nil
 }

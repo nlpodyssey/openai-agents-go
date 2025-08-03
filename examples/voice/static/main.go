@@ -96,7 +96,7 @@ func main() {
 	// Create a single workflow instance to maintain conversation history
 	workflow := agents.NewSingleAgentVoiceWorkflow(Agent, WorkflowCallbacks{})
 
-	err := usingPortaudio(func() error {
+	err := UsingPortaudio(func() error {
 		for {
 			fmt.Print("Press <enter> to record, or type 'quit'/'exit' to end: ")
 
@@ -137,7 +137,7 @@ func main() {
 			}
 			stream := result.Stream(ctx)
 
-			err = usingAudioPlayer(func(player *AudioPlayer) error {
+			err = UsingAudioPlayer(func(player *AudioPlayer) error {
 				for event := range stream.Seq() {
 					switch e := event.(type) {
 					case agents.VoiceStreamEventAudio:
