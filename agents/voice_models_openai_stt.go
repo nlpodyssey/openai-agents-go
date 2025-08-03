@@ -340,7 +340,7 @@ loop:
 			break loop
 		case openAISTTTranscriptionSessionEventQueueValueMap:
 			eventType, _ := event["type"].(string)
-			if eventType == "input_audio_transcription_completed" {
+			if eventType == "conversation.item.input_audio_transcription.completed" {
 				transcript, _ := event["transcript"].(string)
 				if transcript != "" {
 					if err = s.endTurn(ctx, transcript); err != nil {
