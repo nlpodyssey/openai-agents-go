@@ -17,7 +17,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
+	"sync/atomic"
+	"time"
 
 	"github.com/gordonklaus/portaudio"
 )
@@ -40,10 +43,12 @@ func UsingPortaudio(fn func() error) (err error) {
 }
 
 type AudioPlayer struct {
-	out       []int16
-	remainder []int16
-	stream    *portaudio.Stream
-	started   bool
+	out              []int16
+	remainder        []int16
+	stream           *portaudio.Stream
+	started          bool
+	lastWriteTime    atomic.Int64 // unix nano timestamp of last write
+	lastChunkSamples atomic.Int64 // samples in the last chunk written
 }
 
 type AudioInputStream struct {
@@ -123,6 +128,10 @@ func (ap *AudioPlayer) AddAudio(buffer []int16) error {
 		return nil
 	}
 
+	// Track when we write this chunk and how many samples it contains
+	ap.lastWriteTime.Store(time.Now().UnixNano())
+	ap.lastChunkSamples.Store(int64(len(buffer)))
+
 	// Start stream on first audio data
 	if !ap.started {
 		if err := ap.stream.Start(); err != nil {
@@ -151,6 +160,8 @@ func (ap *AudioPlayer) AddAudio(buffer []int16) error {
 				}
 				return fmt.Errorf("error writing audio stream: %w", err)
 			}
+			// Update timing for this chunk write
+			ap.lastWriteTime.Store(time.Now().UnixNano())
 		} else {
 			// Store partial chunk for next call
 			ap.remainder = ap.remainder[:len(chunk)]
@@ -181,4 +192,39 @@ func (ap *AudioPlayer) Flush() error {
 		ap.remainder = ap.remainder[:0]
 	}
 	return nil
+}
+
+// HasOutputFinished checks if all audio data has been consumed by the output device
+func (ap *AudioPlayer) HasOutputFinished() bool {
+	if !ap.started {
+		return true
+	}
+
+	info := ap.stream.Info()
+	lastWrite := time.Unix(0, ap.lastWriteTime.Load())
+	lastChunkSamples := ap.lastChunkSamples.Load()
+
+	// If no samples written yet, we're done
+	if lastChunkSamples == 0 {
+		return true
+	}
+
+	// If no last write time recorded, we're done
+	if ap.lastWriteTime.Load() == 0 {
+		return true
+	}
+
+	// Calculate the expected duration for ONLY the last chunk written
+	lastChunkDuration := time.Duration(lastChunkSamples) * time.Second / SampleRate
+	outputLatency := info.OutputLatency
+	totalExpectedTime := lastChunkDuration + outputLatency
+	timeSinceLastWrite := time.Since(lastWrite)
+
+	return timeSinceLastWrite >= totalExpectedTime
+}
+
+// ResetPlaybackTracking resets the sample tracking for a new turn
+func (ap *AudioPlayer) ResetPlaybackTracking() {
+	ap.lastChunkSamples.Store(0)
+	ap.lastWriteTime.Store(0)
 }
