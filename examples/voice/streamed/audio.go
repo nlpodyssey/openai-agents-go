@@ -144,6 +144,11 @@ func (ap *AudioPlayer) AddAudio(buffer []int16) error {
 		if len(chunk) == len(out) {
 			copy(out, chunk)
 			if err := stream.Write(); err != nil {
+				// Handle audio underflow gracefully - don't panic
+				if errors.Is(err, portaudio.OutputUnderflowed) {
+					slog.Debug("Audio output underflowed", slog.String("error", err.Error()))
+					continue
+				}
 				return fmt.Errorf("error writing audio stream: %w", err)
 			}
 		} else {
@@ -162,8 +167,17 @@ func (ap *AudioPlayer) Flush() error {
 		clear(ap.out[len(ap.remainder):])
 
 		if err := ap.stream.Write(); err != nil {
-			return fmt.Errorf("error writing remaining audio stream: %w", err)
+			// Handle audio underflow gracefully - don't panic
+			if errors.Is(err, portaudio.OutputUnderflowed) {
+				slog.Debug("Audio output underflowed", slog.String("error", err.Error()))
+			} else {
+				return fmt.Errorf("error writing remaining audio stream: %w", err)
+			}
 		}
+
+		// Track final remainder flush
+		ap.lastWriteTime.Store(time.Now().UnixNano())
+		ap.lastChunkSamples.Store(int64(len(ap.remainder)))
 		ap.remainder = ap.remainder[:0]
 	}
 	return nil
