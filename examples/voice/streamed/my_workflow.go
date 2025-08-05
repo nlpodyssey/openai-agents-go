@@ -46,19 +46,19 @@ var (
 		GetWeather,
 	)
 
-	SpanishAgent = agents.New("Spanish").
-			WithHandoffDescription("A spanish speaking agent.").
+	AdvancedAgent = agents.New("Advanced").
+			WithHandoffDescription("Advanced reasoning with GPT-4o for complex tasks.").
 			WithInstructions(handoff_prompt.PromptWithHandoffInstructions(
-			"You're speaking to a human, so be polite and concise. Speak in Spanish.",
+			"You have advanced capabilities. Handle complex reasoning, code generation, and analysis.",
 		)).
-		WithModel("gpt-4o-mini")
+		WithModel("gpt-4o") // More expensive model
 
 	Agent = agents.New("Assistant").
 		WithInstructions(handoff_prompt.PromptWithHandoffInstructions(
-			"You're speaking to a human, so be polite and concise. If the user speaks in Spanish, handoff to the spanish agent.",
+			"You're a basic assistant. For simple queries, answer directly. If the user needs complex analysis, code generation, or mathematical reasoning, handoff to the advanced agent.",
 		)).
-		WithModel("gpt-4o-mini").
-		WithAgentHandoffs(SpanishAgent).
+		WithModel("gpt-4o-mini"). // Cheaper model
+		WithAgentHandoffs(AdvancedAgent).
 		AddTool(GetWeatherTool)
 )
 

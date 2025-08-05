@@ -30,6 +30,8 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	printStartupMessage()
+
 	err := UsingPortaudio(func() error {
 		audioInput := agents.NewStreamedAudioInput()
 		onTranscription := func(transcription string) {
@@ -142,4 +144,26 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func printStartupMessage() {
+	fmt.Println("===========================================")
+	fmt.Println("Voice Assistant Ready")
+	fmt.Println("===========================================")
+	fmt.Println()
+	fmt.Println("What to expect:")
+	fmt.Println("• Speak naturally - the system will transcribe your voice")
+	fmt.Println("• Have a continuous conversation - context is maintained across turns")
+	fmt.Println("• Responses are spoken back to you using text-to-speech")
+	fmt.Println("• Simple queries are handled by GPT-4o-mini (cost-effective)")
+	fmt.Println("• Complex tasks automatically escalate to GPT-4o")
+	fmt.Println()
+	fmt.Println("WARNING: Complex queries use GPT-4o which incurs higher costs!")
+	fmt.Println()
+	fmt.Println("Secret feature: There's a hidden word that triggers a special response!")
+	fmt.Println()
+	fmt.Println("Press Ctrl+C to stop")
+	fmt.Println()
+	fmt.Println("Listening for your voice input...")
+	fmt.Println("-------------------------------------------")
 }
