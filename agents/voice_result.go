@@ -213,13 +213,15 @@ func (r *StreamedAudioResult) transformAudioBuffer(buffer [][]byte, outputDataTy
 	for _, v := range buffer {
 		flatLen += len(v)
 	}
-	if flatLen%2 != 0 {
-		return nil, fmt.Errorf("full audio buffer length %d is not even: cannot convert to []int16", flatLen)
-	}
 
 	flatBuffer := make([]byte, 0, flatLen)
 	for _, v := range buffer {
 		flatBuffer = append(flatBuffer, v...)
+	}
+
+	// If the buffer length is odd, truncate the last byte to make it even
+	if len(flatBuffer)%2 != 0 {
+		flatBuffer = flatBuffer[:len(flatBuffer)-1]
 	}
 
 	audioInt16 := make(AudioDataInt16, len(flatBuffer)/2)
