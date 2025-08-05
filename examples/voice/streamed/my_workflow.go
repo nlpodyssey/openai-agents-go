@@ -135,6 +135,9 @@ func (r *myWorkflowRunResult) Seq() iter.Seq[string] {
 			return
 		}
 
+		// Print the agent name to the terminal
+		fmt.Printf("\n[%s]: ", w.currentAgent.Name)
+
 		stream := agents.VoiceWorkflowHelper().StreamTextFrom(result)
 
 		for chunk := range stream.Seq() {
