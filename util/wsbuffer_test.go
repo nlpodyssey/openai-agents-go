@@ -1,0 +1,99 @@
+// Copyright 2025 The NLP Odyssey Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package util
+
+import (
+	"io"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestWriteSeekerBuffer(t *testing.T) {
+	var buf WriteSeekerBuffer
+
+	write := func(p, want []byte) {
+		n, err := buf.Write(p)
+		require.NoError(t, err)
+		require.Equal(t, len(p), n)
+		require.Equal(t, want, buf.Bytes())
+	}
+	seek := func(offset int64, whence int, want int64) {
+		n, err := buf.Seek(offset, whence)
+		require.NoError(t, err)
+		require.Equal(t, want, n)
+	}
+	seekErr := func(offset int64, whence int, errString string) {
+		n, err := buf.Seek(offset, whence)
+		require.Zero(t, n)
+		require.EqualError(t, err, errString)
+	}
+
+	require.Nil(t, buf.Bytes())
+
+	write(nil, nil)
+	write([]byte{}, nil)
+
+	write([]byte{0x01}, []byte{0x01})
+	write([]byte{0x02, 0x03}, []byte{0x01, 0x02, 0x03})
+	write([]byte{0x04, 0x05, 0x06}, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06})
+
+	write(nil, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06})
+	write([]byte{}, []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06})
+
+	seek(0, io.SeekStart, 0)
+	write([]byte{0x07, 0x08}, []byte{0x07, 0x08, 0x03, 0x04, 0x05, 0x06})
+
+	seek(3, io.SeekStart, 3)
+	write([]byte{0x09}, []byte{0x07, 0x08, 0x03, 0x09, 0x05, 0x06})
+
+	seek(5, io.SeekStart, 5)
+	write([]byte{0x0a, 0x0b}, []byte{0x07, 0x08, 0x03, 0x09, 0x05, 0x0a, 0x0b})
+
+	seek(9, io.SeekStart, 9)
+	write([]byte{0x0c}, []byte{0x07, 0x08, 0x03, 0x09, 0x05, 0x0a, 0x0b, 0x00, 0x00, 0x0c})
+
+	seekErr(-1, io.SeekStart, "WriteSeekerBuffer.Seek: negative position")
+
+	seek(-9, io.SeekCurrent, 1)
+	write([]byte{0x0d, 0x0e}, []byte{0x07, 0x0d, 0x0e, 0x09, 0x05, 0x0a, 0x0b, 0x00, 0x00, 0x0c})
+
+	seek(0, io.SeekCurrent, 3)
+	write([]byte{0x0f}, []byte{0x07, 0x0d, 0x0e, 0x0f, 0x05, 0x0a, 0x0b, 0x00, 0x00, 0x0c})
+
+	seek(3, io.SeekCurrent, 7)
+	write([]byte{0x10, 0x11}, []byte{0x07, 0x0d, 0x0e, 0x0f, 0x05, 0x0a, 0x0b, 0x10, 0x11, 0x0c})
+
+	seek(2, io.SeekCurrent, 11)
+	write([]byte{0x12}, []byte{0x07, 0x0d, 0x0e, 0x0f, 0x05, 0x0a, 0x0b, 0x10, 0x11, 0x0c, 0x00, 0x12})
+
+	seekErr(-13, io.SeekCurrent, "WriteSeekerBuffer.Seek: negative position")
+
+	seek(-12, io.SeekEnd, 0)
+	write([]byte{0x13}, []byte{0x13, 0x0d, 0x0e, 0x0f, 0x05, 0x0a, 0x0b, 0x10, 0x11, 0x0c, 0x00, 0x12})
+
+	seek(-1, io.SeekEnd, 11)
+	write([]byte{0x14}, []byte{0x13, 0x0d, 0x0e, 0x0f, 0x05, 0x0a, 0x0b, 0x10, 0x11, 0x0c, 0x00, 0x14})
+
+	seek(0, io.SeekEnd, 12)
+	write([]byte{0x15}, []byte{0x13, 0x0d, 0x0e, 0x0f, 0x05, 0x0a, 0x0b, 0x10, 0x11, 0x0c, 0x00, 0x14, 0x15})
+
+	seek(1, io.SeekEnd, 14)
+	write([]byte{0x16}, []byte{0x13, 0x0d, 0x0e, 0x0f, 0x05, 0x0a, 0x0b, 0x10, 0x11, 0x0c, 0x00, 0x14, 0x15, 0x00, 0x16})
+
+	seekErr(-16, io.SeekEnd, "WriteSeekerBuffer.Seek: negative position")
+
+	seekErr(0, -1, "WriteSeekerBuffer.Seek: invalid whence")
+}
