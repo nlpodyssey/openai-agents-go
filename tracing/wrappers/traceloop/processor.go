@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/tracing"
@@ -174,6 +175,7 @@ func (p *TracingProcessor) OnSpanEnd(ctx context.Context, span tracing.Span) err
 		return nil
 	}
 
+
 	p.mu.Lock()
 	task, taskExists := p.tasks[span.SpanID()]
 	llmSpan, llmExists := p.llmSpans[span.SpanID()]
@@ -287,24 +289,35 @@ func (p *TracingProcessor) extractPrompt(span tracing.Span) *sdk.Prompt {
 			Model:  "gpt-4", // Default, will be updated if available
 		}
 
+		if data.Response != nil {
+			prompt.Model = data.Response.Model
+		}
+
 		if data.Input != nil {
-			// Try to extract messages from input
-			if inputSlice, ok := data.Input.([]map[string]any); ok {
-				messages := make([]sdk.Message, len(inputSlice))
-				for i, msg := range inputSlice {
-					if content, ok := msg["content"].(string); ok {
-						role := "user" // default
-						if r, ok := msg["role"].(string); ok {
-							role = r
-						}
-						messages[i] = sdk.Message{
-							Index:   i,
-							Content: content,
-							Role:    role,
+			// Handle InputItems from agents package using reflection
+			messages := p.extractMessagesFromInputUsingReflection(data.Input)
+			prompt.Messages = messages
+			
+			// Fallback to legacy format if no messages extracted
+			if len(messages) == 0 {
+				if inputSlice, ok := data.Input.([]map[string]any); ok {
+					// Handle legacy []map[string]any format
+					messages := make([]sdk.Message, len(inputSlice))
+					for i, msg := range inputSlice {
+						if content, ok := msg["content"].(string); ok {
+							role := "user" // default
+							if r, ok := msg["role"].(string); ok {
+								role = r
+							}
+							messages[i] = sdk.Message{
+								Index:   i,
+								Content: content,
+								Role:    role,
+							}
 						}
 					}
+					prompt.Messages = messages
 				}
-				prompt.Messages = messages
 			}
 		}
 
@@ -341,14 +354,34 @@ func (p *TracingProcessor) extractCompletion(span tracing.Span) *sdk.Completion 
 		}
 
 		if data.Response != nil {
-			// Extract response content
-			// This would need to be adapted based on the actual Response structure
-			completion.Messages = []sdk.Message{
-				{
-					Index:   0,
-					Content: fmt.Sprintf("Response ID: %v", data.Response),
-					Role:    "assistant",
-				},
+			completion.Model = data.Response.Model
+			
+			// Extract response content from the actual response output
+			if len(data.Response.Output) > 0 {
+				messages := make([]sdk.Message, 0)
+				for i, output := range data.Response.Output {
+					if len(output.Content) > 0 {
+						for j, content := range output.Content {
+							if content.Text != "" {
+								messages = append(messages, sdk.Message{
+									Index:   i*100 + j, // Simple indexing
+									Content: content.Text,
+									Role:    "assistant",
+								})
+							}
+						}
+					}
+				}
+				completion.Messages = messages
+			} else {
+				// Fallback to simple response ID
+				completion.Messages = []sdk.Message{
+					{
+						Index:   0,
+						Content: fmt.Sprintf("Response ID: %s", data.Response.ID),
+						Role:    "assistant",
+					},
+				}
 			}
 		}
 
@@ -369,16 +402,45 @@ func (p *TracingProcessor) extractUsage(span tracing.Span) sdk.Usage {
 		usage := sdk.Usage{}
 
 		// Try to extract usage information from the usage data
+		// Check for standard OpenAI field names first
 		if totalTokens, ok := data.Usage["total_tokens"].(int); ok {
 			usage.TotalTokens = totalTokens
 		}
+		
 		if promptTokens, ok := data.Usage["prompt_tokens"].(int); ok {
 			usage.PromptTokens = promptTokens
+		} else if inputTokens, ok := data.Usage["input_tokens"].(int); ok {
+			usage.PromptTokens = inputTokens
 		}
+		
 		if completionTokens, ok := data.Usage["completion_tokens"].(int); ok {
 			usage.CompletionTokens = completionTokens
+		} else if outputTokens, ok := data.Usage["output_tokens"].(int); ok {
+			usage.CompletionTokens = outputTokens
+		}
+		
+		// Calculate total if not provided
+		if usage.TotalTokens == 0 && (usage.PromptTokens > 0 || usage.CompletionTokens > 0) {
+			usage.TotalTokens = usage.PromptTokens + usage.CompletionTokens
 		}
 
+		return usage
+	}
+
+	if data, ok := spanData.(*tracing.ResponseSpanData); ok && data.Response != nil {
+		usage := sdk.Usage{}
+		
+		// Extract usage from OpenAI response usage fields
+		if data.Response.Usage.InputTokens > 0 {
+			usage.PromptTokens = int(data.Response.Usage.InputTokens)
+		}
+		if data.Response.Usage.OutputTokens > 0 {
+			usage.CompletionTokens = int(data.Response.Usage.OutputTokens)
+		}
+		
+		// Calculate total tokens
+		usage.TotalTokens = usage.PromptTokens + usage.CompletionTokens
+		
 		return usage
 	}
 
@@ -413,5 +475,110 @@ func (p *TracingProcessor) convertMessagesToTraceloop(input any) []sdk.Message {
 		return messages
 	}
 
+	return nil
+}
+
+// extractMessagesFromInputUsingReflection extracts messages from any input format using reflection
+func (p *TracingProcessor) extractMessagesFromInputUsingReflection(input interface{}) []sdk.Message {
+	if input == nil {
+		return nil
+	}
+	
+	// Use reflection to handle the InputItems type
+	v := reflect.ValueOf(input)
+	if v.Kind() == reflect.Slice {
+		var messages []sdk.Message
+		
+		for i := 0; i < v.Len(); i++ {
+			item := v.Index(i).Interface()
+			if msg := p.extractMessageFromInputItem(item, i); msg != nil {
+				messages = append(messages, *msg)
+			}
+		}
+		return messages
+	}
+	
+	return nil
+}
+
+// extractMessageFromInputItem extracts a message from a TResponseInputItem using reflection
+func (p *TracingProcessor) extractMessageFromInputItem(item interface{}, index int) *sdk.Message {
+	if item == nil {
+		return nil
+	}
+	
+	// Use reflection to access the OfMessage field
+	v := reflect.ValueOf(item)
+	if v.Kind() == reflect.Struct {
+		// Look for the OfMessage field
+		ofMessageField := v.FieldByName("OfMessage")
+		if ofMessageField.IsValid() && !ofMessageField.IsNil() {
+			// Get the actual message object
+			messageValue := ofMessageField.Elem() // Dereference the pointer
+			if messageValue.IsValid() && messageValue.Kind() == reflect.Struct {
+				// Look for Content and Role fields in the message
+				contentField := messageValue.FieldByName("Content")
+				roleField := messageValue.FieldByName("Role")
+				
+				content := ""
+				role := "user" // default
+				
+				if contentField.IsValid() {
+					// Content is a union type, try to extract string value
+					if contentField.Kind() == reflect.String {
+						content = contentField.String()
+					} else {
+						// Try to extract from union type by examining its structure
+						contentStr := fmt.Sprintf("%v", contentField.Interface())
+						// Look for the actual text content in the string representation
+						// From debug: Content = {Hello! Can you introduce yourself? [] {{<nil>}}}
+						// Need to extract the full text before the array brackets
+						if len(contentStr) > 2 && contentStr[0] == '{' {
+							// Find the end of the text content (before " []" or similar)
+							end := len(contentStr)
+							bracketStart := -1
+							
+							// Look for " [" which indicates the start of the array part
+							for i := 1; i < len(contentStr)-1; i++ {
+								if contentStr[i] == ' ' && contentStr[i+1] == '[' {
+									bracketStart = i
+									break
+								}
+							}
+							
+							if bracketStart > 1 {
+								end = bracketStart
+							} else {
+								// Fallback: find the last } before the end
+								for i := len(contentStr) - 1; i > 1; i-- {
+									if contentStr[i] == '}' {
+										end = i
+										break
+									}
+								}
+							}
+							
+							if end > 1 {
+								content = contentStr[1:end]
+							}
+						}
+					}
+				}
+				
+				if roleField.IsValid() && roleField.Kind() == reflect.String {
+					role = roleField.String()
+				}
+				
+				if content != "" {
+					return &sdk.Message{
+						Index:   index,
+						Content: content,
+						Role:    role,
+					}
+				}
+			}
+		}
+	}
+	
 	return nil
 }
