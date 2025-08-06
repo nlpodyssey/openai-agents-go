@@ -124,7 +124,7 @@ func (sd GenerationSpanData) Export() map[string]any {
 }
 
 // ResponseSpanData represents a Response Span in the trace.
-// Includes response and input.
+// Includes response, input, and request model information.
 type ResponseSpanData struct {
 	// Optional response.
 	Response *responses.Response
@@ -133,6 +133,11 @@ type ResponseSpanData struct {
 	// This is not used by the OpenAI trace processors, but is useful for
 	// other tracing processor implementations.
 	Input any
+
+	// Optional request model name.
+	// This is useful for tracing processors to track what model was requested,
+	// especially when the response model might be different or missing.
+	Model string
 }
 
 func (ResponseSpanData) Type() string { return "response" }
@@ -142,9 +147,14 @@ func (sd ResponseSpanData) Export() map[string]any {
 	if sd.Response != nil {
 		responseID = sd.Response.ID
 	}
+	var model any
+	if sd.Model != "" {
+		model = sd.Model
+	}
 	return map[string]any{
 		"type":        sd.Type(),
 		"response_id": responseID,
+		"model":       model,
 	}
 }
 

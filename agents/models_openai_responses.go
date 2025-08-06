@@ -56,6 +56,7 @@ func (m OpenAIResponsesModel) GetResponse(
 		ctx, tracing.ResponseSpanParams{
 			Disabled: params.Tracing.IsDisabled(),
 			Input:    params.Input,
+			Model:    string(m.Model),
 		},
 		func(ctx context.Context, spanResponse tracing.Span) (err error) {
 			defer func() {
@@ -143,6 +144,7 @@ func (m OpenAIResponsesModel) StreamResponse(
 		ctx, tracing.ResponseSpanParams{
 			Disabled: params.Tracing.IsDisabled(),
 			Input:    params.Input,
+			Model:    string(m.Model),
 		},
 		func(ctx context.Context, spanResponse tracing.Span) (err error) {
 			defer func() {
