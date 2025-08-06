@@ -289,7 +289,10 @@ func (p *TracingProcessor) extractPrompt(span tracing.Span) *sdk.Prompt {
 			Model:  "gpt-4", // Default, will be updated if available
 		}
 
-		if data.Response != nil {
+		// Prefer request model over response model for more accurate reporting
+		if data.Model != "" {
+			prompt.Model = data.Model
+		} else if data.Response != nil && data.Response.Model != "" {
 			prompt.Model = data.Response.Model
 		}
 
@@ -353,8 +356,14 @@ func (p *TracingProcessor) extractCompletion(span tracing.Span) *sdk.Completion 
 			Model: "gpt-4", // Default
 		}
 
-		if data.Response != nil {
+		// Prefer request model over response model for more accurate reporting
+		if data.Model != "" {
+			completion.Model = data.Model
+		} else if data.Response != nil && data.Response.Model != "" {
 			completion.Model = data.Response.Model
+		}
+
+		if data.Response != nil {
 			
 			// Extract response content from the actual response output
 			if len(data.Response.Output) > 0 {
