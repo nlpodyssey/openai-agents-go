@@ -63,7 +63,7 @@ func ItemHelpers() itemHelpers { return itemHelpers{} }
 
 // ExtractLastContent extracts the last text content or refusal from a message.
 func (itemHelpers) ExtractLastContent(message TResponseOutputItem) (string, error) {
-	if message.Type != "message" {
+	if message.Type != "message" || len(message.Content) == 0 {
 		return "", nil
 	}
 
@@ -80,7 +80,7 @@ func (itemHelpers) ExtractLastContent(message TResponseOutputItem) (string, erro
 
 // ExtractLastText extracts the last text content from a message, if any. Ignores refusals.
 func (itemHelpers) ExtractLastText(message TResponseOutputItem) (string, bool) {
-	if message.Type == "message" {
+	if message.Type == "message" && len(message.Content) > 0 {
 		lastContent := message.Content[len(message.Content)-1]
 		if lastContent.Type == "output_text" {
 			return lastContent.Text, true
