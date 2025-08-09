@@ -29,7 +29,7 @@ func main() {
 
 	ctx := context.Background()
 
-	result, err := agents.RunStreamed(ctx, agent, "Just write the word 'hi' and nothing else.")
+	result, err := agents.RunStreamed(ctx, agent, "Please tell me 5 jokes.")
 	if err != nil {
 		panic(err)
 	}
