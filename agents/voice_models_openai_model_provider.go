@@ -19,8 +19,8 @@ import (
 	"errors"
 	"os"
 
-	"github.com/openai/openai-go/option"
-	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/v2/option"
+	"github.com/openai/openai-go/v2/packages/param"
 )
 
 const (

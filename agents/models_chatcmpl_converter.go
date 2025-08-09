@@ -24,10 +24,10 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared/constant"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v2/shared/constant"
 )
 
 type chatCmplConverter struct{}
@@ -46,7 +46,7 @@ func (chatCmplConverter) ConvertToolChoice(toolChoice modelsettings.ToolChoice) 
 			}, nil
 		default:
 			return openai.ChatCompletionToolChoiceOptionUnionParam{
-				OfChatCompletionNamedToolChoice: &openai.ChatCompletionNamedToolChoiceParam{
+				OfFunctionToolChoice: &openai.ChatCompletionNamedToolChoiceParam{
 					Function: openai.ChatCompletionNamedToolChoiceFunctionParam{
 						Name: toolChoice.String(),
 					},
@@ -465,13 +465,15 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 				return nil, fmt.Errorf("failed to JSON-marshal file search call arguments: %w", err)
 			}
 
-			newToolCall := openai.ChatCompletionMessageToolCallParam{
-				ID: fileSearch.ID,
-				Function: openai.ChatCompletionMessageToolCallFunctionParam{
-					Name:      "file_search_call",
-					Arguments: string(jsonArguments),
+			newToolCall := openai.ChatCompletionMessageToolCallUnionParam{
+				OfFunction: &openai.ChatCompletionMessageFunctionToolCallParam{
+					ID: fileSearch.ID,
+					Function: openai.ChatCompletionMessageFunctionToolCallFunctionParam{
+						Name:      "file_search_call",
+						Arguments: string(jsonArguments),
+					},
+					Type: constant.ValueOf[constant.Function](),
 				},
-				Type: constant.ValueOf[constant.Function](),
 			}
 			toolCalls = append(toolCalls, newToolCall)
 			asst.ToolCalls = toolCalls
@@ -484,13 +486,15 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 				arguments = "{}"
 			}
 
-			newToolCall := openai.ChatCompletionMessageToolCallParam{
-				ID: funcCall.CallID,
-				Function: openai.ChatCompletionMessageToolCallFunctionParam{
-					Name:      funcCall.Name,
-					Arguments: arguments,
+			newToolCall := openai.ChatCompletionMessageToolCallUnionParam{
+				OfFunction: &openai.ChatCompletionMessageFunctionToolCallParam{
+					ID: funcCall.CallID,
+					Function: openai.ChatCompletionMessageFunctionToolCallFunctionParam{
+						Name:      funcCall.Name,
+						Arguments: arguments,
+					},
+					Type: constant.ValueOf[constant.Function](),
 				},
-				Type: constant.ValueOf[constant.Function](),
 			}
 			toolCalls = append(toolCalls, newToolCall)
 			asst.ToolCalls = toolCalls
@@ -520,7 +524,7 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 	return result, nil
 }
 
-func (chatCmplConverter) ToolToOpenai(tool Tool) (*openai.ChatCompletionToolParam, error) {
+func (chatCmplConverter) ToolToOpenai(tool Tool) (*openai.ChatCompletionToolUnionParam, error) {
 	functionTool, ok := tool.(FunctionTool)
 	if !ok {
 		return nil, UserErrorf("hosted tools are not supported with the ChatCompletions API. Got tool %#v", tool)
@@ -531,27 +535,26 @@ func (chatCmplConverter) ToolToOpenai(tool Tool) (*openai.ChatCompletionToolPara
 		description = param.NewOpt(functionTool.Description)
 	}
 
-	return &openai.ChatCompletionToolParam{
-		Function: openai.FunctionDefinitionParam{
+	funcTool := openai.ChatCompletionFunctionTool(
+		openai.FunctionDefinitionParam{
 			Name:        functionTool.Name,
 			Description: description,
 			Parameters:  functionTool.ParamsJSONSchema,
 		},
-		Type: constant.ValueOf[constant.Function](),
-	}, nil
+	)
+	return &funcTool, nil
 }
 
-func (chatCmplConverter) ConvertHandoffTool(handoff Handoff) openai.ChatCompletionToolParam {
+func (chatCmplConverter) ConvertHandoffTool(handoff Handoff) openai.ChatCompletionToolUnionParam {
 	var description param.Opt[string]
 	if handoff.ToolDescription != "" {
 		description = param.NewOpt(handoff.ToolDescription)
 	}
-	return openai.ChatCompletionToolParam{
-		Function: openai.FunctionDefinitionParam{
+	return openai.ChatCompletionFunctionTool(
+		openai.FunctionDefinitionParam{
 			Name:        handoff.ToolName,
 			Description: description,
 			Parameters:  handoff.InputJSONSchema,
 		},
-		Type: constant.ValueOf[constant.Function](),
-	}
+	)
 }

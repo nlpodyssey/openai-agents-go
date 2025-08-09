@@ -15,7 +15,7 @@
 package agents
 
 import (
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 // ImageGenerationTool is a tool that allows the LLM to generate images.

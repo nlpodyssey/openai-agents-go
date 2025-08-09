@@ -85,7 +85,7 @@ func mainStream(agent *agents.Agent) {
 
 	err = result.StreamEvents(func(event agents.StreamEvent) error {
 		if e, ok := event.(agents.RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-			fmt.Print(e.Data.Delta.OfString)
+			fmt.Print(e.Data.Delta)
 			_ = os.Stdout.Sync()
 		}
 		return nil
@@ -103,7 +103,7 @@ func mainStream(agent *agents.Agent) {
 
 	err = result.StreamEvents(func(event agents.StreamEvent) error {
 		if e, ok := event.(agents.RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-			fmt.Print(e.Data.Delta.OfString)
+			fmt.Print(e.Data.Delta)
 			_ = os.Stdout.Sync()
 		}
 		return nil

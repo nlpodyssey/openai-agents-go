@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 // RunDemoLoop runs a simple REPL loop with the given agent.
@@ -83,7 +83,7 @@ func RunDemoLoopRW(ctx context.Context, agent *Agent, stream bool, r io.Reader, 
 				switch e := event.(type) {
 				case RawResponsesStreamEvent:
 					if e.Data.Type == "response.output_text.delta" {
-						return writeAndFlush(e.Data.Delta.OfString)
+						return writeAndFlush(e.Data.Delta)
 					}
 				case RunItemStreamEvent:
 					switch item := e.Item.(type) {

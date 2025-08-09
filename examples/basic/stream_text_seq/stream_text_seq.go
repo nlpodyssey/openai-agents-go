@@ -36,7 +36,7 @@ func main() {
 
 	for event := range seq.Seq {
 		if e, ok := event.(agents.RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-			fmt.Print(e.Data.Delta.OfString)
+			fmt.Print(e.Data.Delta)
 			_ = os.Stdout.Sync()
 		}
 	}

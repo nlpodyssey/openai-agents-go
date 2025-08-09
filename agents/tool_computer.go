@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/nlpodyssey/openai-agents-go/computer"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 // ComputerTool is a hosted tool that lets the LLM control a computer.

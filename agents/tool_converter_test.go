@@ -19,9 +19,8 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/shared/constant"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/packages/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -46,15 +45,14 @@ func TestToOpenaiWithFunctionTool(t *testing.T) {
 
 	result, err := agents.ChatCmplConverter().ToolToOpenai(tool)
 	require.NoError(t, err)
-	assert.Equal(t, &openai.ChatCompletionToolParam{
-		Function: openai.FunctionDefinitionParam{
+	assert.Equal(t, openai.ChatCompletionFunctionTool(
+		openai.FunctionDefinitionParam{
 			Name:        "some_function",
 			Strict:      param.Opt[bool]{},
 			Description: param.NewOpt("Function description."),
 			Parameters:  tool.ParamsJSONSchema,
 		},
-		Type: constant.ValueOf[constant.Function](),
-	}, result)
+	), *result)
 }
 
 func TestConvertHandoffTool(t *testing.T) {
@@ -70,15 +68,14 @@ func TestConvertHandoffTool(t *testing.T) {
 
 	result := agents.ChatCmplConverter().ConvertHandoffTool(*handoff)
 
-	assert.Equal(t, openai.ChatCompletionToolParam{
-		Function: openai.FunctionDefinitionParam{
+	assert.Equal(t, openai.ChatCompletionFunctionTool(
+		openai.FunctionDefinitionParam{
 			Name:        agents.DefaultHandoffToolName(agent),
 			Strict:      param.Opt[bool]{},
 			Description: param.NewOpt(agents.DefaultHandoffToolDescription(agent)),
 			Parameters:  handoff.InputJSONSchema,
 		},
-		Type: constant.ValueOf[constant.Function](),
-	}, result)
+	), result)
 }
 
 func TestToolConverterHostedToolsErrors(t *testing.T) {

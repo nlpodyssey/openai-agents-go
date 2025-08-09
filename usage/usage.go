@@ -17,7 +17,7 @@ package usage
 import (
 	"context"
 
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 type Usage struct {

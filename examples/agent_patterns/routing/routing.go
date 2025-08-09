@@ -26,8 +26,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/tracing"
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 /*
@@ -101,7 +101,7 @@ func main() {
 					data := e.Data
 					switch data.Type {
 					case "response.output_text.delta":
-						fmt.Print(data.Delta.OfString)
+						fmt.Print(data.Delta)
 						_ = os.Stdout.Sync()
 					case "response.content_part.done":
 						fmt.Println()
