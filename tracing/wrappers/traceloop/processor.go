@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/tracing"
+	"github.com/openai/openai-go/responses"
 	sdk "github.com/traceloop/go-openllmetry/traceloop-sdk"
 )
 
@@ -324,6 +325,9 @@ func (p *TracingProcessor) extractPrompt(span tracing.Span) *sdk.Prompt {
 			}
 		}
 
+		// Extract tool definitions if available
+		prompt.Tools = p.extractToolsFromSpan(span)
+
 		return prompt
 	}
 
@@ -364,23 +368,9 @@ func (p *TracingProcessor) extractCompletion(span tracing.Span) *sdk.Completion 
 		}
 
 		if data.Response != nil {
-			
-			// Extract response content from the actual response output
+			// Extract response content and tool calls from the actual response output
 			if len(data.Response.Output) > 0 {
-				messages := make([]sdk.Message, 0)
-				for i, output := range data.Response.Output {
-					if len(output.Content) > 0 {
-						for j, content := range output.Content {
-							if content.Text != "" {
-								messages = append(messages, sdk.Message{
-									Index:   i*100 + j, // Simple indexing
-									Content: content.Text,
-									Role:    "assistant",
-								})
-							}
-						}
-					}
-				}
+				messages := p.extractMessagesWithToolCallsFromResponseOutput(data.Response.Output)
 				completion.Messages = messages
 			} else {
 				// Fallback to simple response ID
@@ -590,4 +580,269 @@ func (p *TracingProcessor) extractMessageFromInputItem(item interface{}, index i
 	}
 	
 	return nil
+}
+
+// extractToolsFromSpan extracts tool definitions from the span context for the prompt
+func (p *TracingProcessor) extractToolsFromSpan(span tracing.Span) []sdk.Tool {
+	spanData := span.SpanData()
+	if spanData == nil {
+		return []sdk.Tool{}
+	}
+
+	// Extract tools from ResponseSpanData
+	if data, ok := spanData.(*tracing.ResponseSpanData); ok && data.Tools != nil {
+		return p.convertSerializedToolsToSDK(data.Tools)
+	}
+
+	return []sdk.Tool{}
+}
+
+// convertSerializedToolsToSDK converts serialized tool definitions to SDK tools
+func (p *TracingProcessor) convertSerializedToolsToSDK(tools []map[string]interface{}) []sdk.Tool {
+	var sdkTools []sdk.Tool
+	
+	for _, toolDef := range tools {
+		if tool := p.convertSerializedToolToSDK(toolDef); tool != nil {
+			sdkTools = append(sdkTools, *tool)
+		}
+	}
+	
+	return sdkTools
+}
+
+// convertSerializedToolToSDK converts a single serialized tool to SDK tool
+func (p *TracingProcessor) convertSerializedToolToSDK(toolDef map[string]interface{}) *sdk.Tool {
+	if toolDef == nil {
+		return nil
+	}
+	
+	// Extract function information
+	functionData, ok := toolDef["function"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	
+	name, ok := functionData["name"].(string)
+	if !ok {
+		return nil
+	}
+	
+	description := ""
+	if desc, ok := functionData["description"].(string); ok {
+		description = desc
+	}
+	
+	parameters := map[string]interface{}{
+		"type": "object",
+		"properties": map[string]interface{}{},
+	}
+	if params, ok := functionData["parameters"].(map[string]interface{}); ok {
+		parameters = params
+	}
+	
+	return &sdk.Tool{
+		Type: "function",
+		Function: sdk.ToolFunction{
+			Name:        name,
+			Description: description,
+			Parameters:  parameters,
+		},
+	}
+}
+
+
+// extractMessagesWithToolCallsFromResponseOutput extracts messages including tool calls from response output
+func (p *TracingProcessor) extractMessagesWithToolCallsFromResponseOutput(outputs []responses.ResponseOutputItemUnion) []sdk.Message {
+	messages := make([]sdk.Message, 0)
+	messageIndex := 0
+	
+	for _, output := range outputs {
+		switch output.Type {
+		case "message":
+			// Handle regular message content
+			if len(output.Content) > 0 {
+				for _, content := range output.Content {
+					if content.Text != "" {
+						messages = append(messages, sdk.Message{
+							Index:   messageIndex,
+							Content: content.Text,
+							Role:    "assistant",
+						})
+						messageIndex++
+					}
+				}
+			}
+		
+		case "function_call":
+			// Handle function tool calls using proper ToolCall structure
+			toolCall := sdk.ToolCall{
+				ID:   output.CallID,
+				Type: "function",
+				Function: sdk.ToolCallFunction{
+					Name:      output.Name,
+					Arguments: output.Arguments,
+				},
+			}
+			
+			message := sdk.Message{
+				Index:     messageIndex,
+				Content:   "", // Tool calls typically don't have text content
+				Role:      "assistant",
+				ToolCalls: []sdk.ToolCall{toolCall},
+			}
+			messages = append(messages, message)
+			messageIndex++
+			
+		case "computer_call":
+			// Handle computer tool calls using proper ToolCall structure
+			toolCall := sdk.ToolCall{
+				ID:   output.CallID,
+				Type: "function",
+				Function: sdk.ToolCallFunction{
+					Name:      "computer_use",
+					Arguments: fmt.Sprintf(`{"action": "%s", "id": "%s"}`, output.Action.Type, output.ID),
+				},
+			}
+			
+			message := sdk.Message{
+				Index:     messageIndex,
+				Content:   "",
+				Role:      "assistant",
+				ToolCalls: []sdk.ToolCall{toolCall},
+			}
+			messages = append(messages, message)
+			messageIndex++
+			
+		case "file_search_call":
+			// Handle file search tool calls using proper ToolCall structure
+			toolCall := sdk.ToolCall{
+				ID:   output.CallID,
+				Type: "function",
+				Function: sdk.ToolCallFunction{
+					Name:      "file_search",
+					Arguments: fmt.Sprintf(`{"id": "%s", "status": "%s"}`, output.ID, output.Status),
+				},
+			}
+			
+			message := sdk.Message{
+				Index:     messageIndex,
+				Content:   "",
+				Role:      "assistant",
+				ToolCalls: []sdk.ToolCall{toolCall},
+			}
+			messages = append(messages, message)
+			messageIndex++
+			
+		case "web_search_call":
+			// Handle web search tool calls using proper ToolCall structure
+			toolCall := sdk.ToolCall{
+				ID:   output.CallID,
+				Type: "function",
+				Function: sdk.ToolCallFunction{
+					Name:      "web_search",
+					Arguments: fmt.Sprintf(`{"id": "%s", "status": "%s"}`, output.ID, output.Status),
+				},
+			}
+			
+			message := sdk.Message{
+				Index:     messageIndex,
+				Content:   "",
+				Role:      "assistant",
+				ToolCalls: []sdk.ToolCall{toolCall},
+			}
+			messages = append(messages, message)
+			messageIndex++
+			
+		case "local_shell_call":
+			// Handle local shell tool calls using proper ToolCall structure
+			toolCall := sdk.ToolCall{
+				ID:   output.CallID,
+				Type: "function",
+				Function: sdk.ToolCallFunction{
+					Name:      "local_shell",
+					Arguments: fmt.Sprintf(`{"id": "%s"}`, output.ID),
+				},
+			}
+			
+			message := sdk.Message{
+				Index:     messageIndex,
+				Content:   "",
+				Role:      "assistant",
+				ToolCalls: []sdk.ToolCall{toolCall},
+			}
+			messages = append(messages, message)
+			messageIndex++
+			
+		case "code_interpreter_call":
+			// Handle code interpreter tool calls using proper ToolCall structure
+			toolCall := sdk.ToolCall{
+				ID:   output.CallID,
+				Type: "function",
+				Function: sdk.ToolCallFunction{
+					Name:      "code_interpreter",
+					Arguments: fmt.Sprintf(`{"id": "%s"}`, output.ID),
+				},
+			}
+			
+			message := sdk.Message{
+				Index:     messageIndex,
+				Content:   "",
+				Role:      "assistant",
+				ToolCalls: []sdk.ToolCall{toolCall},
+			}
+			messages = append(messages, message)
+			messageIndex++
+			
+		case "image_generation_call":
+			// Handle image generation tool calls using proper ToolCall structure
+			toolCall := sdk.ToolCall{
+				ID:   output.CallID,
+				Type: "function",
+				Function: sdk.ToolCallFunction{
+					Name:      "image_generation",
+					Arguments: fmt.Sprintf(`{"id": "%s"}`, output.ID),
+				},
+			}
+			
+			message := sdk.Message{
+				Index:     messageIndex,
+				Content:   "",
+				Role:      "assistant",
+				ToolCalls: []sdk.ToolCall{toolCall},
+			}
+			messages = append(messages, message)
+			messageIndex++
+			
+		case "mcp_call":
+			// Handle MCP tool calls using proper ToolCall structure
+			toolCall := sdk.ToolCall{
+				ID:   output.CallID,
+				Type: "function",
+				Function: sdk.ToolCallFunction{
+					Name:      output.Name,
+					Arguments: output.Arguments,
+				},
+			}
+			
+			message := sdk.Message{
+				Index:     messageIndex,
+				Content:   "",
+				Role:      "assistant",
+				ToolCalls: []sdk.ToolCall{toolCall},
+			}
+			messages = append(messages, message)
+			messageIndex++
+		}
+	}
+	
+	// If no messages were extracted, create a fallback message
+	if len(messages) == 0 {
+		messages = append(messages, sdk.Message{
+			Index:   0,
+			Content: "No extractable content found",
+			Role:    "assistant",
+		})
+	}
+	
+	return messages
 }

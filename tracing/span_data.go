@@ -124,7 +124,7 @@ func (sd GenerationSpanData) Export() map[string]any {
 }
 
 // ResponseSpanData represents a Response Span in the trace.
-// Includes response, input, and request model information.
+// Includes response, input, request model information, and tool definitions.
 type ResponseSpanData struct {
 	// Optional response.
 	Response *responses.Response
@@ -138,6 +138,10 @@ type ResponseSpanData struct {
 	// This is useful for tracing processors to track what model was requested,
 	// especially when the response model might be different or missing.
 	Model string
+
+	// Optional tool definitions available during this request.
+	// This should be a serializable representation of tool schemas.
+	Tools []map[string]interface{}
 }
 
 func (ResponseSpanData) Type() string { return "response" }
@@ -155,6 +159,7 @@ func (sd ResponseSpanData) Export() map[string]any {
 		"type":        sd.Type(),
 		"response_id": responseID,
 		"model":       model,
+		"tools":       sd.Tools,
 	}
 }
 
