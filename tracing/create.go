@@ -17,6 +17,7 @@ package tracing
 import (
 	"cmp"
 	"context"
+	"reflect"
 
 	"github.com/openai/openai-go/responses"
 )
@@ -223,6 +224,8 @@ type ResponseSpanParams struct {
 	Input any
 	// The request model name for tracing processors
 	Model string
+	// Optional list of tool definitions available during this request
+	Tools any
 	// The ID of the span. Optional. If not provided, we will generate an ID.
 	// We recommend using GenSpanID to generate a span ID, to guarantee that
 	// IDs are correctly formatted.
@@ -243,6 +246,7 @@ func NewResponseSpan(ctx context.Context, params ResponseSpanParams) Span {
 		Response: params.Response,
 		Input:    params.Input,
 		Model:    params.Model,
+		Tools:    processToolsForSerialization(params.Tools),
 	}
 	return GetTraceProvider().CreateSpan(
 		ctx,
@@ -251,6 +255,149 @@ func NewResponseSpan(ctx context.Context, params ResponseSpanParams) Span {
 		params.Parent,
 		params.Disabled,
 	)
+}
+
+// processToolsForSerialization converts tools to a serializable format
+func processToolsForSerialization(tools any) []map[string]interface{} {
+	if tools == nil {
+		return nil
+	}
+
+	v := reflect.ValueOf(tools)
+	if v.Kind() != reflect.Slice {
+		return nil
+	}
+
+	var toolDefinitions []map[string]interface{}
+
+	for i := 0; i < v.Len(); i++ {
+		tool := v.Index(i).Interface()
+		if toolDef := createSerializableToolDefinition(tool); toolDef != nil {
+			toolDefinitions = append(toolDefinitions, toolDef)
+		}
+	}
+
+	return toolDefinitions
+}
+
+// createSerializableToolDefinition creates a serializable tool definition
+func createSerializableToolDefinition(tool any) map[string]interface{} {
+	if tool == nil {
+		return nil
+	}
+
+	// Get the tool name using the ToolName() method
+	toolNameMethod := reflect.ValueOf(tool).MethodByName("ToolName")
+	if !toolNameMethod.IsValid() {
+		return nil
+	}
+	
+	toolNameResults := toolNameMethod.Call(nil)
+	if len(toolNameResults) == 0 || toolNameResults[0].Kind() != reflect.String {
+		return nil
+	}
+	toolName := toolNameResults[0].String()
+
+	result := map[string]interface{}{
+		"type": "function",
+		"function": map[string]interface{}{
+			"name": toolName,
+		},
+	}
+
+	// Use reflection to access the tool's fields
+	v := reflect.ValueOf(tool)
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return result
+		}
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return result
+	}
+
+	// Extract description for FunctionTool
+	if v.Type().Name() == "FunctionTool" {
+		if descField := v.FieldByName("Description"); descField.IsValid() && descField.Kind() == reflect.String {
+			if desc := descField.String(); desc != "" {
+				result["function"].(map[string]interface{})["description"] = desc
+			}
+		}
+
+		// Extract ParamsJSONSchema and sanitize it
+		if paramsField := v.FieldByName("ParamsJSONSchema"); paramsField.IsValid() && !paramsField.IsNil() {
+			if paramsInterface := paramsField.Interface(); paramsInterface != nil {
+				if paramsMap, ok := paramsInterface.(map[string]any); ok && paramsMap != nil {
+					parameters := sanitizeParametersForSerialization(paramsMap)
+					result["function"].(map[string]interface{})["parameters"] = parameters
+				}
+			}
+		}
+	}
+
+	return result
+}
+
+// sanitizeParametersForSerialization removes non-serializable fields from tool parameters
+func sanitizeParametersForSerialization(params map[string]any) map[string]interface{} {
+	result := make(map[string]interface{})
+	
+	for key, value := range params {
+		if isSerializable(value) {
+			if nestedMap, ok := value.(map[string]any); ok {
+				result[key] = sanitizeParametersForSerialization(nestedMap)
+			} else {
+				result[key] = value
+			}
+		}
+	}
+	
+	return result
+}
+
+// isSerializable checks if a value can be JSON marshaled
+func isSerializable(value any) bool {
+	if value == nil {
+		return true
+	}
+	
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.Func, reflect.Chan, reflect.UnsafePointer:
+		return false
+	case reflect.Ptr:
+		if v.IsNil() {
+			return true
+		}
+		return isSerializable(v.Elem().Interface())
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < v.Len(); i++ {
+			if !isSerializable(v.Index(i).Interface()) {
+				return false
+			}
+		}
+		return true
+	case reflect.Map:
+		for _, key := range v.MapKeys() {
+			if !isSerializable(key.Interface()) || !isSerializable(v.MapIndex(key).Interface()) {
+				return false
+			}
+		}
+		return true
+	case reflect.Struct:
+		// For structs, we need to check each field
+		t := v.Type()
+		for i := 0; i < v.NumField(); i++ {
+			if t.Field(i).IsExported() && !isSerializable(v.Field(i).Interface()) {
+				return false
+			}
+		}
+		return true
+	default:
+		return true
+	}
 }
 
 func ResponseSpan(ctx context.Context, params ResponseSpanParams, fn func(context.Context, Span) error) error {
