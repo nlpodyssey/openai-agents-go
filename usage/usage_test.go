@@ -17,7 +17,7 @@ package usage
 import (
 	"testing"
 
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/responses"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -17,7 +17,7 @@ package agents
 import (
 	"context"
 
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 // LocalShellCommandRequest is a request to execute a command on a shell.

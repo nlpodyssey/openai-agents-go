@@ -18,8 +18,8 @@ import (
 	"context"
 	"iter"
 
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 // VoiceWorkflowBase is the base interface for a voice workflow.
@@ -85,7 +85,7 @@ func (r *VoiceWorkflowHelperStreamTextFromResult) Seq() iter.Seq[string] {
 				return nil
 			}
 			if e, ok := event.(RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-				canYield = yield(e.Data.Delta.OfString)
+				canYield = yield(e.Data.Delta)
 			}
 			return nil
 		})

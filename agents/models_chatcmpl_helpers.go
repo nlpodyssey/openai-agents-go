@@ -18,8 +18,8 @@ import (
 	"strings"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/packages/param"
 )
 
 type chatCmplHelpers struct {

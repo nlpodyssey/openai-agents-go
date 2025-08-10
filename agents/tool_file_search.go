@@ -15,8 +15,8 @@
 package agents
 
 import (
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 // FileSearchTool is a hosted tool that lets the LLM search through a vector store.

@@ -29,14 +29,14 @@ func main() {
 
 	ctx := context.Background()
 
-	result, err := agents.RunStreamed(ctx, agent, "Just write the word 'hi' and nothing else.")
+	result, err := agents.RunStreamed(ctx, agent, "Please tell me 5 jokes.")
 	if err != nil {
 		panic(err)
 	}
 
 	err = result.StreamEvents(func(event agents.StreamEvent) error {
 		if e, ok := event.(agents.RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-			fmt.Print(e.Data.Delta.OfString)
+			fmt.Print(e.Data.Delta)
 			_ = os.Stdout.Sync()
 		}
 		return nil

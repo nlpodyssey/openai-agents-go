@@ -23,8 +23,8 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/nlpodyssey/openai-agents-go/usage"
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 type FakeModel struct {

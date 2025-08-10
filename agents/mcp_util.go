@@ -25,7 +25,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/nlpodyssey/openai-agents-go/util"
-	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/v2/packages/param"
 )
 
 // MCPToolFilterContext provides context information available to tool filter functions.
@@ -244,48 +244,35 @@ func (mcpUtil) InvokeMCPTool(
 			slog.Any("result", *result))
 	}
 
-	// The MCP tool result is a list of content items, whereas OpenAI tool
-	// outputs are a single string. We'll try to convert.
 	var toolOutput string
-	switch {
-	case len(result.Content) == 1:
-		b, err := json.Marshal(result.Content[0])
-		if err != nil {
-			return "", fmt.Errorf("failed to JSON-marshal result content of MCP tool %s: %w", tool.Name, err)
-		}
-		toolOutput = string(b)
 
-		// Append structured content if it exists and we're using it.
-		if server.UseStructuredContent() && result.StructuredContent != nil {
-			b, err = json.Marshal(result.StructuredContent)
-			if err != nil {
-				return "", fmt.Errorf("failed to JSON-marshal result structured content of MCP tool %s: %w", tool.Name, err)
-			}
-			toolOutput = fmt.Sprintf("%s\n%s", toolOutput, string(b))
-		}
-	case len(result.Content) > 1:
-		var toolResults []any
-		for _, item := range result.Content {
-			toolResults = append(toolResults, item)
-		}
-		if server.UseStructuredContent() && result.StructuredContent != nil {
-			toolResults = append(toolResults, result.StructuredContent)
-		}
-
-		b, err := json.Marshal(toolResults)
-		if err != nil {
-			return "", fmt.Errorf("failed to JSON-marshal result content of MCP tool %s: %w", tool.Name, err)
-		}
-		toolOutput = string(b)
-	case server.UseStructuredContent() && result.StructuredContent != nil:
+	// If structured content is requested and available, use it exclusively
+	if server.UseStructuredContent() && result.StructuredContent != nil {
 		b, err := json.Marshal(result.StructuredContent)
 		if err != nil {
 			return "", fmt.Errorf("failed to JSON-marshal result structured content of MCP tool %s: %w", tool.Name, err)
 		}
 		toolOutput = string(b)
-	default:
-		// Empty content is a valid result (e.g., "no results found")
-		toolOutput = "[]"
+	} else {
+		// Fall back to regular text content processing
+		// The MCP tool result is a list of content items, whereas OpenAI tool
+		// outputs are a single string. We'll try to convert.
+		if len(result.Content) == 1 {
+			b, err := json.Marshal(result.Content[0])
+			if err != nil {
+				return "", fmt.Errorf("failed to JSON-marshal result content of MCP tool %s: %w", tool.Name, err)
+			}
+			toolOutput = string(b)
+		} else if len(result.Content) > 1 {
+			b, err := json.Marshal(result.Content)
+			if err != nil {
+				return "", fmt.Errorf("failed to JSON-marshal result content of MCP tool %s: %w", tool.Name, err)
+			}
+			toolOutput = string(b)
+		} else {
+			// Empty content is a valid result (e.g., "no results found")
+			toolOutput = "[]"
+		}
 	}
 
 	currentSpan := tracing.GetCurrentSpan(ctx)

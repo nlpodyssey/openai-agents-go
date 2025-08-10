@@ -12,20 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package agents
+package util
 
-import (
-	"github.com/openai/openai-go/v2/responses"
-)
+import "iter"
 
-// CodeInterpreterTool is a tool that allows the LLM to execute code in a sandboxed environment.
-type CodeInterpreterTool struct {
-	// The tool config, which includes the container and other settings.
-	ToolConfig responses.ToolCodeInterpreterParam
+type SeqErr[T any] interface {
+	Seq() iter.Seq[T]
+	Error() error
 }
 
-func (t CodeInterpreterTool) ToolName() string {
-	return "code_interpreter"
+func SeqErrFunc[T any](fn func(yield func(T) bool) error) SeqErr[T] {
+	return &seqErrFunc[T]{fn: fn}
 }
 
-func (t CodeInterpreterTool) isTool() {}
+type seqErrFunc[T any] struct {
+	fn  func(yield func(T) bool) error
+	err error
+}
+
+func (s *seqErrFunc[T]) seq(yield func(T) bool) { s.err = s.fn(yield) }
+func (s *seqErrFunc[T]) Seq() iter.Seq[T]       { return s.seq }
+func (s *seqErrFunc[T]) Error() error           { return s.err }

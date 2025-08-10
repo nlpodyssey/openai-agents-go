@@ -19,10 +19,10 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared/constant"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v2/shared/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -87,18 +87,18 @@ func TestMessageToOutputItemsWithToolCall(t *testing.T) {
 	// be reflected as separate `ResponseFunctionToolCall` items appended after
 	// the message item.
 
-	toolCall := openai.ChatCompletionMessageToolCall{
+	toolCall := openai.ChatCompletionMessageToolCallUnion{
 		ID: "tool1",
-		Function: openai.ChatCompletionMessageToolCallFunction{
+		Function: openai.ChatCompletionMessageFunctionToolCallFunction{
 			Name:      "my_func",
 			Arguments: `{"x":1}`,
 		},
-		Type: constant.ValueOf[constant.Function](),
+		Type: "function",
 	}
 
 	msg := openai.ChatCompletionMessage{
 		Content:   "Hi",
-		ToolCalls: []openai.ChatCompletionMessageToolCall{toolCall},
+		ToolCalls: []openai.ChatCompletionMessageToolCallUnion{toolCall},
 		Role:      constant.ValueOf[constant.Assistant](),
 	}
 
@@ -228,15 +228,15 @@ func TestItemsToMessagesWithOutputMessageAndFunctionCall(t *testing.T) {
 				Content: openai.ChatCompletionAssistantMessageParamContentUnion{
 					OfString: param.NewOpt("Part 1"),
 				},
-				ToolCalls: []openai.ChatCompletionMessageToolCallParam{
-					{
+				ToolCalls: []openai.ChatCompletionMessageToolCallUnionParam{
+					{OfFunction: &openai.ChatCompletionMessageFunctionToolCallParam{
 						ID: "abc",
-						Function: openai.ChatCompletionMessageToolCallFunctionParam{
+						Function: openai.ChatCompletionMessageFunctionToolCallFunctionParam{
 							Name:      "math",
 							Arguments: "{}",
 						},
 						Type: constant.ValueOf[constant.Function](),
-					},
+					}},
 				},
 				Role: constant.ValueOf[constant.Assistant](),
 			},
@@ -275,7 +275,7 @@ func TestConvertToolChoiceHandlesStandardAndNamedOptions(t *testing.T) {
 	v, err = agents.ChatCmplConverter().ConvertToolChoice(modelsettings.ToolChoiceString("mytool"))
 	require.NoError(t, err)
 	assert.Equal(t, openai.ChatCompletionToolChoiceOptionUnionParam{
-		OfChatCompletionNamedToolChoice: &openai.ChatCompletionNamedToolChoiceParam{
+		OfFunctionToolChoice: &openai.ChatCompletionNamedToolChoiceParam{
 			Function: openai.ChatCompletionNamedToolChoiceFunctionParam{
 				Name: "mytool",
 			},
@@ -513,14 +513,16 @@ func TestToolCallConversion(t *testing.T) {
 		{
 			OfAssistant: &openai.ChatCompletionAssistantMessageParam{
 				Name: param.Opt[string]{},
-				ToolCalls: []openai.ChatCompletionMessageToolCallParam{
+				ToolCalls: []openai.ChatCompletionMessageToolCallUnionParam{
 					{
-						ID: "abc",
-						Function: openai.ChatCompletionMessageToolCallFunctionParam{
-							Name:      "math",
-							Arguments: "{}",
+						OfFunction: &openai.ChatCompletionMessageFunctionToolCallParam{
+							ID: "abc",
+							Function: openai.ChatCompletionMessageFunctionToolCallFunctionParam{
+								Name:      "math",
+								Arguments: "{}",
+							},
+							Type: constant.ValueOf[constant.Function](),
 						},
-						Type: constant.ValueOf[constant.Function](),
 					},
 				},
 				Role: constant.ValueOf[constant.Assistant](),

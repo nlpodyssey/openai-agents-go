@@ -2,6 +2,7 @@ package agents
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -17,7 +18,7 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/asyncqueue"
 	"github.com/nlpodyssey/openai-agents-go/asynctask"
 	"github.com/nlpodyssey/openai-agents-go/tracing"
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 )
 
 const (
@@ -84,6 +85,7 @@ func voiceModelsOpenAIWaitForEvent(
 
 // OpenAISTTTranscriptionSession is a transcription session for OpenAI's STT model.
 type OpenAISTTTranscriptionSession struct {
+	websocketURL                   string
 	connected                      bool
 	client                         OpenaiClient
 	model                          string
@@ -137,7 +139,12 @@ type OpenAISTTTranscriptionSessionParams struct {
 	Settings                       STTModelSettings
 	TraceIncludeSensitiveData      bool
 	TraceIncludeSensitiveAudioData bool
+
+	// Optional, defaults to DefaultOpenAISTTTranscriptionSessionWebsocketURL
+	WebsocketURL string
 }
+
+const DefaultOpenAISTTTranscriptionSessionWebsocketURL = "wss://api.openai.com/v1/realtime?intent=transcription"
 
 func NewOpenAISTTTranscriptionSession(params OpenAISTTTranscriptionSessionParams) *OpenAISTTTranscriptionSession {
 	turnDetection := params.Settings.TurnDetection
@@ -146,6 +153,7 @@ func NewOpenAISTTTranscriptionSession(params OpenAISTTTranscriptionSessionParams
 	}
 
 	return &OpenAISTTTranscriptionSession{
+		websocketURL:                   cmp.Or(params.WebsocketURL, DefaultOpenAISTTTranscriptionSessionWebsocketURL),
 		connected:                      false,
 		client:                         params.Client,
 		model:                          params.Model,
@@ -408,7 +416,7 @@ func (s *OpenAISTTTranscriptionSession) processWebsocketConnection(ctx context.C
 	}
 	header.Set("OpenAI-Beta", "realtime=v1")
 	header.Set("OpenAI-Log-Session", "1")
-	c, _, err := websocket.DefaultDialer.Dial("wss://api.openai.com/v1/realtime?intent=transcription", header)
+	c, _, err := websocket.DefaultDialer.Dial(s.websocketURL, header)
 	if err != nil {
 		return fmt.Errorf("websocket connection error: %w", err)
 	}

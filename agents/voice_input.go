@@ -86,13 +86,13 @@ type AudioInput struct {
 	// A buffer containing the audio data for the agent.
 	Buffer AudioData
 
-	// The sample rate of the audio data.Defaults to DefaultAudioSampleRate.
+	// Optional sample rate of the audio data. Defaults to DefaultAudioSampleRate.
 	SampleRate int
 
-	// The sample width of the audio data. Defaults to DefaultAudioSampleWidth.
+	// Optional sample width of the audio data. Defaults to DefaultAudioSampleWidth.
 	SampleWidth int
 
-	// The number of channels in the audio data. Defaults to DefaultAudioChannels.
+	// Optional number of channels in the audio data. Defaults to DefaultAudioChannels.
 	Channels int
 }
 

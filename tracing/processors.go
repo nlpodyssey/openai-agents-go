@@ -29,7 +29,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/openai/openai-go/packages/param"
+	"github.com/openai/openai-go/v2/packages/param"
 )
 
 // ConsoleSpanExporter is an Exporter that prints the traces and spans to the console.

@@ -26,7 +26,7 @@ require (
 	github.com/matteo-grella/dwarfreflect v0.1.0-alpha
 	github.com/mattn/go-sqlite3 v1.14.30
 	github.com/modelcontextprotocol/go-sdk v0.2.0
-	github.com/openai/openai-go v1.12.0
+	github.com/openai/openai-go/v2 v2.0.1
 	github.com/playwright-community/playwright-go v0.5200.0
 	github.com/stretchr/testify v1.10.0
 	github.com/xeipuuv/gojsonschema v1.2.0

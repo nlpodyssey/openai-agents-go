@@ -17,8 +17,8 @@ package agents
 import (
 	"context"
 
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
 )
 
 // Prompt configuration to use for interacting with an OpenAI model.

@@ -16,6 +16,7 @@ package agents
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math"
 )
 
@@ -25,6 +26,17 @@ const (
 	AudioDataTypeInt16 = iota + 1
 	AudioDataTypeFloat32
 )
+
+func (t AudioDataType) ByteSize() int {
+	switch t {
+	case AudioDataTypeInt16:
+		return 2
+	case AudioDataTypeFloat32:
+		return 4
+	default:
+		panic(fmt.Errorf("unexpected AudioDataType value: %v", t))
+	}
+}
 
 type AudioData interface {
 	Len() int

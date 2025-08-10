@@ -12,36 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package util
 
 import (
-	"context"
-	"fmt"
-	"os"
+	"errors"
+	"testing"
 
-	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/stretchr/testify/assert"
 )
 
-func main() {
-	agent := agents.New("Joker").
-		WithInstructions("You are a helpful assistant.").
-		WithModel("gpt-4.1-nano")
+func TestSeqErrFunc(t *testing.T) {
+	customError := errors.New("error")
+	s := SeqErrFunc(func(yield func(string) bool) error {
+		yield("foo")
+		yield("bar")
+		yield("baz")
+		return customError
+	})
 
-	ctx := context.Background()
-
-	seq, err := agents.RunStreamedSeq(ctx, agent, "Just write the word 'hi' and nothing else.")
-	if err != nil {
-		panic(err)
+	var values []string
+	for v := range s.Seq() {
+		values = append(values, v)
 	}
-
-	for event := range seq.Seq {
-		if e, ok := event.(agents.RawResponsesStreamEvent); ok && e.Data.Type == "response.output_text.delta" {
-			fmt.Print(e.Data.Delta)
-			_ = os.Stdout.Sync()
-		}
-	}
-
-	if seq.Err != nil {
-		panic(seq.Err)
-	}
+	assert.Equal(t, []string{"foo", "bar", "baz"}, values)
+	assert.ErrorIs(t, s.Error(), customError)
 }

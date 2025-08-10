@@ -27,11 +27,11 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/nlpodyssey/openai-agents-go/usage"
 	"github.com/nlpodyssey/openai-agents-go/util"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
-	"github.com/openai/openai-go/packages/param"
-	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared/constant"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
+	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v2/shared/constant"
 )
 
 type OpenAIChatCompletionsModel struct {
@@ -308,7 +308,7 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 		return nil, nil, err
 	}
 
-	var convertedTools []openai.ChatCompletionToolParam
+	var convertedTools []openai.ChatCompletionToolUnionParam
 	for _, tool := range tools {
 		v, err := ChatCmplConverter().ToolToOpenai(tool)
 		if err != nil {

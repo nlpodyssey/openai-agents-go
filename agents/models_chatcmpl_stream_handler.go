@@ -20,10 +20,10 @@ import (
 	"reflect"
 
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/packages/ssestream"
-	"github.com/openai/openai-go/responses"
-	"github.com/openai/openai-go/shared/constant"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/packages/ssestream"
+	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v2/shared/constant"
 )
 
 type StreamingState struct {
@@ -155,10 +155,8 @@ func (chatCmplStreamHandler) HandleStream(
 			}
 			// Emit the delta for this segment of content
 			if err = yield(TResponseStreamEvent{ // responses.ResponseTextDeltaEvent
-				ContentIndex: state.TextContentIndexAndOutput.Index,
-				Delta: responses.ResponseStreamEventUnionDelta{
-					OfString: delta.Content,
-				},
+				ContentIndex:   state.TextContentIndexAndOutput.Index,
+				Delta:          delta.Content,
 				ItemID:         FakeResponsesID,
 				OutputIndex:    0,
 				Type:           "response.output_text.delta",
@@ -219,10 +217,8 @@ func (chatCmplStreamHandler) HandleStream(
 			}
 			// Emit the delta for this segment of refusal
 			if err = yield(TResponseStreamEvent{ // responses.ResponseRefusalDeltaEvent
-				ContentIndex: state.RefusalContentIndexAndOutput.Index,
-				Delta: responses.ResponseStreamEventUnionDelta{
-					OfString: delta.Refusal,
-				},
+				ContentIndex:   state.RefusalContentIndexAndOutput.Index,
+				Delta:          delta.Refusal,
 				ItemID:         FakeResponsesID,
 				OutputIndex:    0,
 				Type:           "response.refusal.delta",
@@ -313,9 +309,7 @@ func (chatCmplStreamHandler) HandleStream(
 		}
 		// Then, yield the args
 		if err = yield(TResponseStreamEvent{ // responses.ResponseFunctionCallArgumentsDeltaEvent
-			Delta: responses.ResponseStreamEventUnionDelta{
-				OfString: functionCall.Arguments,
-			},
+			Delta:          functionCall.Arguments,
 			ItemID:         FakeResponsesID,
 			OutputIndex:    functionCallStartingIndex,
 			Type:           "response.function_call_arguments.delta",
