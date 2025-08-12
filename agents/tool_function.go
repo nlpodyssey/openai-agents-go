@@ -47,6 +47,13 @@ type FunctionTool struct {
 	// return a string error message (which will be sent back to the LLM).
 	OnInvokeTool func(ctx context.Context, arguments string) (any, error)
 
+	// Optional error handling function. When the tool invocation returns an error,
+	// this function is called with the original error and its return value is sent
+	// back to the LLM. If not set, a default function returning a generic error
+	// message is used. To disable error handling and propagate the original error,
+	// explicitly set this to a pointer to a nil ToolErrorFunction.
+	FailureErrorFunction *ToolErrorFunction
+
 	// Whether the JSON schema is in strict mode.
 	// We **strongly** recommend setting this to True, as it increases the likelihood of correct JSON input.
 	// Defaults to true if omitted.
@@ -64,6 +71,16 @@ func (t FunctionTool) ToolName() string {
 }
 
 func (t FunctionTool) isTool() {}
+
+// ToolErrorFunction is a callback that handles tool invocation errors and returns a value to be sent back to the LLM.
+// If this function returns an error, it will be treated as a fatal error for the tool.
+type ToolErrorFunction func(ctx context.Context, err error) (any, error)
+
+// DefaultToolErrorFunction is the default handler used when a FunctionTool does not specify its own FailureErrorFunction.
+// It returns a generic error message containing the original error string.
+func DefaultToolErrorFunction(_ context.Context, err error) (any, error) {
+	return fmt.Sprintf("An error occurred while running the tool. Please try again. Error: %s", err), nil
+}
 
 type FunctionToolEnabler interface {
 	IsEnabled(ctx context.Context, agent *Agent) (bool, error)

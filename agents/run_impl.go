@@ -674,6 +674,11 @@ func (runImpl) ExecuteFunctionToolCalls(
 
 		traceIncludeSensitiveData := config.TraceIncludeSensitiveData.Or(true)
 
+		errorFn := DefaultToolErrorFunction // non-fatal
+		if funcTool.FailureErrorFunction != nil {
+			errorFn = *funcTool.FailureErrorFunction
+		}
+
 		err := tracing.FunctionSpan(
 			ctx, tracing.FunctionSpanParams{Name: funcTool.Name},
 			func(ctx context.Context, spanFn tracing.Span) (err error) {
@@ -726,7 +731,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 				go func() {
 					defer wg.Done()
 					result, toolError = funcTool.OnInvokeTool(ctx, toolCall.Arguments)
-					if toolError != nil {
+					if toolError != nil && errorFn == nil {
 						cancel()
 					}
 				}()
@@ -736,8 +741,22 @@ func (runImpl) ExecuteFunctionToolCalls(
 				if err = errors.Join(hooksErrors[:]...); err != nil {
 					return err
 				}
+
 				if toolError != nil {
-					return fmt.Errorf("error running tool %s: %w", funcTool.Name, toolError)
+					if errorFn == nil {
+						return fmt.Errorf("error running tool %s: %w", funcTool.Name, toolError)
+					}
+					result, err = errorFn(ctx, toolError)
+					if err != nil {
+						return fmt.Errorf("error running tool %s: %w", funcTool.Name, err)
+					}
+					AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+						Message: "Error running tool (non-fatal)",
+						Data: map[string]any{
+							"tool_name": funcTool.Name,
+							"error":     toolError.Error(),
+						},
+					})
 				}
 
 				wg.Add(1)
