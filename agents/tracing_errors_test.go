@@ -138,9 +138,14 @@ func TestToolCallError(t *testing.T) {
 
 	testError := agents.NewModelBehaviorError("test error")
 
+	tool := agentstesting.GetFunctionToolErr("foo", testError)
+	// Explicitly disable error handling so the original error is propagated
+	fn := agents.ToolErrorFunction(nil)
+	tool.FailureErrorFunction = &fn
+
 	agent := agents.New("test_agent").
 		WithModelInstance(model).
-		WithTools(agentstesting.GetFunctionToolErr("foo", testError))
+		WithTools(tool)
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
@@ -180,6 +185,75 @@ func TestToolCallError(t *testing.T) {
 							},
 							"data": m{"name": "foo", "input": "bad_json", "output": ""},
 						},
+					},
+				},
+			},
+		},
+	}, spans)
+}
+
+func TestToolCallErrorHandled(t *testing.T) {
+	tracingtesting.Setup(t)
+	agents.ClearOpenaiSettings()
+
+	model := agentstesting.NewFakeModel(true, nil)
+
+	testError := agents.NewModelBehaviorError("test error")
+
+	tool := agentstesting.GetFunctionToolErr("foo", testError)
+	// Use default error handling (non-fatal) by leaving FailureErrorFunction to nil
+	// To reset, tool.FailureErrorFunction = nil
+
+	agent := agents.New("test_agent").
+		WithModelInstance(model).
+		WithTools(tool)
+
+	model.AddMultipleTurnOutputs([]agentstesting.FakeModelTurnOutput{
+		{Value: []agents.TResponseOutputItem{
+			agentstesting.GetTextMessage("a_message"),
+			agentstesting.GetFunctionToolCall("foo", "bad_json"),
+		}},
+		{Value: []agents.TResponseOutputItem{
+			agentstesting.GetTextMessage("done"),
+		}},
+	})
+
+	_, err := agents.Run(t.Context(), agent, "first_test")
+	require.NoError(t, err)
+
+	spans := tracingtesting.FetchNormalizedSpans(t, false, false, false)
+
+	type m = map[string]any
+	assert.Equal(t, []m{
+		{
+			"workflow_name": "Agent workflow",
+			"children": []m{
+				{
+					"type": "agent",
+					"data": m{
+						"name":        "test_agent",
+						"handoffs":    []string{},
+						"tools":       []string{"foo"},
+						"output_type": "string",
+					},
+					"children": []m{
+						{"type": "generation"},
+						{
+							"type": "function",
+							"error": m{
+								"message": "Error running tool (non-fatal)",
+								"data": m{
+									"tool_name": "foo",
+									"error":     "test error",
+								},
+							},
+							"data": m{
+								"name":   "foo",
+								"input":  "bad_json",
+								"output": "An error occurred while running the tool. Please try again. Error: test error",
+							},
+						},
+						{"type": "generation"},
 					},
 				},
 			},
