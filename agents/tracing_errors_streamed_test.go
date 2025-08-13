@@ -139,9 +139,14 @@ func TestToolCallErrorStreamed(t *testing.T) {
 
 	testError := agents.NewModelBehaviorError("test error")
 
+	tool := agentstesting.GetFunctionToolErr("foo", testError)
+	// Explicitly disable error handling so the original error is propagated
+	fn := agents.ToolErrorFunction(nil)
+	tool.FailureErrorFunction = &fn
+
 	agent := agents.New("test_agent").
 		WithModelInstance(model).
-		WithTools(agentstesting.GetFunctionToolErr("foo", testError))
+		WithTools(tool)
 
 	model.SetNextOutput(agentstesting.FakeModelTurnOutput{
 		Value: []agents.TResponseOutputItem{
