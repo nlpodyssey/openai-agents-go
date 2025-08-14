@@ -342,7 +342,9 @@ func (r Runner) run(ctx context.Context, startingAgent *Agent, input Input) (*Ru
 			currentSpan            tracing.Span
 		)
 
-		ctx = usage.NewContext(ctx, usage.NewUsage())
+		if u, ok := usage.FromContext(ctx); !ok || u == nil {
+			ctx = usage.NewContext(ctx, usage.NewUsage())
+		}
 
 		currentAgent := startingAgent
 		shouldRunAgentStartHooks := true
@@ -569,7 +571,9 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 		})
 	}
 
-	ctx = usage.NewContext(ctx, usage.NewUsage())
+	if u, ok := usage.FromContext(ctx); !ok || u == nil {
+		ctx = usage.NewContext(ctx, usage.NewUsage())
+	}
 
 	streamedResult := newRunResultStreaming(ctx)
 	streamedResult.setInput(CopyInput(input))
@@ -1363,6 +1367,12 @@ func (r Runner) getNewResponse(
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if newResponse.Usage == nil {
+		newResponse.Usage = &usage.Usage{Requests: 1}
+	} else {
+		newResponse.Usage.Requests++
 	}
 
 	if contextUsage, _ := usage.FromContext(ctx); contextUsage != nil {
