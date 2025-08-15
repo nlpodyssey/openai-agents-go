@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	"github.com/nlpodyssey/openai-agents-go/tracing"
-	"github.com/openai/openai-go/responses"
+	"github.com/openai/openai-go/v2/responses"
 	sdk "github.com/traceloop/go-openllmetry/traceloop-sdk"
 )
 
