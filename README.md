@@ -9,21 +9,29 @@ This is a Go port of [OpenAI Agents Python SDK](https://openai.github.io/openai-
 This project aims at being as close as possible to the original Python
 implementation, for both its behavior and the API. 
 
-#### CAUTION: Work in Progress
-
-A significant set of core functionalities has been already implemented and
-works well. The project is under active development: we are implementing
-missing features, adding tests, writing documentation, and refactoring the
-code for a smoother usage. Please expect the SDK's API to change also
-significantly before we release a first stable version.
-
 ### Core concepts:
 
 1. **Agents**: LLMs configured with instructions, tools, guardrails, and handoffs
 2. **Handoffs**: A specialized tool call used by the Agents SDK for transferring control between agents
 3. **Guardrails**: Configurable safety checks for input and output validation
 
-Explore the [examples](examples) directory to see the SDK in action.
+Explore the [examples](examples) directory to see the SDK in action:
+
+| Directory | Description |
+|-----------|-------------|
+| [basic](examples/basic) | Core features such as hello world, streaming, prompt templates, and tools. |
+| [agent_patterns](examples/agent_patterns) | Common agent design patterns including routing, guardrails, and parallelization. |
+| [customer_service](examples/customer_service) | Multi-agent airline support scenario using handoffs and tools. |
+| [financial_research_agent](examples/financial_research_agent) | Coordinated agents performing financial analysis and report writing. |
+| [handoffs](examples/handoffs) | Techniques for filtering messages and handing off between agents. |
+| [hosted_mcp](examples/hosted_mcp) | Hosted Model Context Protocol examples, including simple and approval flows. |
+| [mcp](examples/mcp) | Running local MCP servers and clients for filesystems, git, prompts, and streaming. |
+| [model_providers](examples/model_providers) | Integrating custom model providers and proxies like LiteLLM. |
+| [research_bot](examples/research_bot) | General research bot combining planner, search, and writer agents. |
+| [repl](examples/repl) | Command-line REPL for interactive experimentation. |
+| [session](examples/session) | Demonstrates persistent session memory across multiple runs. |
+| [tools](examples/tools) | Usage of built-in tools such as code interpreter, computer use, file search, and web search. |
+| [voice](examples/voice) | Static and streaming voice response examples. |
 
 ## Installation
 
@@ -170,8 +178,11 @@ See examples in [`examples/agent_patterns`](examples/agent_patterns).
 
 ## Authors
 
-This project is currently being developed by [Matteo Grella](https://github.com/matteo-grella) and [Marco Nicola](https://github.com/marco-nicola) as an early-stage port of [OpenAI's Agents SDK](https://openai.github.io/openai-agents-python/), aimed at supporting its initial adoption by Go developers and offering something potentially useful to the OpenAI team.
+This project was started by [Matteo Grella](https://github.com/matteo-grella) and [Marco Nicola](https://github.com/marco-nicola) as a port of [OpenAI's Agents SDK](https://openai.github.io/openai-agents-python/), aimed at supporting its adoption by Go developers and offering something potentially useful to the OpenAI team.  
+It has since evolved with community contributions, and we welcome new ideas, improvements, and pull requests from anyone interested in shaping its future.
 
 ## Acknowledgments
 
 We would like to thank the OpenAI team for creating the original [OpenAI Agents Python SDK](https://openai.github.io/openai-agents-python/) and the [official OpenAI Go client library](https://github.com/openai/openai-go), which serve as the foundation for this Go implementation.
+
+We also acknowledge [Anthropic, PBC](https://www.anthropic.com) for creating and maintaining the [Model Context Protocol](https://github.com/modelcontextprotocol), a crucial dependency for the MCP functionality in this framework, and particularly the [MCP Go SDK](https://github.com/modelcontextprotocol/go-sdk).

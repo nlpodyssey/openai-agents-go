@@ -1,0 +1,39 @@
+model_list:
+  # OpenAI Models
+  - model_name: openai-gpt-4o
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: openai-gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  # Anthropic Models (if you have the key)
+  - model_name: claude-3-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20240620
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Google Models (if you have the key)
+  - model_name: gemini-pro
+    litellm_params:
+      model: gemini/gemini-pro
+      api_key: os.environ/GOOGLE_API_KEY
+
+  # Ollama Local Models (if running locally)
+  - model_name: ollama-llama3
+    litellm_params:
+      model: ollama/llama3
+      api_base: http://localhost:11434
+
+# General settings
+general_settings:
+  # Log level for debugging
+  set_verbose: true
+  
+  # Enable model fallbacks
+  fallbacks:
+    - openai-gpt-4o
+    - openai-gpt-4o-mini
