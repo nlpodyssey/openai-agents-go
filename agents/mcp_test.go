@@ -30,14 +30,14 @@ func runMCPServer() {
 
 	mcp.AddTool(
 		server, &mcp.Tool{Name: "add_nop_tool", Description: "Adds nop_tool"},
-		func(ctx context.Context, session *mcp.ServerSession, c *mcp.CallToolParamsFor[struct{}]) (*mcp.CallToolResultFor[any], error) {
+		func(ctx context.Context, session *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, *struct{}, error) {
 			mcp.AddTool(
 				server, &mcp.Tool{Name: "nop_tool"},
-				func(ctx context.Context, session *mcp.ServerSession, c *mcp.CallToolParamsFor[struct{}]) (*mcp.CallToolResultFor[any], error) {
-					return &mcp.CallToolResultFor[any]{}, nil
+				func(ctx context.Context, session *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, *struct{}, error) {
+					return &mcp.CallToolResult{}, nil, nil
 				},
 			)
-			return &mcp.CallToolResultFor[any]{Content: []mcp.Content{&mcp.TextContent{Text: "OK"}}}, nil
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: "OK"}}}, nil, nil
 		},
 	)
 

@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/modelcontextprotocol/go-sdk/jsonschema"
+	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
 	"github.com/stretchr/testify/assert"

@@ -35,9 +35,10 @@ func runServer(addr string) {
 				{Name: "language", Required: false},
 			},
 		},
-		func(ctx context.Context, session *mcp.ServerSession, params *mcp.GetPromptParams) (*mcp.GetPromptResult, error) {
-			focus := cmp.Or(params.Arguments["focus"], "general code quality")
-			language := cmp.Or(params.Arguments["language"], "python")
+		func(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+			args := req.Params.Arguments
+			focus := cmp.Or(args["focus"], "general code quality")
+			language := cmp.Or(args["language"], "python")
 			fmt.Printf("[debug-server] generate_code_review_instructions(%q, %q)\n", focus, language)
 
 			text := `You are a senior ` + language + ` code review specialist. Your role is to provide comprehensive code analysis with focus on ` + focus + `.

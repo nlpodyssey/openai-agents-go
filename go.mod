@@ -19,6 +19,7 @@ go 1.24.3
 require (
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
+	github.com/google/jsonschema-go v0.2.0
 	github.com/google/uuid v1.6.0
 	github.com/gordonklaus/portaudio v0.0.0-20250206071425-98a94950218b
 	github.com/gorilla/websocket v1.5.3
@@ -26,7 +27,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/matteo-grella/dwarfreflect v0.1.0-alpha
 	github.com/mattn/go-sqlite3 v1.14.30
-	github.com/modelcontextprotocol/go-sdk v0.2.0
+	github.com/modelcontextprotocol/go-sdk v0.3.0
 	github.com/openai/openai-go/v2 v2.0.2
 	github.com/playwright-community/playwright-go v0.5200.0
 	github.com/stretchr/testify v1.10.0

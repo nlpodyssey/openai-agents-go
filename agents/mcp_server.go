@@ -118,7 +118,7 @@ func (s *MCPServerWithClientSession) Connect(ctx context.Context) (err error) {
 	}()
 
 	client := mcp.NewClient(&mcp.Implementation{Name: s.name}, nil)
-	session, err := client.Connect(ctx, s.transport)
+	session, err := client.Connect(ctx, s.transport, nil)
 	if err != nil {
 		return fmt.Errorf("MCP client connection error: %w", err)
 	}

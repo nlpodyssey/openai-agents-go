@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/modelcontextprotocol/go-sdk/jsonschema"
+	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agentstesting"
@@ -43,7 +43,7 @@ func TestMCPUtil_GetAllFunctionTools(t *testing.T) {
 	}{
 		{"test_tool_1", nil},
 		{"test_tool_2", nil},
-		{"test_tool_3", &jsonschema.Schema{}},
+		{"test_tool_3", &jsonschema.Schema{Type: "object"}},
 		{"test_tool_4", &jsonschema.Schema{
 			Type:     "object",
 			Required: []string{"bar", "baz"},
@@ -98,7 +98,7 @@ func TestMCPUtil_GetAllFunctionTools(t *testing.T) {
 		type m = map[string]any
 		assert.Equal(t, m{"properties": m{}}, funcTools[0].ParamsJSONSchema)
 		assert.Equal(t, m{"properties": m{}}, funcTools[1].ParamsJSONSchema)
-		assert.Equal(t, m{"properties": m{}}, funcTools[2].ParamsJSONSchema)
+		assert.Equal(t, m{"type": "object", "properties": m{}}, funcTools[2].ParamsJSONSchema)
 		assert.Equal(t, m{
 			"type":     "object",
 			"required": []any{"bar", "baz"},
@@ -139,7 +139,12 @@ func TestMCPUtil_GetAllFunctionTools(t *testing.T) {
 		type m = map[string]any
 		assert.Equal(t, m{"properties": m{}, "required": []any{}}, funcTools[0].ParamsJSONSchema)
 		assert.Equal(t, m{"properties": m{}, "required": []any{}}, funcTools[1].ParamsJSONSchema)
-		assert.Equal(t, m{"properties": m{}, "required": []any{}}, funcTools[2].ParamsJSONSchema)
+		assert.Equal(t, m{
+			"type":                 "object",
+			"additionalProperties": false,
+			"properties":           m{},
+			"required":             []any{},
+		}, funcTools[2].ParamsJSONSchema)
 		assert.Equal(t, m{
 			"type":                 "object",
 			"required":             []any{"bar", "baz"},
@@ -302,7 +307,7 @@ func TestAgentConvertSchemasToStrict(t *testing.T) {
 		assert.Equal(t, m{
 			"type":                 "object",
 			"required":             []any{"bar", "baz"},
-			"additionalProperties": m{"not": m{}},
+			"additionalProperties": false,
 			"properties": m{
 				"bar": m{"type": "string"},
 				"baz": m{"type": "integer"},
@@ -352,7 +357,7 @@ func TestAgentConvertSchemasToStrict(t *testing.T) {
 		assert.Equal(t, m{
 			"type":                 "object",
 			"required":             []any{"bar", "baz"},
-			"additionalProperties": m{"not": m{}},
+			"additionalProperties": false,
 			"properties": m{
 				"bar": m{"type": "string"},
 				"baz": m{"type": "integer"},
@@ -401,7 +406,7 @@ func TestAgentConvertSchemasToStrict(t *testing.T) {
 		assert.Equal(t, m{
 			"type":                 "object",
 			"required":             []any{"bar", "baz"},
-			"additionalProperties": m{"not": m{}},
+			"additionalProperties": false,
 			"properties": m{
 				"bar": m{"type": "string"},
 				"baz": m{"type": "integer"},
