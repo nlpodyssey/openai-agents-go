@@ -51,17 +51,26 @@ type FAQLookupArgs struct {
 }
 
 func FAQLookup(_ context.Context, args FAQLookupArgs) (string, error) {
-	q := args.Question
+	question := strings.ToLower(args.Question)
+	contains := func(values ...string) bool {
+		for _, v := range values {
+			if strings.Contains(question, v) {
+				return true
+			}
+		}
+		return false
+	}
+
 	switch {
-	case strings.Contains(q, "bag") || strings.Contains(q, "baggage"):
+	case contains("bag", "baggage", "luggage", "carry-on", "hand luggage", "hand carry"):
 		return "You are allowed to bring one bag on the plane. " +
 			"It must be under 50 pounds and 22 inches x 14 inches x 9 inches.", nil
-	case strings.Contains(q, "seats") || strings.Contains(q, "plane"):
+	case contains("seat", "seats", "seating", "plane"):
 		return "There are 120 seats on the plane. " +
 			"There are 22 business class seats and 98 economy seats. " +
 			"Exit rows are rows 4 and 16. " +
 			"Rows 5-8 are Economy Plus, with extra legroom. ", nil
-	case strings.Contains(q, "wifi"):
+	case contains("wifi", "internet", "wireless", "connectivity", "network", "online"):
 		return "We have free wifi on the plane, join Airline-Wifi", nil
 	default:
 		return "I'm sorry, I don't know the answer to that question.", nil
