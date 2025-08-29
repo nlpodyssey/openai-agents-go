@@ -52,6 +52,7 @@ func TestModelSettings_BasicSerialization(t *testing.T) {
 		"truncation":          nil,
 		"max_tokens":          json.Number("100"),
 		"reasoning":           map[string]any{},
+		"verbosity":           nil,
 		"metadata":            nil,
 		"store":               nil,
 		"include_usage":       nil,
@@ -75,6 +76,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		Truncation:        param.NewOpt(TruncationAuto),
 		MaxTokens:         param.NewOpt[int64](100),
 		Reasoning:         openai.ReasoningParam{},
+		Verbosity:         param.NewOpt(VerbosityMedium),
 		Metadata:          map[string]string{"foo": "bar"},
 		Store:             param.NewOpt(false),
 		IncludeUsage:      param.NewOpt(false),
@@ -100,6 +102,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		"truncation":          "auto",
 		"max_tokens":          json.Number("100"),
 		"reasoning":           map[string]any{},
+		"verbosity":           "medium",
 		"metadata":            map[string]any{"foo": "bar"},
 		"store":               false,
 		"include_usage":       false,
@@ -139,6 +142,7 @@ func TestModelSettings_ToolChoiceMCPSerialization(t *testing.T) {
 		"truncation":          nil,
 		"max_tokens":          nil,
 		"reasoning":           map[string]any{},
+		"verbosity":           nil,
 		"metadata":            nil,
 		"store":               nil,
 		"include_usage":       nil,
@@ -171,6 +175,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Effort:  openai.ReasoningEffortLow,
 			Summary: openai.ReasoningSummaryConcise,
 		},
+		Verbosity:                       param.NewOpt(VerbosityMedium),
 		Metadata:                        map[string]string{"foo": "bar"},
 		Store:                           param.NewOpt(false),
 		IncludeUsage:                    param.NewOpt(false),
@@ -192,6 +197,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 				Effort:  openai.ReasoningEffortMedium,
 				Summary: openai.ReasoningSummaryDetailed,
 			},
+			Verbosity:  param.NewOpt(VerbosityHigh),
 			Store:      param.NewOpt(true),
 			ExtraQuery: map[string]string{"a": "b"},
 			CustomizeResponsesRequest: func(context.Context, *responses.ResponseNewParams, []option.RequestOption) (*responses.ResponseNewParams, []option.RequestOption, error) {
@@ -213,6 +219,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Effort:  openai.ReasoningEffortMedium,
 			Summary: openai.ReasoningSummaryDetailed,
 		}, resolved.Reasoning)
+		assert.Equal(t, param.NewOpt(VerbosityHigh), resolved.Verbosity)
 		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.Metadata)
 		assert.Equal(t, param.NewOpt(true), resolved.Store)
 		assert.Equal(t, param.NewOpt(false), resolved.IncludeUsage)
@@ -254,6 +261,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Effort:  openai.ReasoningEffortLow,
 			Summary: openai.ReasoningSummaryConcise,
 		}, resolved.Reasoning)
+		assert.Equal(t, param.NewOpt(VerbosityMedium), resolved.Verbosity)
 		assert.Equal(t, map[string]string{"a": "b"}, resolved.Metadata)
 		assert.Equal(t, param.NewOpt(false), resolved.Store)
 		assert.Equal(t, param.NewOpt(true), resolved.IncludeUsage)

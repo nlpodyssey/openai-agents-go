@@ -66,6 +66,9 @@ type ModelSettings struct {
 	// (see https://platform.openai.com/docs/guides/reasoning).
 	Reasoning openai.ReasoningParam `json:"reasoning"`
 
+	// Constrains the verbosity of the model's response.
+	Verbosity param.Opt[Verbosity] `json:"verbosity"`
+
 	// Optional metadata to include with the model response call.
 	Metadata map[string]string `json:"metadata"`
 
@@ -106,6 +109,14 @@ type ModelSettings struct {
 	// Use with caution as not all models support all parameters.
 	CustomizeChatCompletionsRequest func(context.Context, *openai.ChatCompletionNewParams, []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) `json:"-"`
 }
+
+type Verbosity string
+
+const (
+	VerbosityLow    Verbosity = "low"
+	VerbosityMedium Verbosity = "medium"
+	VerbosityHigh   Verbosity = "high"
+)
 
 type ToolChoice interface {
 	isToolChoice()
@@ -149,6 +160,7 @@ func (ms ModelSettings) Resolve(override ModelSettings) ModelSettings {
 	resolveOpt(&newSettings.Truncation, override.Truncation)
 	resolveOpt(&newSettings.MaxTokens, override.MaxTokens)
 	resolveAny(&newSettings.Reasoning, override.Reasoning)
+	resolveOpt(&newSettings.Verbosity, override.Verbosity)
 	resolveMap(&newSettings.Metadata, override.Metadata)
 	resolveOpt(&newSettings.Store, override.Store)
 	resolveOpt(&newSettings.IncludeUsage, override.IncludeUsage)

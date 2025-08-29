@@ -244,6 +244,10 @@ func (m OpenAIResponsesModel) prepareRequest(
 	slices.Sort(include)
 	include = slices.Compact(include)
 
+	if modelSettings.Verbosity.Valid() {
+		responseFormat.Verbosity = responses.ResponseTextConfigVerbosity(modelSettings.Verbosity.Value)
+	}
+
 	if DontLogModelData {
 		Logger().Debug("Calling LLM")
 	} else {
