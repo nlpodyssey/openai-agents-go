@@ -149,6 +149,10 @@ type AgentAsToolParams struct {
 	// Optional function that extracts the output from the agent.
 	// If not provided, the last message from the agent will be used.
 	CustomOutputExtractor func(context.Context, RunResult) (string, error)
+
+	// Optional static or dynamic flag reporting whether the tool is enabled.
+	// If omitted, the tool is enabled by default.
+	IsEnabled FunctionToolEnabler
 }
 
 // AsTool transforms this agent into a tool, callable by other agents.
@@ -180,7 +184,9 @@ func (a *Agent) AsTool(params AgentAsToolParams) Tool {
 		return ItemHelpers().TextMessageOutputs(output.NewItems), nil
 	}
 
-	return NewFunctionTool(name, params.ToolDescription, runAgent)
+	tool := NewFunctionTool(name, params.ToolDescription, runAgent)
+	tool.IsEnabled = params.IsEnabled
+	return tool
 }
 
 // GetSystemPrompt returns the system prompt for the agent.
