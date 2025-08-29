@@ -81,6 +81,10 @@ type ModelSettings struct {
 	// (see https://platform.openai.com/docs/api-reference/responses/create#responses-create-include).
 	ResponseInclude []responses.ResponseIncludable `json:"response_include"`
 
+	// Number of top tokens to return logprobs for.
+	// Setting this will automatically include ``"message.output_text.logprobs"`` in the response.
+	TopLogprobs param.Opt[int64] `json:"top_logprobs"`
+
 	// Optional additional query fields to provide with the request.
 	ExtraQuery map[string]string `json:"extra_query"`
 
@@ -148,6 +152,7 @@ func (ms ModelSettings) Resolve(override ModelSettings) ModelSettings {
 	resolveOpt(&newSettings.Store, override.Store)
 	resolveOpt(&newSettings.IncludeUsage, override.IncludeUsage)
 	resolveAny(&newSettings.ResponseInclude, override.ResponseInclude)
+	resolveOpt(&newSettings.TopLogprobs, override.TopLogprobs)
 	resolveMap(&newSettings.ExtraQuery, override.ExtraQuery)
 	resolveMap(&newSettings.ExtraHeaders, override.ExtraHeaders)
 	resolveAny(&newSettings.CustomizeResponsesRequest, override.CustomizeResponsesRequest)

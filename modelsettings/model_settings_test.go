@@ -56,6 +56,7 @@ func TestModelSettings_BasicSerialization(t *testing.T) {
 		"store":               nil,
 		"include_usage":       nil,
 		"response_include":    nil,
+		"top_logprobs":        nil,
 		"extra_query":         nil,
 		"extra_headers":       nil,
 	}
@@ -78,6 +79,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		Store:             param.NewOpt(false),
 		IncludeUsage:      param.NewOpt(false),
 		ResponseInclude:   []responses.ResponseIncludable{responses.ResponseIncludableFileSearchCallResults},
+		TopLogprobs:       param.NewOpt(int64(1)),
 		ExtraQuery:        map[string]string{"foo": "bar"},
 		ExtraHeaders:      map[string]string{"foo": "bar"},
 	}
@@ -102,6 +104,7 @@ func TestModelSettings_AllFieldsSerialization(t *testing.T) {
 		"store":               false,
 		"include_usage":       false,
 		"response_include":    []any{"file_search_call.results"},
+		"top_logprobs":        json.Number("1"),
 		"extra_query":         map[string]any{"foo": "bar"},
 		"extra_headers":       map[string]any{"foo": "bar"},
 	}
@@ -140,6 +143,7 @@ func TestModelSettings_ToolChoiceMCPSerialization(t *testing.T) {
 		"store":               nil,
 		"include_usage":       nil,
 		"response_include":    nil,
+		"top_logprobs":        nil,
 		"extra_query":         nil,
 		"extra_headers":       nil,
 	}
@@ -171,6 +175,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		Store:                           param.NewOpt(false),
 		IncludeUsage:                    param.NewOpt(false),
 		ResponseInclude:                 []responses.ResponseIncludable{responses.ResponseIncludableFileSearchCallResults},
+		TopLogprobs:                     param.NewOpt(int64(1)),
 		ExtraQuery:                      map[string]string{"foo": "bar"},
 		ExtraHeaders:                    map[string]string{"foo": "bar"},
 		CustomizeResponsesRequest:       nil,
@@ -212,6 +217,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		assert.Equal(t, param.NewOpt(true), resolved.Store)
 		assert.Equal(t, param.NewOpt(false), resolved.IncludeUsage)
 		assert.Equal(t, []responses.ResponseIncludable{responses.ResponseIncludableFileSearchCallResults}, resolved.ResponseInclude)
+		assert.Equal(t, param.NewOpt(int64(1)), resolved.TopLogprobs)
 		assert.Equal(t, map[string]string{"a": "b"}, resolved.ExtraQuery)
 		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.ExtraHeaders)
 		assert.NotNil(t, resolved.CustomizeResponsesRequest)
@@ -227,6 +233,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 			Metadata:          map[string]string{"a": "b"},
 			IncludeUsage:      param.NewOpt(true),
 			ResponseInclude:   []responses.ResponseIncludable{responses.ResponseIncludableMessageInputImageImageURL},
+			TopLogprobs:       param.NewOpt(int64(2)),
 			ExtraHeaders:      map[string]string{"c": "d"},
 			CustomizeChatCompletionsRequest: func(context.Context, *openai.ChatCompletionNewParams, []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) {
 				return nil, nil, nil
@@ -251,6 +258,7 @@ func TestModelSettings_Resolve(t *testing.T) {
 		assert.Equal(t, param.NewOpt(false), resolved.Store)
 		assert.Equal(t, param.NewOpt(true), resolved.IncludeUsage)
 		assert.Equal(t, []responses.ResponseIncludable{responses.ResponseIncludableMessageInputImageImageURL}, resolved.ResponseInclude)
+		assert.Equal(t, param.NewOpt(int64(2)), resolved.TopLogprobs)
 		assert.Equal(t, map[string]string{"foo": "bar"}, resolved.ExtraQuery)
 		assert.Equal(t, map[string]string{"c": "d"}, resolved.ExtraHeaders)
 		assert.Nil(t, resolved.CustomizeResponsesRequest)
