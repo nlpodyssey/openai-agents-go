@@ -120,8 +120,9 @@ type Agent struct {
 	// Optional property which lets you configure how tool use is handled.
 	// - RunLLMAgain: The default behavior. Tools are run, and then the LLM receives the results
 	//   and gets to respond.
-	// - StopOnFirstTool: The output of the first tool call is used as the final output. This
-	//   means that the LLM does not process the result of the tool call.
+	// - StopOnFirstTool: The output from the first tool call is treated as the final result.
+	//   In other words, it isn’t sent back to the LLM for further processing but is used directly
+	//   as the final output.
 	// - StopAtTools: The agent will stop running if any of the tools in the list are called.
 	//   The final output will be the output of the first matching tool call. The LLM does not
 	//   process the result of the tool call.
