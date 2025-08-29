@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
+	"github.com/openai/openai-go/v2/packages/param"
 )
 
 type CustomAgentHooks struct {
@@ -74,6 +75,14 @@ func (h *CustomAgentHooks) OnToolEnd(_ context.Context, agent *agents.Agent, too
 		"### (%s) %d: Agent %s ended tool %s with result %#v\n",
 		h.displayName, h.eventCounter, agent.Name, tool.ToolName(), result,
 	)
+	return nil
+}
+
+func (*CustomAgentHooks) OnLLMStart(context.Context, *agents.Agent, param.Opt[string], []agents.TResponseInputItem) error {
+	return nil
+}
+
+func (*CustomAgentHooks) OnLLMEnd(context.Context, *agents.Agent, agents.ModelResponse) error {
 	return nil
 }
 

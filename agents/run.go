@@ -1037,6 +1037,14 @@ func (r Runner) runSingleTurnStreamed(
 		return nil, err
 	}
 
+	// Call hook just before the model is invoked, with the correct system prompt.
+	if agent.Hooks != nil {
+		err = agent.Hooks.OnLLMStart(ctx, agent, filtered.Instructions, filtered.Input)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// 1. Stream the output events
 	modelResponseParams := ModelResponseParams{
 		SystemInstructions: filtered.Instructions,
@@ -1085,6 +1093,14 @@ func (r Runner) runSingleTurnStreamed(
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	// Call hook just after the model response is finalized.
+	if agent.Hooks != nil && finalResponse != nil {
+		err = agent.Hooks.OnLLMEnd(ctx, agent, *finalResponse)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 2. At this point, the streaming is complete for this turn of the agent loop.
@@ -1446,6 +1462,14 @@ func (r Runner) getNewResponse(
 	modelSettings := agent.ModelSettings.Resolve(runConfig.ModelSettings)
 	modelSettings = RunImpl().MaybeResetToolChoice(agent, toolUseTracker, modelSettings)
 
+	// If the agent has hooks, we need to call them before and after the LLM call
+	if agent.Hooks != nil {
+		err = agent.Hooks.OnLLMStart(ctx, agent, filtered.Instructions, filtered.Input)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	newResponse, err := model.GetResponse(ctx, ModelResponseParams{
 		SystemInstructions: filtered.Instructions,
 		Input:              InputItems(filtered.Input),
@@ -1462,6 +1486,14 @@ func (r Runner) getNewResponse(
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// If the agent has hooks, we need to call them after the LLM call
+	if agent.Hooks != nil {
+		err = agent.Hooks.OnLLMEnd(ctx, agent, *newResponse)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if newResponse.Usage == nil {

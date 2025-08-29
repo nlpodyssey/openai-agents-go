@@ -16,11 +16,19 @@ package agents
 
 import (
 	"context"
+
+	"github.com/openai/openai-go/v2/packages/param"
 )
 
 // RunHooks is implemented by an object that receives callbacks on various
 // lifecycle events in an agent run.
 type RunHooks interface {
+	// OnLLMStart is called just before invoking the LLM for this agent.
+	OnLLMStart(ctx context.Context, agent *Agent, systemPrompt param.Opt[string], inputItems []TResponseInputItem) error
+
+	// OnLLMEnd is called immediately after the LLM call returns for this agent.
+	OnLLMEnd(ctx context.Context, agent *Agent, response ModelResponse) error
+
 	// OnAgentStart is called before the agent is invoked. Called each time the current agent changes.
 	OnAgentStart(ctx context.Context, agent *Agent) error
 
@@ -39,6 +47,12 @@ type RunHooks interface {
 
 type NoOpRunHooks struct{}
 
+func (NoOpRunHooks) OnLLMStart(context.Context, *Agent, param.Opt[string], []TResponseInputItem) error {
+	return nil
+}
+func (NoOpRunHooks) OnLLMEnd(context.Context, *Agent, ModelResponse) error {
+	return nil
+}
 func (NoOpRunHooks) OnAgentStart(context.Context, *Agent) error {
 	return nil
 }
@@ -74,4 +88,10 @@ type AgentHooks interface {
 
 	// OnToolEnd is called after a tool is invoked.
 	OnToolEnd(ctx context.Context, agent *Agent, tool Tool, result any) error
+
+	// OnLLMStart is called immediately before the agent issues an LLM call.
+	OnLLMStart(ctx context.Context, agent *Agent, systemPrompt param.Opt[string], inputItems []TResponseInputItem) error
+
+	// OnLLMEnd is called immediately after the agent receives the LLM response.
+	OnLLMEnd(ctx context.Context, agent *Agent, response ModelResponse) error
 }

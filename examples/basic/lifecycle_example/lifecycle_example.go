@@ -22,6 +22,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/usage"
+	"github.com/openai/openai-go/v2/packages/param"
 )
 
 type ExampleHooks struct {
@@ -33,6 +34,14 @@ func (*ExampleHooks) usageToStr(u *usage.Usage) string {
 		"%d requests, %d input tokens, %d output tokens, %d total tokens",
 		u.Requests, u.InputTokens, u.OutputTokens, u.TotalTokens,
 	)
+}
+
+func (*ExampleHooks) OnLLMStart(context.Context, *agents.Agent, param.Opt[string], []agents.TResponseInputItem) error {
+	return nil
+}
+
+func (*ExampleHooks) OnLLMEnd(context.Context, *agents.Agent, agents.ModelResponse) error {
+	return nil
 }
 
 func (e *ExampleHooks) OnAgentStart(ctx context.Context, agent *agents.Agent) error {

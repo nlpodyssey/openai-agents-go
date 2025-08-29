@@ -39,6 +39,14 @@ func (h *RunHooksForTests) Reset() {
 	clear(h.Events)
 }
 
+func (*RunHooksForTests) OnLLMStart(context.Context, *agents.Agent, param.Opt[string], []agents.TResponseInputItem) error {
+	return nil
+}
+
+func (*RunHooksForTests) OnLLMEnd(context.Context, *agents.Agent, agents.ModelResponse) error {
+	return nil
+}
+
 func (h *RunHooksForTests) OnAgentStart(context.Context, *agents.Agent) error {
 	h.Events["OnAgentStart"] += 1
 	return nil
