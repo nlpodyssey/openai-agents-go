@@ -70,11 +70,12 @@ type ModelSettings struct {
 	Metadata map[string]string `json:"metadata"`
 
 	// Whether to store the generated model response for later retrieval.
-	// Defaults to true if not provided.
+	// For Responses API: automatically enabled when not specified.
+	// For Chat Completions API: disabled when not specified.
 	Store param.Opt[bool] `json:"store"`
 
 	// Whether to include usage chunk.
-	// Defaults to true if not provided.
+	//Only available for Chat Completions API.
 	IncludeUsage param.Opt[bool] `json:"include_usage"`
 
 	// Optional additional output data to include in the model response
