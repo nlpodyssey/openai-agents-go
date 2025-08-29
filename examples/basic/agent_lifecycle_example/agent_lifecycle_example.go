@@ -81,7 +81,7 @@ type RandomNumberArgs struct {
 	Max int64 `json:"max"`
 }
 
-// RandomNumber generates a random number up to the provided maximum.
+// RandomNumber generates a random number from 0 to max (inclusive).
 func RandomNumber(_ context.Context, args RandomNumberArgs) (int64, error) {
 	return rand.Int63n(args.Max + 1), nil
 }
@@ -100,7 +100,7 @@ type FinalResult struct {
 }
 
 var (
-	RandomNumberTool = agents.NewFunctionTool("random_number", "Generate a random number up to the provided maximum.", RandomNumber)
+	RandomNumberTool = agents.NewFunctionTool("random_number", "Generate a random number from 0 to max (inclusive).", RandomNumber)
 
 	MultiplyByTwoTool = agents.NewFunctionTool("multiply_by_two", "Simple multiplication by two.", MultiplyByTwo)
 

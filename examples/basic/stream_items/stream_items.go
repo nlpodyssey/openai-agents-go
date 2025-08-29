@@ -22,11 +22,16 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 )
 
+// HowManyJokes returns a random integer of jokes to tell between 1 and 10 (inclusive).
 func HowManyJokes(_ context.Context, _ struct{}) (int64, error) {
 	return rand.Int63n(10) + 1, nil
 }
 
-var HowManyJokesTool = agents.NewFunctionTool[struct{}, int64]("how_many_jokes", "", HowManyJokes)
+var HowManyJokesTool = agents.NewFunctionTool[struct{}, int64](
+	"how_many_jokes",
+	"Return a random integer of jokes to tell between 1 and 10 (inclusive).",
+	HowManyJokes,
+)
 
 func main() {
 	agent := agents.New("Joker").
