@@ -57,6 +57,8 @@ type ModelSettings struct {
 	ParallelToolCalls param.Opt[bool] `json:"parallel_tool_calls"`
 
 	// The truncation strategy to use when calling the model.
+	// For more details, see Responses API documentation:
+	// https://platform.openai.com/docs/api-reference/responses/create#responses_create-truncation
 	Truncation param.Opt[Truncation] `json:"truncation"`
 
 	// The maximum number of output tokens to generate.
