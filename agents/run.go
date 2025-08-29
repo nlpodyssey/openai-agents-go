@@ -36,6 +36,21 @@ import (
 
 const DefaultMaxTurns = 10
 
+// ModelInputData is a container for the data that will be sent to the model.
+type ModelInputData struct {
+	Input        []TResponseInputItem
+	Instructions param.Opt[string]
+}
+
+// CallModelData contains data passed to RunConfig.CallModelInputFilter prior to model call.
+type CallModelData struct {
+	ModelData ModelInputData
+	Agent     *Agent
+}
+
+// CallModelInputFilter is a type alias for the optional input filter callback.
+type CallModelInputFilter = func(context.Context, CallModelData) (*ModelInputData, error)
+
 // DefaultRunner is the default Runner instance used by package-level Run
 // helpers.
 var DefaultRunner = Runner{}
@@ -98,6 +113,14 @@ type RunConfig struct {
 
 	// An optional dictionary of additional metadata to include with the trace.
 	TraceMetadata map[string]any
+
+	// Optional callback that is invoked immediately before calling the model. It receives the current
+	// agent and the model input (instructions and input items), and must return a possibly
+	// modified `ModelInputData` to use for the model call.
+	//
+	// This allows you to edit the input sent to the model e.g. to stay within a token limit.
+	// For example, you can use this to add a system prompt to the input.
+	CallModelInputFilter CallModelInputFilter
 
 	// Optional maximum number of turns to run the agent for.
 	// A turn is defined as one AI invocation (including any tool calls that might occur).
@@ -599,6 +622,55 @@ func (r Runner) runStreamed(ctx context.Context, startingAgent *Agent, input Inp
 	return streamedResult, nil
 }
 
+// Apply optional CallModelInputFilter to modify model input.
+//
+// Returns a ModelInputData that will be sent to the model.
+func (r Runner) maybeFilterModelInput(
+	ctx context.Context,
+	agent *Agent,
+	runConfig RunConfig,
+	inputItems []TResponseInputItem,
+	systemInstructions param.Opt[string],
+) (_ *ModelInputData, err error) {
+	effectiveInstructions := systemInstructions
+	effectiveInput := inputItems
+
+	if runConfig.CallModelInputFilter == nil {
+		return &ModelInputData{
+			Input:        effectiveInput,
+			Instructions: effectiveInstructions,
+		}, nil
+	}
+
+	defer func() {
+		if err != nil {
+			AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+				Message: "Error in CallModelInputFilter",
+				Data:    map[string]any{"error": err.Error()},
+			})
+		}
+	}()
+
+	modelInput := ModelInputData{
+		Input:        slices.Clone(effectiveInput),
+		Instructions: effectiveInstructions,
+	}
+
+	filterPayload := CallModelData{
+		ModelData: modelInput,
+		Agent:     agent,
+	}
+
+	updated, err := runConfig.CallModelInputFilter(ctx, filterPayload)
+	if err != nil {
+		return nil, err
+	}
+	if updated == nil {
+		return nil, fmt.Errorf("CallModelInputFilter returned nil *ModelInputData but no error")
+	}
+	return updated, nil
+}
+
 func (r Runner) runInputGuardrailsWithQueue(
 	ctx context.Context,
 	agent *Agent,
@@ -954,10 +1026,21 @@ func (r Runner) runSingleTurnStreamed(
 		input = append(input, item.ToInputItem())
 	}
 
+	filtered, err := r.maybeFilterModelInput(
+		ctx,
+		agent,
+		runConfig,
+		input,
+		systemPrompt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// 1. Stream the output events
 	modelResponseParams := ModelResponseParams{
-		SystemInstructions: systemPrompt,
-		Input:              InputItems(input),
+		SystemInstructions: filtered.Instructions,
+		Input:              InputItems(filtered.Input),
 		ModelSettings:      modelSettings,
 		Tools:              allTools,
 		OutputType:         agent.OutputType,
@@ -1343,6 +1426,18 @@ func (r Runner) getNewResponse(
 	previousResponseID string,
 	promptConfig responses.ResponsePromptParam,
 ) (*ModelResponse, error) {
+	// Allow user to modify model input right before the call, if configured
+	filtered, err := r.maybeFilterModelInput(
+		ctx,
+		agent,
+		runConfig,
+		input,
+		systemPrompt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	model, err := r.getModel(agent, runConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get model: %w", err)
@@ -1352,8 +1447,8 @@ func (r Runner) getNewResponse(
 	modelSettings = RunImpl().MaybeResetToolChoice(agent, toolUseTracker, modelSettings)
 
 	newResponse, err := model.GetResponse(ctx, ModelResponseParams{
-		SystemInstructions: systemPrompt,
-		Input:              InputItems(input),
+		SystemInstructions: filtered.Instructions,
+		Input:              InputItems(filtered.Input),
 		ModelSettings:      modelSettings,
 		Tools:              allTools,
 		OutputType:         outputType,
