@@ -30,7 +30,7 @@ type RunHooks interface {
 	// OnHandoff is called when a handoff occurs.
 	OnHandoff(ctx context.Context, fromAgent, toAgent *Agent) error
 
-	// OnToolStart is called before a tool is invoked.
+	// OnToolStart is called concurrently with tool invocation.
 	OnToolStart(ctx context.Context, agent *Agent, tool Tool) error
 
 	// OnToolEnd is called after a tool is invoked.
@@ -69,7 +69,7 @@ type AgentHooks interface {
 	// The `source` is the agent that is handing off to this agent.
 	OnHandoff(ctx context.Context, agent, source *Agent) error
 
-	// OnToolStart is called before a tool is invoked.
+	// OnToolStart is called concurrently with tool invocation.
 	OnToolStart(ctx context.Context, agent *Agent, tool Tool) error
 
 	// OnToolEnd is called after a tool is invoked.
