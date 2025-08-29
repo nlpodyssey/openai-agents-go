@@ -229,10 +229,14 @@ func (chatCmplConverter) ExtractAllContentFromResponseInputContentUnionParams(
 			if !fileParam.FileData.Valid() {
 				return nil, UserErrorf("only FileData is supported for InputFile %#v", *fileParam)
 			}
+			if !fileParam.Filename.Valid() {
+				return nil, UserErrorf("Filename must be provided for InputFile %#v", *fileParam)
+			}
 			out[i] = openai.ChatCompletionContentPartUnionParam{
 				OfFile: &openai.ChatCompletionContentPartFileParam{
 					File: openai.ChatCompletionContentPartFileFileParam{
 						FileData: fileParam.FileData,
+						Filename: fileParam.Filename,
 					},
 					Type: constant.ValueOf[constant.File](),
 				},
