@@ -22,6 +22,7 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/usage"
+	"github.com/openai/openai-go/v2/packages/param"
 )
 
 type ExampleHooks struct {
@@ -33,6 +34,14 @@ func (*ExampleHooks) usageToStr(u *usage.Usage) string {
 		"%d requests, %d input tokens, %d output tokens, %d total tokens",
 		u.Requests, u.InputTokens, u.OutputTokens, u.TotalTokens,
 	)
+}
+
+func (*ExampleHooks) OnLLMStart(context.Context, *agents.Agent, param.Opt[string], []agents.TResponseInputItem) error {
+	return nil
+}
+
+func (*ExampleHooks) OnLLMEnd(context.Context, *agents.Agent, agents.ModelResponse) error {
+	return nil
 }
 
 func (e *ExampleHooks) OnAgentStart(ctx context.Context, agent *agents.Agent) error {
@@ -89,7 +98,7 @@ type RandomNumberArgs struct {
 	Max int64 `json:"max"`
 }
 
-// RandomNumber generates a random number up to the provided max.
+// RandomNumber generates a random number from 0 to max (inclusive).
 func RandomNumber(_ context.Context, args RandomNumberArgs) (int64, error) {
 	return rand.Int63n(args.Max + 1), nil
 }
@@ -110,7 +119,7 @@ type FinalResult struct {
 var (
 	Hooks = &ExampleHooks{}
 
-	RandomNumberTool = agents.NewFunctionTool("random_number", "Generate a random number up to the provided max.", RandomNumber)
+	RandomNumberTool = agents.NewFunctionTool("random_number", "Generate a random number from 0 to max (inclusive).", RandomNumber)
 
 	MultiplyByTwoTool = agents.NewFunctionTool("multiply_by_two", "Return x times two.", MultiplyByTwo)
 

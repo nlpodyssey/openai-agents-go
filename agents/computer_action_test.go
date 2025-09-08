@@ -175,9 +175,13 @@ type LoggingRunHooks struct {
 	Ended   [][]any
 }
 
-func (h *LoggingRunHooks) OnAgentStart(context.Context, *Agent) error      { return nil }
-func (h *LoggingRunHooks) OnAgentEnd(context.Context, *Agent, any) error   { return nil }
-func (h *LoggingRunHooks) OnHandoff(context.Context, *Agent, *Agent) error { return nil }
+func (*LoggingRunHooks) OnLLMStart(context.Context, *Agent, param.Opt[string], []TResponseInputItem) error {
+	return nil
+}
+func (*LoggingRunHooks) OnLLMEnd(context.Context, *Agent, ModelResponse) error { return nil }
+func (*LoggingRunHooks) OnAgentStart(context.Context, *Agent) error            { return nil }
+func (*LoggingRunHooks) OnAgentEnd(context.Context, *Agent, any) error         { return nil }
+func (*LoggingRunHooks) OnHandoff(context.Context, *Agent, *Agent) error       { return nil }
 func (h *LoggingRunHooks) OnToolStart(_ context.Context, agent *Agent, tool Tool) error {
 	h.Started = append(h.Started, []any{agent, tool})
 	return nil
@@ -204,6 +208,10 @@ func (h *LoggingAgentHooks) OnToolEnd(_ context.Context, agent *Agent, tool Tool
 	h.Ended = append(h.Ended, []any{agent, tool, result})
 	return nil
 }
+func (*LoggingAgentHooks) OnLLMStart(context.Context, *Agent, param.Opt[string], []TResponseInputItem) error {
+	return nil
+}
+func (*LoggingAgentHooks) OnLLMEnd(context.Context, *Agent, ModelResponse) error { return nil }
 
 func TestExecuteInvokesHooksAndReturnsToolCallOutput(t *testing.T) {
 	// ComputerAction().Execute() should invoke lifecycle hooks and return a proper ToolCallOutputItem.

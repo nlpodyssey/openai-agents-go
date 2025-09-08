@@ -33,25 +33,37 @@ func runServer(addr string) {
 		B int `json:"b"`
 	}
 
+	type addResult struct {
+		Result int `json:"result"`
+	}
+
 	mcp.AddTool(
 		server, &mcp.Tool{Name: "add", Description: "Add two numbers"},
-		func(_ context.Context, _ *mcp.ServerSession, params *mcp.CallToolParamsFor[addParams]) (*mcp.CallToolResultFor[int], error) {
-			fmt.Printf("[debug-server] add(%d, %d)\n", params.Arguments.A, params.Arguments.B)
-			result := params.Arguments.A + params.Arguments.B
-			return &mcp.CallToolResultFor[int]{
-				Content: []mcp.Content{&mcp.TextContent{Text: strconv.Itoa(result)}},
-			}, nil
+		func(_ context.Context, _ *mcp.CallToolRequest, params addParams) (*mcp.CallToolResult, addResult, error) {
+			fmt.Printf("[debug-server] add(%d, %d)\n", params.A, params.B)
+			result := params.A + params.B
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.TextContent{Text: strconv.Itoa(result)},
+				},
+			}, addResult{Result: result}, nil
 		},
 	)
 
+	type getSecretWordResult struct {
+		SecretWord string
+	}
+
 	mcp.AddTool(
 		server, &mcp.Tool{Name: "get_secret_word"},
-		func(_ context.Context, _ *mcp.ServerSession, _ *mcp.CallToolParamsFor[struct{}]) (*mcp.CallToolResultFor[string], error) {
+		func(_ context.Context, _ *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, getSecretWordResult, error) {
 			fmt.Println("[debug-server] get_secret_word()")
 			choice := []string{"apple", "banana", "cherry"}[rand.Intn(3)]
-			return &mcp.CallToolResultFor[string]{
-				Content: []mcp.Content{&mcp.TextContent{Text: choice}},
-			}, nil
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.TextContent{Text: choice},
+				},
+			}, getSecretWordResult{SecretWord: choice}, nil
 		},
 	)
 
@@ -59,14 +71,18 @@ func runServer(addr string) {
 		City string `json:"city"`
 	}
 
+	type getCurrentWeatherResult struct {
+		Weather string
+	}
+
 	mcp.AddTool(
 		server, &mcp.Tool{Name: "get_current_weather"},
-		func(ctx context.Context, _ *mcp.ServerSession, params *mcp.CallToolParamsFor[getCurrentWeatherParams]) (*mcp.CallToolResultFor[string], error) {
-			fmt.Printf("[debug-server] get_current_weather(%q)\n", params.Arguments.City)
+		func(ctx context.Context, _ *mcp.CallToolRequest, params getCurrentWeatherParams) (*mcp.CallToolResult, *getCurrentWeatherResult, error) {
+			fmt.Printf("[debug-server] get_current_weather(%q)\n", params.City)
 
-			resp, err := http.Get("https://wttr.in/" + params.Arguments.City)
+			resp, err := http.Get("https://wttr.in/" + params.City)
 			if err != nil {
-				return nil, fmt.Errorf("HTTP request to wttr.in error: %w", err)
+				return nil, nil, fmt.Errorf("HTTP request to wttr.in error: %w", err)
 			}
 			defer func() {
 				_ = resp.Body.Close()
@@ -74,12 +90,14 @@ func runServer(addr string) {
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return nil, fmt.Errorf("failed to read wttr.in body response: %w", err)
+				return nil, nil, fmt.Errorf("failed to read wttr.in body response: %w", err)
 			}
 
-			return &mcp.CallToolResultFor[string]{
-				Content: []mcp.Content{&mcp.TextContent{Text: string(body)}},
-			}, nil
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.TextContent{Text: string(body)},
+				},
+			}, &getCurrentWeatherResult{Weather: string(body)}, nil
 		},
 	)
 

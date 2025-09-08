@@ -353,6 +353,8 @@ func (m OpenAIChatCompletionsModel) prepareRequest(
 		StreamOptions:     streamOptions,
 		Store:             store,
 		ReasoningEffort:   modelSettings.Reasoning.Effort,
+		Verbosity:         openai.ChatCompletionNewParamsVerbosity(modelSettings.Verbosity.Or("")),
+		TopLogprobs:       modelSettings.TopLogprobs,
 		Metadata:          modelSettings.Metadata,
 	}
 

@@ -235,6 +235,19 @@ func (m OpenAIResponsesModel) prepareRequest(
 		return nil, nil, err
 	}
 
+	include := slices.Concat(convertedTools.Includes, modelSettings.ResponseInclude)
+	if modelSettings.TopLogprobs.Valid() {
+		include = append(include, "message.output_text.logprobs")
+	}
+
+	// Remove duplicates
+	slices.Sort(include)
+	include = slices.Compact(include)
+
+	if modelSettings.Verbosity.Valid() {
+		responseFormat.Verbosity = responses.ResponseTextConfigVerbosity(modelSettings.Verbosity.Value)
+	}
+
 	if DontLogModelData {
 		Logger().Debug("Calling LLM")
 	} else {
@@ -259,7 +272,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 		Instructions:       systemInstructions,
 		Model:              m.Model,
 		Input:              responses.ResponseNewParamsInputUnion{OfInputItemList: listInput},
-		Include:            slices.Concat(convertedTools.Includes, modelSettings.ResponseInclude),
+		Include:            include,
 		Tools:              convertedTools.Tools,
 		Prompt:             prompt,
 		Temperature:        modelSettings.Temperature,
@@ -271,6 +284,7 @@ func (m OpenAIResponsesModel) prepareRequest(
 		Text:               responseFormat,
 		Store:              modelSettings.Store,
 		Reasoning:          modelSettings.Reasoning,
+		TopLogprobs:        modelSettings.TopLogprobs,
 		Metadata:           modelSettings.Metadata,
 	}
 

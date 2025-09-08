@@ -1277,6 +1277,8 @@ func (runImpl) StreamStepResultToQueue(stepResult SingleStepResult, queue *async
 	}
 }
 
+// checkForFinalOutputFromTools determines if tool results should produce a final output.
+// The returned ToolsToFinalOutputResult indicates whether final output is ready, and the output value.
 func (runImpl) checkForFinalOutputFromTools(
 	ctx context.Context,
 	agent *Agent,

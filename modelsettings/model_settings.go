@@ -57,6 +57,8 @@ type ModelSettings struct {
 	ParallelToolCalls param.Opt[bool] `json:"parallel_tool_calls"`
 
 	// The truncation strategy to use when calling the model.
+	// For more details, see Responses API documentation:
+	// https://platform.openai.com/docs/api-reference/responses/create#responses_create-truncation
 	Truncation param.Opt[Truncation] `json:"truncation"`
 
 	// The maximum number of output tokens to generate.
@@ -66,20 +68,28 @@ type ModelSettings struct {
 	// (see https://platform.openai.com/docs/guides/reasoning).
 	Reasoning openai.ReasoningParam `json:"reasoning"`
 
+	// Constrains the verbosity of the model's response.
+	Verbosity param.Opt[Verbosity] `json:"verbosity"`
+
 	// Optional metadata to include with the model response call.
 	Metadata map[string]string `json:"metadata"`
 
 	// Whether to store the generated model response for later retrieval.
-	// Defaults to true if not provided.
+	// For Responses API: automatically enabled when not specified.
+	// For Chat Completions API: disabled when not specified.
 	Store param.Opt[bool] `json:"store"`
 
 	// Whether to include usage chunk.
-	// Defaults to true if not provided.
+	//Only available for Chat Completions API.
 	IncludeUsage param.Opt[bool] `json:"include_usage"`
 
 	// Optional additional output data to include in the model response
 	// (see https://platform.openai.com/docs/api-reference/responses/create#responses-create-include).
 	ResponseInclude []responses.ResponseIncludable `json:"response_include"`
+
+	// Number of top tokens to return logprobs for.
+	// Setting this will automatically include ``"message.output_text.logprobs"`` in the response.
+	TopLogprobs param.Opt[int64] `json:"top_logprobs"`
 
 	// Optional additional query fields to provide with the request.
 	ExtraQuery map[string]string `json:"extra_query"`
@@ -101,6 +111,14 @@ type ModelSettings struct {
 	// Use with caution as not all models support all parameters.
 	CustomizeChatCompletionsRequest func(context.Context, *openai.ChatCompletionNewParams, []option.RequestOption) (*openai.ChatCompletionNewParams, []option.RequestOption, error) `json:"-"`
 }
+
+type Verbosity string
+
+const (
+	VerbosityLow    Verbosity = "low"
+	VerbosityMedium Verbosity = "medium"
+	VerbosityHigh   Verbosity = "high"
+)
 
 type ToolChoice interface {
 	isToolChoice()
@@ -144,10 +162,12 @@ func (ms ModelSettings) Resolve(override ModelSettings) ModelSettings {
 	resolveOpt(&newSettings.Truncation, override.Truncation)
 	resolveOpt(&newSettings.MaxTokens, override.MaxTokens)
 	resolveAny(&newSettings.Reasoning, override.Reasoning)
+	resolveOpt(&newSettings.Verbosity, override.Verbosity)
 	resolveMap(&newSettings.Metadata, override.Metadata)
 	resolveOpt(&newSettings.Store, override.Store)
 	resolveOpt(&newSettings.IncludeUsage, override.IncludeUsage)
 	resolveAny(&newSettings.ResponseInclude, override.ResponseInclude)
+	resolveOpt(&newSettings.TopLogprobs, override.TopLogprobs)
 	resolveMap(&newSettings.ExtraQuery, override.ExtraQuery)
 	resolveMap(&newSettings.ExtraHeaders, override.ExtraHeaders)
 	resolveAny(&newSettings.CustomizeResponsesRequest, override.CustomizeResponsesRequest)

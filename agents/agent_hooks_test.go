@@ -64,6 +64,14 @@ func (h *AgentHooksForTests) OnToolEnd(context.Context, *agents.Agent, agents.To
 	return nil
 }
 
+func (*AgentHooksForTests) OnLLMStart(context.Context, *agents.Agent, param.Opt[string], []agents.TResponseInputItem) error {
+	return nil
+}
+
+func (*AgentHooksForTests) OnLLMEnd(context.Context, *agents.Agent, agents.ModelResponse) error {
+	return nil
+}
+
 func TestNonStreamedAgentHooks(t *testing.T) {
 	hooks := NewAgentHooksForTests()
 	model := agentstesting.NewFakeModel(false, nil)

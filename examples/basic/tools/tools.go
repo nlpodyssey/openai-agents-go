@@ -31,6 +31,7 @@ type GetWeatherArgs struct {
 	City string `json:"city"`
 }
 
+// GetWeather returns the current weather information for a specified city.
 func GetWeather(_ context.Context, args GetWeatherArgs) (Weather, error) {
 	fmt.Println("[debug] GetWeather called")
 	return Weather{
@@ -40,7 +41,11 @@ func GetWeather(_ context.Context, args GetWeatherArgs) (Weather, error) {
 	}, nil
 }
 
-var GetWeatherTool = agents.NewFunctionTool("get_weather", "", GetWeather)
+var GetWeatherTool = agents.NewFunctionTool(
+	"get_weather",
+	"Get the current weather information for a specified city.",
+	GetWeather,
+)
 
 func main() {
 	agent := agents.New("Hello world").
