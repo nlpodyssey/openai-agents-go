@@ -272,7 +272,7 @@ func NewMCPServerStdio(params MCPServerStdioParams) *MCPServerStdio {
 	return &MCPServerStdio{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
 			Name:                 name,
-			Transport:            mcp.NewCommandTransport(params.Command),
+			Transport:            &mcp.CommandTransport{Command: params.Command},
 			CacheToolsList:       params.CacheToolsList,
 			ToolFilter:           params.ToolFilter,
 			UseStructuredContent: params.UseStructuredContent,
@@ -282,7 +282,7 @@ func NewMCPServerStdio(params MCPServerStdioParams) *MCPServerStdio {
 
 type MCPServerSSEParams struct {
 	BaseURL       string
-	TransportOpts *mcp.SSEClientTransportOptions
+	TransportOpts *mcp.SSEClientTransport
 
 	// Whether to cache the tools list. If `true`, the tools list will be
 	// cached and only fetched from the server once. If `false`, the tools list will be
@@ -328,10 +328,19 @@ func NewMCPServerSSE(params MCPServerSSEParams) *MCPServerSSE {
 		name = fmt.Sprintf("sse: %s", params.BaseURL)
 	}
 
+	transport := &mcp.SSEClientTransport{
+		Endpoint: params.BaseURL,
+	}
+	if params.TransportOpts != nil && params.TransportOpts.HTTPClient != nil {
+		transport = &mcp.SSEClientTransport{
+			Endpoint:   params.BaseURL,
+			HTTPClient: params.TransportOpts.HTTPClient,
+		}
+	}
 	return &MCPServerSSE{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
 			Name:                 name,
-			Transport:            mcp.NewSSEClientTransport(params.BaseURL, params.TransportOpts),
+			Transport:            transport,
 			CacheToolsList:       params.CacheToolsList,
 			ToolFilter:           params.ToolFilter,
 			UseStructuredContent: params.UseStructuredContent,
@@ -341,7 +350,7 @@ func NewMCPServerSSE(params MCPServerSSEParams) *MCPServerSSE {
 
 type MCPServerStreamableHTTPParams struct {
 	URL           string
-	TransportOpts *mcp.StreamableClientTransportOptions
+	TransportOpts *mcp.StreamableClientTransport
 
 	// Whether to cache the tools list. If `true`, the tools list will be
 	// cached and only fetched from the server once. If `false`, the tools list will be
@@ -378,10 +387,20 @@ func NewMCPServerStreamableHTTP(params MCPServerStreamableHTTPParams) *MCPServer
 		name = fmt.Sprintf("streamable_http: %s", params.URL)
 	}
 
+	transport := &mcp.StreamableClientTransport{
+		Endpoint: params.URL,
+	}
+	if params.TransportOpts != nil && params.TransportOpts.HTTPClient != nil {
+		transport = &mcp.StreamableClientTransport{
+			Endpoint:   params.URL,
+			HTTPClient: params.TransportOpts.HTTPClient,
+			MaxRetries: params.TransportOpts.MaxRetries,
+		}
+	}
 	return &MCPServerStreamableHTTP{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
 			Name:                 name,
-			Transport:            mcp.NewStreamableClientTransport(params.URL, params.TransportOpts),
+			Transport:            transport,
 			CacheToolsList:       params.CacheToolsList,
 			ToolFilter:           params.ToolFilter,
 			UseStructuredContent: params.UseStructuredContent,
