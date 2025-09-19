@@ -438,8 +438,9 @@ func (conv responsesConverter) convertTool(
 		includes = nil
 	case WebSearchTool:
 		convertedTool = &responses.ToolUnionParam{
-			OfWebSearchPreview: &responses.WebSearchToolParam{
-				Type:              responses.WebSearchToolTypeWebSearchPreview,
+			OfWebSearch: &responses.WebSearchToolParam{
+				Type:              responses.WebSearchToolTypeWebSearch,
+				Filters:           t.Filters,
 				UserLocation:      t.UserLocation,
 				SearchContextSize: t.SearchContextSize,
 			},

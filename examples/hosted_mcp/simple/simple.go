@@ -38,7 +38,7 @@ func main() {
 		agents.HostedMCPTool{
 			ToolConfig: responses.ToolMcpParam{
 				ServerLabel: "gitmcp",
-				ServerURL:   "https://gitmcp.io/openai/codex",
+				ServerURL:   param.NewOpt("https://gitmcp.io/openai/codex"),
 				RequireApproval: responses.ToolMcpRequireApprovalUnionParam{
 					OfMcpToolApprovalSetting: param.NewOpt("never"),
 				},

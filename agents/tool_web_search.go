@@ -21,6 +21,9 @@ import (
 // WebSearchTool is a hosted tool that lets the LLM search the web.
 // Currently only supported with OpenAI models, using the Responses API.
 type WebSearchTool struct {
+	// Optional filters to apply to the search.
+	Filters responses.WebSearchToolFiltersParam
+
 	// Optional location for the search. Lets you customize results to be relevant to a location.
 	UserLocation responses.WebSearchToolUserLocationParam
 
@@ -29,7 +32,7 @@ type WebSearchTool struct {
 }
 
 func (t WebSearchTool) ToolName() string {
-	return "web_search_preview"
+	return "web_search"
 }
 
 func (t WebSearchTool) isTool() {}
