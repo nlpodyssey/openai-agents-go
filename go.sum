@@ -55,6 +55,8 @@ github.com/modelcontextprotocol/go-sdk v0.3.0 h1:/1XC6+PpdKfE4CuFJz8/goo0An31bu8
 github.com/modelcontextprotocol/go-sdk v0.3.0/go.mod h1:71VUZVa8LL6WARvSgLJ7DMpDWSeomT4uBv8g97mGBvo=
 github.com/openai/openai-go/v2 v2.1.1 h1:/RMA/V3D+yF/Cc4jHXFt6lkqSOWRf5roRi+DvZaDYQI=
 github.com/openai/openai-go/v2 v2.1.1/go.mod h1:sIUkR+Cu/PMUVkSKhkk742PRURkQOCFhiwJ7eRSBqmk=
+github.com/openai/openai-go/v2 v2.5.0 h1:5kveb/ibAddz5z79B1kb2wqWTs6kGDG1gbA+C0Aqsrg=
+github.com/openai/openai-go/v2 v2.5.0/go.mod h1:sIUkR+Cu/PMUVkSKhkk742PRURkQOCFhiwJ7eRSBqmk=
 github.com/playwright-community/playwright-go v0.5200.0 h1:z/5LGuX2tBrg3ug1HupMXLjIG93f1d2MWdDsNhkMQ9c=
 github.com/playwright-community/playwright-go v0.5200.0/go.mod h1:UnnyQZaqUOO5ywAZu60+N4EiWReUqX1MQBBA3Oofvf8=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
