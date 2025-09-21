@@ -440,6 +440,7 @@ func (conv responsesConverter) convertTool(
 		convertedTool = &responses.ToolUnionParam{
 			OfWebSearch: &responses.WebSearchToolParam{
 				Type:              responses.WebSearchToolTypeWebSearch,
+				Filters:           t.Filters,
 				UserLocation:      t.UserLocation,
 				SearchContextSize: t.SearchContextSize,
 			},
