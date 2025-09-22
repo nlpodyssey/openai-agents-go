@@ -232,8 +232,8 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 				},
 			},
 			{
-				OfWebSearchPreview: &responses.WebSearchToolParam{
-					Type:              responses.WebSearchToolTypeWebSearchPreview,
+				OfWebSearch: &responses.WebSearchToolParam{
+					Type:              responses.WebSearchToolTypeWebSearch,
 					UserLocation:      responses.WebSearchToolUserLocationParam{},
 					SearchContextSize: responses.WebSearchToolSearchContextSizeHigh,
 				},

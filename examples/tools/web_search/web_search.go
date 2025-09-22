@@ -31,7 +31,7 @@ func main() {
 		WithTools(agents.WebSearchTool{
 			UserLocation: responses.WebSearchToolUserLocationParam{
 				City: param.NewOpt("New York"),
-				Type: constant.ValueOf[constant.Approximate](),
+				Type: string(constant.ValueOf[constant.Approximate]()),
 			},
 		}).
 		WithModel("gpt-4o-mini")
