@@ -84,7 +84,7 @@ type AgentHooks interface {
 	OnHandoff(ctx context.Context, agent, source *Agent) error
 
 	// OnToolStart is called concurrently with tool invocation.
-	OnToolStart(ctx context.Context, agent *Agent, tool Tool) error
+	OnToolStart(ctx context.Context, agent *Agent, tool Tool, arguments any) error
 
 	// OnToolEnd is called after a tool is invoked.
 	OnToolEnd(ctx context.Context, agent *Agent, tool Tool, result any) error
