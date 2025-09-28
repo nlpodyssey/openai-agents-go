@@ -24,6 +24,8 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/openai/openai-go/v2/shared/constant"
+
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/openai/openai-go/v2/packages/param"
 	"github.com/openai/openai-go/v2/responses"
@@ -148,6 +150,21 @@ func (s *SQLiteSession) GetItems(ctx context.Context, limit int) (_ []TResponseI
 	// Reverse to get chronological order when using DESC
 	if limit > 0 {
 		slices.Reverse(items)
+	}
+
+	// xxx call and xxx call output must appear in pairs
+	// so remove the first item if it's a xxx call output
+	if len(items) > 0 {
+		switch *items[0].GetType() {
+		case string(constant.ValueOf[constant.FunctionCallOutput]()):
+			items = slices.Delete(items, 0, 1)
+		case string(constant.ValueOf[constant.ComputerCallOutput]()):
+			items = slices.Delete(items, 0, 1)
+		case string(constant.ValueOf[constant.LocalShellCallOutput]()):
+			items = slices.Delete(items, 0, 1)
+		case string(constant.ValueOf[constant.CustomToolCallOutput]()):
+			items = slices.Delete(items, 0, 1)
+		}
 	}
 
 	return items, nil
