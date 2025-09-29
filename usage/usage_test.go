@@ -15,6 +15,7 @@
 package usage
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/openai/openai-go/v2/responses"
@@ -60,5 +61,50 @@ func TestUsage_Add(t *testing.T) {
 		},
 		TotalTokens: 96,
 	}
+	assert.Equal(t, expected, u)
+}
+
+func TestUsage_AddConcurrent(t *testing.T) {
+	const goroutines = 128
+
+	u := NewUsage()
+	other := &Usage{
+		Requests:    1,
+		InputTokens: 2,
+		InputTokensDetails: responses.ResponseUsageInputTokensDetails{
+			CachedTokens: 3,
+		},
+		OutputTokens: 4,
+		OutputTokensDetails: responses.ResponseUsageOutputTokensDetails{
+			ReasoningTokens: 5,
+		},
+		TotalTokens: 6,
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			u.Add(other)
+		}()
+	}
+
+	wg.Wait()
+
+	expected := &Usage{
+		Requests:    uint64(goroutines),
+		InputTokens: uint64(2 * goroutines),
+		InputTokensDetails: responses.ResponseUsageInputTokensDetails{
+			CachedTokens: int64(3 * goroutines),
+		},
+		OutputTokens: uint64(4 * goroutines),
+		OutputTokensDetails: responses.ResponseUsageOutputTokensDetails{
+			ReasoningTokens: int64(5 * goroutines),
+		},
+		TotalTokens: uint64(6 * goroutines),
+	}
+
 	assert.Equal(t, expected, u)
 }
