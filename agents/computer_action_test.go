@@ -200,7 +200,7 @@ type LoggingAgentHooks struct {
 func (h *LoggingAgentHooks) OnStart(context.Context, *Agent) error           { return nil }
 func (h *LoggingAgentHooks) OnEnd(context.Context, *Agent, any) error        { return nil }
 func (h *LoggingAgentHooks) OnHandoff(context.Context, *Agent, *Agent) error { return nil }
-func (h *LoggingAgentHooks) OnToolStart(_ context.Context, agent *Agent, tool Tool) error {
+func (h *LoggingAgentHooks) OnToolStart(_ context.Context, agent *Agent, tool Tool, arguments any) error {
 	h.Started = append(h.Started, []any{agent, tool})
 	return nil
 }

@@ -54,7 +54,7 @@ func (h *AgentHooksForTests) OnHandoff(context.Context, *agents.Agent, *agents.A
 	return nil
 }
 
-func (h *AgentHooksForTests) OnToolStart(context.Context, *agents.Agent, agents.Tool) error {
+func (h *AgentHooksForTests) OnToolStart(context.Context, *agents.Agent, agents.Tool, any) error {
 	h.Events["OnToolStart"] += 1
 	return nil
 }

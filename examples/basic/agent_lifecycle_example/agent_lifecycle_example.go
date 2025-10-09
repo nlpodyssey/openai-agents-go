@@ -60,7 +60,7 @@ func (h *CustomAgentHooks) OnHandoff(_ context.Context, agent, source *agents.Ag
 	return nil
 }
 
-func (h *CustomAgentHooks) OnToolStart(_ context.Context, agent *agents.Agent, tool agents.Tool) error {
+func (h *CustomAgentHooks) OnToolStart(_ context.Context, agent *agents.Agent, tool agents.Tool, arguments any) error {
 	h.eventCounter += 1
 	fmt.Printf(
 		"### (%s) %d: Agent %s started tool %s\n",

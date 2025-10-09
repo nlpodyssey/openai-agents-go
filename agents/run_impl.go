@@ -719,7 +719,7 @@ func (runImpl) ExecuteFunctionToolCalls(
 					wg.Add(1)
 					go func() {
 						defer wg.Done()
-						err := agent.Hooks.OnToolStart(ctx, agent, funcTool)
+						err := agent.Hooks.OnToolStart(ctx, agent, funcTool, toolCall.Arguments)
 						if err != nil {
 							cancel()
 							hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolStart failed: %w", err)
@@ -1342,7 +1342,7 @@ func (ca computerAction) Execute(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := agent.Hooks.OnToolStart(childCtx, agent, action.ComputerTool)
+			err := agent.Hooks.OnToolStart(childCtx, agent, action.ComputerTool, nil)
 			if err != nil {
 				cancel()
 				hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolStart failed: %w", err)
@@ -1485,7 +1485,7 @@ func (localShellAction) Execute(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := agent.Hooks.OnToolStart(childCtx, agent, call.LocalShellTool)
+			err := agent.Hooks.OnToolStart(childCtx, agent, call.LocalShellTool, nil)
 			if err != nil {
 				cancel()
 				hooksErrors[1] = fmt.Errorf("AgentHooks.OnToolStart failed: %w", err)

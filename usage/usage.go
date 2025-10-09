@@ -16,6 +16,7 @@ package usage
 
 import (
 	"context"
+	"sync/atomic"
 
 	"github.com/openai/openai-go/v2/responses"
 )
@@ -45,12 +46,16 @@ func NewUsage() *Usage {
 }
 
 func (u *Usage) Add(other *Usage) {
-	u.Requests += other.Requests
-	u.InputTokens += other.InputTokens
-	u.OutputTokens += other.OutputTokens
-	u.TotalTokens += other.TotalTokens
-	u.InputTokensDetails.CachedTokens += other.InputTokensDetails.CachedTokens
-	u.OutputTokensDetails.ReasoningTokens += other.OutputTokensDetails.ReasoningTokens
+	if u == nil || other == nil {
+		return
+	}
+
+	atomic.AddUint64(&u.Requests, other.Requests)
+	atomic.AddUint64(&u.InputTokens, other.InputTokens)
+	atomic.AddUint64(&u.OutputTokens, other.OutputTokens)
+	atomic.AddUint64(&u.TotalTokens, other.TotalTokens)
+	atomic.AddInt64(&u.InputTokensDetails.CachedTokens, other.InputTokensDetails.CachedTokens)
+	atomic.AddInt64(&u.OutputTokensDetails.ReasoningTokens, other.OutputTokensDetails.ReasoningTokens)
 }
 
 // usageContextKey is the key type for Usage values in Contexts.
