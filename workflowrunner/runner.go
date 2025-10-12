@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
@@ -41,7 +42,7 @@ func NewRunnerService(builder *Builder) *RunnerService {
 			switch decl.Mode {
 			case "", "http":
 				return NewHTTPCallbackPublisher(decl.Target, nil), nil
-			case "stdout":
+			case "stdout", "stdout_verbose":
 				return StdoutCallbackPublisher{}, nil
 			default:
 				return nil, fmt.Errorf("unsupported callback mode %q", decl.Mode)
@@ -77,6 +78,11 @@ func (s *RunnerService) Execute(ctx context.Context, req WorkflowRequest) (*asyn
 		stateStore = NewInMemoryExecutionStateStore()
 	}
 	tracker := newExecutionStateTracker(stateStore, req.Session.SessionID, req.Workflow.Name)
+	callbackMode := strings.ToLower(req.Callback.Mode)
+	consoleEnabled := callbackMode == "stdout" || callbackMode == "stdout_verbose"
+	consoleVerbose := callbackMode == "stdout_verbose"
+	printer := newConsolePrinter(consoleEnabled, consoleVerbose)
+	skipPublishing := consoleEnabled
 
 	return asynctask.CreateTask(ctx, func(taskCtx context.Context) (RunSummary, error) {
 		defer func() {
@@ -105,6 +111,7 @@ func (s *RunnerService) Execute(ctx context.Context, req WorkflowRequest) (*asyn
 			if err := tracker.OnRunStarted(ctx, req.Query); err != nil {
 				return err
 			}
+			printer.OnRunStarted(req.Query)
 			startEvent := CallbackEvent{
 				Type:      "run.started",
 				Timestamp: time.Now().UTC(),
@@ -114,45 +121,57 @@ func (s *RunnerService) Execute(ctx context.Context, req WorkflowRequest) (*asyn
 					"query":    req.Query,
 				},
 			}
-			_ = publisher.Publish(ctx, startEvent)
+			if !skipPublishing {
+				_ = publisher.Publish(ctx, startEvent)
+			}
 
 			result, err := buildResult.Runner.RunStreamed(ctx, buildResult.StartingAgent, req.Query)
 			if err != nil {
 				runErr := wrapRunError(err)
 				summary.Error = runErr
-				_ = publisher.Publish(ctx, CallbackEvent{
-					Type:      "run.failed",
-					Timestamp: time.Now().UTC(),
-					Payload: map[string]any{
-						"error": runErr.Error(),
-					},
-				})
+				if !skipPublishing {
+					_ = publisher.Publish(ctx, CallbackEvent{
+						Type:      "run.failed",
+						Timestamp: time.Now().UTC(),
+						Payload: map[string]any{
+							"error": runErr.Error(),
+						},
+					})
+				}
 				_ = tracker.OnRunFailed(ctx, runErr)
+				printer.OnRunFailed(runErr)
 				return runErr
 			}
 
 			streamErr := result.StreamEvents(func(ev agents.StreamEvent) error {
+				if err := tracker.OnStreamEvent(ctx, ev); err != nil {
+					return err
+				}
+				printer.OnStreamEvent(ev)
+				if skipPublishing {
+					return nil
+				}
 				event := CallbackEvent{
 					Type:      "run.event",
 					Timestamp: time.Now().UTC(),
 					Payload:   serializeStreamEvent(ev),
-				}
-				if err := tracker.OnStreamEvent(ctx, ev); err != nil {
-					return err
 				}
 				return publisher.Publish(ctx, event)
 			})
 			if streamErr != nil {
 				streamErr = wrapRunError(streamErr)
 				summary.Error = streamErr
-				_ = publisher.Publish(ctx, CallbackEvent{
-					Type:      "run.failed",
-					Timestamp: time.Now().UTC(),
-					Payload: map[string]any{
-						"error": streamErr.Error(),
-					},
-				})
+				if !skipPublishing {
+					_ = publisher.Publish(ctx, CallbackEvent{
+						Type:      "run.failed",
+						Timestamp: time.Now().UTC(),
+						Payload: map[string]any{
+							"error": streamErr.Error(),
+						},
+					})
+				}
 				_ = tracker.OnRunFailed(ctx, streamErr)
+				printer.OnRunFailed(streamErr)
 				return streamErr
 			}
 
@@ -169,14 +188,18 @@ func (s *RunnerService) Execute(ctx context.Context, req WorkflowRequest) (*asyn
 					"last_response_id": result.LastResponseID(),
 				},
 			}
-			_ = publisher.Publish(ctx, completeEvent)
+			if !skipPublishing {
+				_ = publisher.Publish(ctx, completeEvent)
+			}
 			_ = tracker.OnRunCompleted(ctx, result.LastResponseID(), final)
+			printer.OnRunCompleted(final, displayAgentName(result.LastAgent()))
 			return nil
 		})
 
 		if traceErr != nil && summary.Error == nil {
 			summary.Error = traceErr
 			_ = tracker.OnRunFailed(taskCtx, traceErr)
+			printer.OnRunFailed(traceErr)
 		}
 
 		return summary, summary.Error

@@ -256,6 +256,9 @@ func applyModelDeclaration(agent *agents.Agent, decl ModelDeclaration) error {
 	if decl.Reasoning != nil {
 		settings.Reasoning = buildReasoningParam(*decl.Reasoning)
 	}
+	if strings.TrimSpace(decl.ToolChoice) != "" {
+		settings.ToolChoice = modelsettings.ToolChoiceString(decl.ToolChoice)
+	}
 	agent.WithModelSettings(settings)
 	return nil
 }

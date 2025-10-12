@@ -133,6 +133,7 @@ type ModelDeclaration struct {
 	Metadata     map[string]string     `json:"metadata,omitempty"`
 	ExtraHeaders map[string]string     `json:"extra_headers,omitempty"`
 	ExtraQuery   map[string]string     `json:"extra_query,omitempty"`
+	ToolChoice   string                `json:"tool_choice,omitempty"`
 }
 
 // ReasoningDeclaration mirrors the subset of OpenAI reasoning parameters we support.

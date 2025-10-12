@@ -34,25 +34,11 @@ func main() {
 			StartingAgent: "supervisor",
 			Agents: []workflowrunner.AgentDeclaration{
 				{
-					Name:         "supervisor",
-					Instructions: "Coordinate expert agents to satisfy the user request. Decide whether to hand off to a specialist.",
-					Handoffs:     []string{"researcher", "writer"},
-					Model: &workflowrunner.ModelDeclaration{
-						Model:       "gpt-4o-mini",
-						Temperature: floatPtr(0.2),
-					},
-					HandoffDescription: "High-level orchestrator that delegates to experts.",
-				},
-				{
 					Name:         "researcher",
-					Instructions: "Gather concise findings and key points using search tools.",
+					Instructions: "You are a research specialist. Always call the web_search tool first, gather the most recent reusable rocket breakthroughs, and return 3-4 bullet points with citations.",
 					Model: &workflowrunner.ModelDeclaration{
 						Model:       "gpt-4o-mini",
 						Temperature: floatPtr(0.1),
-					},
-					InputGuardrails: []workflowrunner.GuardrailDeclaration{
-						{Name: "math_homework_input"},
-						{Name: "basic_profanity_input"},
 					},
 					Tools: []workflowrunner.ToolDeclaration{
 						{
@@ -69,27 +55,33 @@ func main() {
 				},
 				{
 					Name:         "writer",
-					Instructions: "Transform research bullet points into cohesive prose with executive tone.",
+					Instructions: "You receive research bullet points and craft a concise two-paragraph executive summary that references those findings.",
 					Model: &workflowrunner.ModelDeclaration{
 						Model:       "gpt-4o",
-						Temperature: floatPtr(0.4),
+						Temperature: floatPtr(0.3),
 					},
 					OutputGuardrails: []workflowrunner.GuardrailDeclaration{
 						{Name: "basic_profanity_output"},
 						{Name: "phone_number_output"},
 					},
+				},
+				{
+					Name:         "supervisor",
+					Instructions: "You orchestrate reusable-rocket research. First, call the `research_insights` tool to gather bullet points. Then call the `exec_summary` tool to produce the final executive summary. After both tools run, deliver the writer's summary to the user.",
+					Model: &workflowrunner.ModelDeclaration{
+						Model:       "gpt-4o-mini",
+						Temperature: floatPtr(0.2),
+					},
 					AgentTools: []workflowrunner.AgentToolReference{
 						{
 							AgentName:   "researcher",
-							ToolName:    "invoke_research",
-							Description: "Use to refresh or expand on research findings.",
+							ToolName:    "research_insights",
+							Description: "Gather the latest reusable rocket breakthroughs using web search.",
 						},
-					},
-					MCPServers: []workflowrunner.MCPDeclaration{
 						{
-							Address:         "https://gitmcp.io/openai/codex",
-							ServerLabel:     "code_search",
-							RequireApproval: "always",
+							AgentName:   "writer",
+							ToolName:    "exec_summary",
+							Description: "Produce the final executive summary based on research bullet points.",
 						},
 					},
 				},

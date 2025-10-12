@@ -1,7 +1,7 @@
 package workflowrunner
 
 import (
-	"slices"
+	"strings"
 )
 
 func composeTraceMetadata(req WorkflowRequest) map[string]any {
@@ -12,7 +12,7 @@ func composeTraceMetadata(req WorkflowRequest) map[string]any {
 		"workflow_name": req.Workflow.Name,
 	}
 	if len(req.Session.Credentials.Capabilities) > 0 {
-		metadata["capabilities"] = slices.Clone(req.Session.Credentials.Capabilities)
+		metadata["capabilities"] = strings.Join(req.Session.Credentials.Capabilities, ",")
 	}
 	for k, v := range req.Metadata {
 		if _, reserved := metadata[k]; reserved {
