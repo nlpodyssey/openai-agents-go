@@ -17,10 +17,10 @@ package openaitypes
 import (
 	"fmt"
 
-	"github.com/openai/openai-go/v2"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
+	"github.com/openai/openai-go/v3/shared/constant"
 )
 
 func ResponseInputItemUnionParamFromResponseOutputMessage(
@@ -710,8 +710,8 @@ func ResponseComputerToolCallPendingSafetyCheckToParam(
 ) responses.ResponseComputerToolCallPendingSafetyCheckParam {
 	return responses.ResponseComputerToolCallPendingSafetyCheckParam{
 		ID:      input.ID,
-		Code:    input.Code,
-		Message: input.Message,
+		Code:    makeOpt(input.Code),
+		Message: makeOpt(input.Message),
 	}
 }
 

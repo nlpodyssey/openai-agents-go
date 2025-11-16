@@ -25,7 +25,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/nlpodyssey/openai-agents-go/tracing"
 	"github.com/nlpodyssey/openai-agents-go/util"
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // MCPToolFilterContext provides context information available to tool filter functions.

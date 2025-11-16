@@ -20,9 +20,9 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
 	"github.com/nlpodyssey/openai-agents-go/usage"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
+	"github.com/openai/openai-go/v3/shared/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -261,7 +261,8 @@ func TestToolCallOutputItemConstructsFunctionCallOutput(t *testing.T) {
 	payload := agents.ItemHelpers().ToolCallOutputItem(call, "result-string")
 	assert.Equal(t, constant.ValueOf[constant.FunctionCallOutput](), payload.Type)
 	assert.Equal(t, "call-abc", payload.CallID)
-	assert.Equal(t, "result-string", payload.Output)
+	require.True(t, payload.Output.OfString.Valid())
+	assert.Equal(t, "result-string", payload.Output.OfString.Value)
 }
 
 /*

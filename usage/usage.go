@@ -18,7 +18,7 @@ import (
 	"context"
 	"sync/atomic"
 
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 type Usage struct {

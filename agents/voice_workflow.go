@@ -18,8 +18,8 @@ import (
 	"context"
 	"iter"
 
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // VoiceWorkflowBase is the base interface for a voice workflow.

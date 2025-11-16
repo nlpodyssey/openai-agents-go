@@ -18,7 +18,7 @@ import (
 	"cmp"
 	"context"
 
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 type TraceParams struct {

@@ -15,7 +15,7 @@
 package agents
 
 import (
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // WebSearchTool is a hosted tool that lets the LLM search the web.

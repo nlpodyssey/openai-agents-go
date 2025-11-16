@@ -19,9 +19,9 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/agents/extensions/handoff_filters"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
+	"github.com/openai/openai-go/v3/shared/constant"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,8 +47,10 @@ func getFunctionResultInputItem(content string) agents.TResponseInputItem {
 	return agents.TResponseInputItem{
 		OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
 			CallID: "1",
-			Output: content,
-			Type:   constant.ValueOf[constant.FunctionCallOutput](),
+			Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+				OfString: param.NewOpt(content),
+			},
+			Type: constant.ValueOf[constant.FunctionCallOutput](),
 		},
 	}
 }
@@ -76,8 +78,10 @@ func getToolOutputRunItem(content string) agents.ToolCallOutputItem {
 		Agent: newFakeAgent(),
 		RawItem: agents.ResponseInputItemFunctionCallOutputParam{
 			CallID: "1",
-			Output: content,
-			Type:   constant.ValueOf[constant.FunctionCallOutput](),
+			Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+				OfString: param.NewOpt(content),
+			},
+			Type: constant.ValueOf[constant.FunctionCallOutput](),
 		},
 		Output: content,
 		Type:   "tool_call_output_item",
@@ -88,8 +92,10 @@ func getHandoffInputItem(content string) agents.TResponseInputItem {
 	return agents.TResponseInputItem{
 		OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
 			CallID: "1",
-			Output: content,
-			Type:   constant.ValueOf[constant.FunctionCallOutput](),
+			Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+				OfString: param.NewOpt(content),
+			},
+			Type: constant.ValueOf[constant.FunctionCallOutput](),
 		},
 	}
 }
@@ -100,8 +106,10 @@ func getHandoffOutputRunItem(content string) agents.HandoffOutputItem {
 		RawItem: agents.TResponseInputItem{
 			OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
 				CallID: "1",
-				Output: content,
-				Type:   constant.ValueOf[constant.FunctionCallOutput](),
+				Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+					OfString: param.NewOpt(content),
+				},
+				Type: constant.ValueOf[constant.FunctionCallOutput](),
 			},
 		},
 		SourceAgent: newFakeAgent(),

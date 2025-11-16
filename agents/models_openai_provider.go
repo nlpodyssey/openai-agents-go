@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/openai/openai-go/v2/option"
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/option"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 type OpenAIProviderParams struct {

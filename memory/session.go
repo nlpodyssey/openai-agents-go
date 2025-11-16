@@ -17,7 +17,7 @@ package memory
 import (
 	"context"
 
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // TResponseInputItem is a type alias for the ResponseInputItemUnionParam type from the OpenAI SDK.

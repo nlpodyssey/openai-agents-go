@@ -19,10 +19,10 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/openai/openai-go/v2"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
+	"github.com/openai/openai-go/v3/shared/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -123,6 +123,7 @@ func TestMessageToOutputItemsWithToolCall(t *testing.T) {
 			CallID:    "tool1",
 			Name:      "my_func",
 			Arguments: `{"x":1}`,
+			Status:    string(responses.ResponseFunctionToolCallStatusCompleted),
 			Type:      "function_call",
 		},
 	}, items)
@@ -333,8 +334,10 @@ func TestItemsToMessagesWithFunctionOutputItem(t *testing.T) {
 		{
 			OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
 				CallID: "some_call",
-				Output: `{"foo": "bar"}`,
-				Type:   constant.ValueOf[constant.FunctionCallOutput](),
+				Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+					OfString: param.NewOpt(`{"foo": "bar"}`),
+				},
+				Type: constant.ValueOf[constant.FunctionCallOutput](),
 			},
 		},
 	})

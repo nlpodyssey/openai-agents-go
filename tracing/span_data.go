@@ -17,7 +17,7 @@ package tracing
 import (
 	"fmt"
 
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // SpanData represents span data in the trace.

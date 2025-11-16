@@ -17,7 +17,7 @@ package agents
 import (
 	"context"
 
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // ToolContextData provides context data of a tool call.

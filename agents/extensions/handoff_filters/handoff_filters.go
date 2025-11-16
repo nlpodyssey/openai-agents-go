@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // RemoveAllTools filters out all tool items: file search, web search and function calls+output.

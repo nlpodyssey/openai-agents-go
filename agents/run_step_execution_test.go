@@ -21,9 +21,9 @@ import (
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/usage"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
+	"github.com/openai/openai-go/v3/shared/constant"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -390,7 +390,9 @@ func assertItemIsFunctionToolCallOutput(t *testing.T, item RunItem, agent *Agent
 		RawItem: ResponseInputItemFunctionCallOutputParam{
 			ID:     param.Opt[string]{},
 			CallID: cmp.Or(callID, "2"),
-			Output: output,
+			Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+				OfString: param.NewOpt(output),
+			},
 			Status: "",
 			Type:   constant.ValueOf[constant.FunctionCallOutput](),
 		},
