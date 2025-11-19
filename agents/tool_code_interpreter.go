@@ -15,7 +15,7 @@
 package agents
 
 import (
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // CodeInterpreterTool is a tool that allows the LLM to execute code in a sandboxed environment.

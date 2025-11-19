@@ -46,7 +46,7 @@ func main() {
 	agent := agents.New("Assistant").
 		WithInstructions("You're a helpful agent that can now count all occurrences of a substring in a string using the provided tool.").
 		WithTools(countSubstringTool).
-		WithModel("gpt-4.1-nano")
+		WithModel("gpt-5-chat-latest")
 
 	// Try using the tool first to see how it handles the request.
 	// Then, test the agent's behavior without the tool to compare results.

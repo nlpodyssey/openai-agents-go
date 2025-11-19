@@ -17,7 +17,7 @@ package agents
 import (
 	"fmt"
 
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // MessageItem returns a message input item with the given role and text.

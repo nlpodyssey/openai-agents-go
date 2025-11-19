@@ -16,7 +16,7 @@ package agents
 
 import (
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // New creates a new Agent with the given name.

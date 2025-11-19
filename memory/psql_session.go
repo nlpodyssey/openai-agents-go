@@ -22,7 +22,7 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3/shared/constant"
 
 	"github.com/jackc/pgx/v5"
 )

@@ -24,11 +24,11 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3/shared/constant"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // SQLiteSession is a SQLite-based implementation of Session storage.

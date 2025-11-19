@@ -24,7 +24,7 @@ import (
 	"github.com/invopop/jsonschema"
 	"github.com/matteo-grella/dwarfreflect"
 	"github.com/nlpodyssey/openai-agents-go/util/transforms"
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // resultExtractor defines how to extract (any, error) from function call results

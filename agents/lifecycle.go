@@ -17,7 +17,7 @@ package agents
 import (
 	"context"
 
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // RunHooks is implemented by an object that receives callbacks on various

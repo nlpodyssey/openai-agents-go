@@ -11,8 +11,8 @@ import (
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/memory"
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
-	"github.com/openai/openai-go/v2"
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // ToolFactory creates an agents.Tool from the declaration.

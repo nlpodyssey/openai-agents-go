@@ -14,7 +14,7 @@
 
 package agents
 
-import "github.com/openai/openai-go/v2/packages/param"
+import "github.com/openai/openai-go/v3/packages/param"
 
 // VoicePipelineConfig provides configuration settings for a VoicePipeline.
 type VoicePipelineConfig struct {

@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // RunDemoLoop runs a simple REPL loop with the given agent.

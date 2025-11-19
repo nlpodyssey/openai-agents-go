@@ -22,7 +22,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 	"github.com/nlpodyssey/openai-agents-go/util"
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // FunctionTool is a Tool that wraps a function.

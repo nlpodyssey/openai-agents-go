@@ -22,9 +22,9 @@ import (
 	"os"
 
 	"github.com/nlpodyssey/openai-agents-go/agents"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
+	"github.com/openai/openai-go/v3/shared/constant"
 )
 
 // This example demonstrates how to use the hosted MCP support in the OpenAI
@@ -54,7 +54,7 @@ func main() {
 	stream := flag.Bool("stream", false, "")
 	flag.Parse()
 
-	agent := agents.New("Assistant").WithModel("gpt-4o").WithTools(
+	agent := agents.New("Assistant").WithModel("gpt-5-chat-latest").WithTools(
 		agents.HostedMCPTool{
 			ToolConfig: responses.ToolMcpParam{
 				ServerLabel: "gitmcp",

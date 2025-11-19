@@ -24,10 +24,10 @@ import (
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
 	"github.com/nlpodyssey/openai-agents-go/openaitypes"
-	"github.com/openai/openai-go/v2"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
-	"github.com/openai/openai-go/v2/shared/constant"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
+	"github.com/openai/openai-go/v3/shared/constant"
 )
 
 type chatCmplConverter struct{}
@@ -90,22 +90,17 @@ func (chatCmplConverter) ConvertResponseFormat(
 func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessage) ([]TResponseOutputItem, error) {
 	items := make([]TResponseOutputItem, 0)
 
-	messageItem := responses.ResponseOutputItemUnion{
-		ID:      FakeResponsesID,
-		Content: nil,
-		Role:    constant.ValueOf[constant.Assistant](),
-		Status:  string(responses.ResponseOutputMessageStatusCompleted),
-		Type:    "message",
-	}
+	// Build content array
+	var content []responses.ResponseOutputMessageContentUnion
 	if message.Content != "" {
-		messageItem.Content = append(messageItem.Content, responses.ResponseOutputMessageContentUnion{
+		content = append(content, responses.ResponseOutputMessageContentUnion{
 			Text:        message.Content,
 			Type:        "output_text",
 			Annotations: nil,
 		})
 	}
 	if message.Refusal != "" {
-		messageItem.Content = append(messageItem.Content, responses.ResponseOutputMessageContentUnion{
+		content = append(content, responses.ResponseOutputMessageContentUnion{
 			Refusal: message.Refusal,
 			Type:    "refusal",
 		})
@@ -114,18 +109,29 @@ func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessa
 		return nil, errors.New("audio is not currently supported")
 	}
 
-	if len(messageItem.Content) > 0 {
+	// Create ResponseOutputItemUnion for message if we have content
+	if len(content) > 0 {
+		messageItem := responses.ResponseOutputItemUnion{
+			ID:      FakeResponsesID,
+			Content: content,
+			Role:    constant.ValueOf[constant.Assistant](),
+			Status:  string(responses.ResponseOutputMessageStatusCompleted),
+			Type:    "message",
+		}
 		items = append(items, messageItem)
 	}
 
+	// Add function calls
 	for _, toolCall := range message.ToolCalls {
-		items = append(items, responses.ResponseOutputItemUnion{
+		funcCall := responses.ResponseOutputItemUnion{
 			ID:        FakeResponsesID,
 			CallID:    toolCall.ID,
 			Arguments: toolCall.Function.Arguments,
 			Name:      toolCall.Function.Name,
 			Type:      "function_call",
-		})
+			Status:    string(responses.ResponseFunctionToolCallStatusCompleted),
+		}
+		items = append(items, funcCall)
 	}
 
 	return items, nil
@@ -502,12 +508,28 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 			}
 			toolCalls = append(toolCalls, newToolCall)
 			asst.ToolCalls = toolCalls
-		} else if funcOutput := item.OfFunctionCallOutput; !param.IsOmitted(funcOutput) { // 5) function call output => tool message
+		} else if funcOutput := item.OfFunctionCallOutput; !param.IsOmitted(funcOutput) {
 			flushAssistantMessage()
+
+			// Convert output to string
+			var outputStr string
+			if !param.IsOmitted(funcOutput.Output.OfString) {
+				outputStr = funcOutput.Output.OfString.Value
+			} else if !param.IsOmitted(funcOutput.Output.OfResponseFunctionCallOutputItemArray) {
+				// Handle array output - serialize to JSON
+				b, err := json.Marshal(funcOutput.Output.OfResponseFunctionCallOutputItemArray)
+				if err != nil {
+					return nil, fmt.Errorf("failed to marshal function output array: %w", err)
+				}
+				outputStr = string(b)
+			} else {
+				return nil, UserErrorf("function call output has neither OfString nor OfResponseFunctionCallOutputItemArray set: %+v", funcOutput.Output)
+			}
+
 			msg := openai.ChatCompletionMessageParamUnion{
 				OfTool: &openai.ChatCompletionToolMessageParam{
 					Content: openai.ChatCompletionToolMessageParamContentUnion{
-						OfString: param.NewOpt(funcOutput.Output),
+						OfString: param.NewOpt(outputStr),
 					},
 					ToolCallID: funcOutput.CallID,
 					Role:       constant.ValueOf[constant.Tool](),

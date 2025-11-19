@@ -18,7 +18,7 @@ import (
 	"context"
 	"iter"
 
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 const DefaultTTSInstructions = "You will receive partial sentences. Do not complete the sentence, just read out the text."

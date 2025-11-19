@@ -18,7 +18,7 @@ import (
 	"context"
 	"slices"
 
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // ToolUseBehavior lets you configure how tool use is handled.

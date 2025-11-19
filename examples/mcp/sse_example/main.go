@@ -59,7 +59,7 @@ func run(ctx context.Context, mcpServer agents.MCPServer) error {
 		WithModelSettings(modelsettings.ModelSettings{
 			ToolChoice: modelsettings.ToolChoiceRequired,
 		}).
-		WithModel("gpt-4o")
+		WithModel("gpt-5-chat-latest")
 
 	// Use the `add` tool to add two numbers
 	message := "Add these numbers: 7 and 22."

@@ -26,8 +26,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/nlpodyssey/openai-agents-go/agents"
 	"github.com/nlpodyssey/openai-agents-go/tracing"
-	"github.com/openai/openai-go/v2/packages/param"
-	"github.com/openai/openai-go/v2/responses"
+	"github.com/openai/openai-go/v3/packages/param"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 /*
@@ -36,7 +36,7 @@ then hands off to the appropriate agent based on the language of the request. Re
 streamed to the user.
 */
 
-const Model = "gpt-4o-mini"
+const Model = "gpt-5-chat-latest"
 
 var (
 	FrenchAgent = agents.New("french_agent").

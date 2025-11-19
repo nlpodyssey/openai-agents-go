@@ -18,7 +18,7 @@ import (
 	"maps"
 	"strings"
 
-	"github.com/openai/openai-go/v2/packages/param"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
 // MultiProvider is a ModelProvider that maps to a Model based on the prefix of the model name.
