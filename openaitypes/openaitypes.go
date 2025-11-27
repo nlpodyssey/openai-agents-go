@@ -222,11 +222,16 @@ func ResponseInputItemUnionParamFromResponseReasoningItem(
 func ResponseReasoningItemToParam(
 	input responses.ResponseReasoningItem,
 ) responses.ResponseReasoningItemParam {
+	var encryptedContent param.Opt[string]
+	if input.EncryptedContent != "" {
+		encryptedContent = param.NewOpt(input.EncryptedContent)
+	}
 	return responses.ResponseReasoningItemParam{
-		ID:      input.ID,
-		Summary: ResponseReasoningItemSummarySliceToParams(input.Summary),
-		Status:  input.Status,
-		Type:    constant.ValueOf[constant.Reasoning](),
+		ID:               input.ID,
+		Summary:          ResponseReasoningItemSummarySliceToParams(input.Summary),
+		Status:           input.Status,
+		EncryptedContent: encryptedContent,
+		Type:             constant.ValueOf[constant.Reasoning](),
 	}
 }
 
