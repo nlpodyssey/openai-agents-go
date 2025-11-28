@@ -1606,17 +1606,6 @@ func (r Runner) prepareInputWithSession(ctx context.Context, input Input) (Input
 		return input, nil
 	}
 
-	// Validate that we don't have both a session and a list input, as this creates
-	// ambiguity about whether the list should append to or replace existing session history
-	if _, ok := input.(InputItems); ok {
-		return nil, NewUserError(
-			"Cannot provide both a session and a list of input items. " +
-				"When using session memory, provide only a string input to append to the " +
-				"conversation, or use Session: nil and provide a list to manually manage " +
-				"conversation history.",
-		)
-	}
-
 	limit := r.Config.LimitMemory
 	// Get previous conversation history
 	history, err := session.GetItems(ctx, limit)
