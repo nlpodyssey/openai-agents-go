@@ -15,7 +15,10 @@
 package agents
 
 import (
+	"context"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/openai/openai-go/v3/packages/param"
 	"github.com/stretchr/testify/assert"
@@ -44,3 +47,44 @@ func Test_runner_getModel(t *testing.T) {
 		assert.Equal(t, "gpt-4o", model.(OpenAIResponsesModel).Model)
 	})
 }
+
+type panicModel struct{}
+
+func (m panicModel) GetResponse(context.Context, ModelResponseParams) (*ModelResponse, error) {
+	panic("this is a test panic")
+}
+
+func (m panicModel) StreamResponse(context.Context, ModelResponseParams, ModelStreamResponseCallback) error {
+	panic("this is a test panic")
+}
+
+func TestStreamHandlesPanicInModel(t *testing.T) {
+	agent := &Agent{
+		Name:  "test",
+		Model: param.NewOpt(NewAgentModel(panicModel{})),
+	}
+
+	result, err := Runner{}.RunStreamed(context.Background(), agent, "test input")
+	assert.NoError(t, err)
+
+	// Use a timeout to ensure we don't hang forever
+	done := make(chan struct{})
+	var streamErr error
+
+	go func() {
+		defer close(done)
+		streamErr = result.StreamEvents(func(event StreamEvent) error {
+			return nil
+		})
+	}()
+
+	select {
+	case <-done:
+		// Test passed - stream completed
+		assert.Error(t, streamErr)
+		assert.True(t, strings.Contains(streamErr.Error(), "this is a test panic"))
+	case <-time.After(2 * time.Second):
+		t.Fatal("Stream blocked forever - panic was not properly handled")
+	}
+}
+

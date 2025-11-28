@@ -747,6 +747,11 @@ func (r Runner) startStreaming(
 	var currentSpan tracing.Span
 
 	defer func() {
+		// Recover from panics to ensure the queue is properly closed
+		if r := recover(); r != nil {
+			err = errors.Join(err, fmt.Errorf("startStreaming panicked: %v", r))
+		}
+
 		if err != nil {
 			var agentsErr *AgentsError
 			if errors.As(err, &agentsErr) {
