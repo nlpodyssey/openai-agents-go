@@ -531,7 +531,7 @@ func (runImpl) ProcessModelResponse(
 				ServerLabel: outputUnion.ServerLabel,
 				Type:        constant.ValueOf[constant.McpCall](),
 				Error:       outputUnion.Error,
-				Output:      outputUnion.Output,
+				Output:      outputUnion.Output.OfString,
 			}
 			items = append(items, ToolCallItem{
 				Agent:   agent,

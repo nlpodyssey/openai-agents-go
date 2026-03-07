@@ -429,7 +429,7 @@ func ResponseFunctionWebSearchActionUnionToParam(
 	case "open_page":
 		return responses.ResponseFunctionWebSearchActionUnionParam{
 			OfOpenPage: &responses.ResponseFunctionWebSearchActionOpenPageParam{
-				URL:  input.URL,
+				URL:  param.NewOpt(input.URL),
 				Type: constant.ValueOf[constant.OpenPage](),
 			},
 		}
@@ -438,7 +438,7 @@ func ResponseFunctionWebSearchActionUnionToParam(
 			OfFind: &responses.ResponseFunctionWebSearchActionFindParam{
 				Pattern: input.Pattern,
 				URL:     input.URL,
-				Type:    constant.ValueOf[constant.Find](),
+				Type:    constant.ValueOf[constant.FindInPage](),
 			},
 		}
 	default:
