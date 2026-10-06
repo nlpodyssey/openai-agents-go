@@ -25,7 +25,7 @@ Explore the [examples](examples) directory to see the SDK in action:
 | [financial_research_agent](examples/financial_research_agent) | Coordinated agents performing financial analysis and report writing. |
 | [handoffs](examples/handoffs) | Techniques for filtering messages and handing off between agents. |
 | [hosted_mcp](examples/hosted_mcp) | Hosted Model Context Protocol examples, including simple and approval flows. |
-| [mcp](examples/mcp) | Running local MCP servers and clients for filesystems, git, prompts, and streaming. |
+| [mcp](examples/mcp) | MCP servers and clients for filesystems, git, prompts, streaming, and [remote web search](examples/mcp/parallel_search). |
 | [model_providers](examples/model_providers) | Integrating custom model providers and proxies like LiteLLM. |
 | [research_bot](examples/research_bot) | General research bot combining planner, search, and writer agents. |
 | [repl](examples/repl) | Command-line REPL for interactive experimentation. |
