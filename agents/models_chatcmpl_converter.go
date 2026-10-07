@@ -114,7 +114,7 @@ func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessa
 		messageItem := responses.ResponseOutputItemUnion{
 			ID:      FakeResponsesID,
 			Content: content,
-			Role:    constant.ValueOf[constant.Assistant](),
+			Role:    string(constant.ValueOf[constant.Assistant]()),
 			Status:  string(responses.ResponseOutputMessageStatusCompleted),
 			Type:    "message",
 		}
@@ -126,7 +126,7 @@ func (chatCmplConverter) MessageToOutputItems(message openai.ChatCompletionMessa
 		funcCall := responses.ResponseOutputItemUnion{
 			ID:        FakeResponsesID,
 			CallID:    toolCall.ID,
-			Arguments: toolCall.Function.Arguments,
+			Arguments: responses.ResponseOutputItemUnionArguments{OfString: toolCall.Function.Arguments},
 			Name:      toolCall.Function.Name,
 			Type:      "function_call",
 			Status:    string(responses.ResponseFunctionToolCallStatusCompleted),

@@ -39,7 +39,7 @@ func GetTextMessage(content string) responses.ResponseOutputItemUnion {
 	return responses.ResponseOutputItemUnion{ // responses.ResponseOutputMessage
 		ID:   "1",
 		Type: "message",
-		Role: constant.ValueOf[constant.Assistant](),
+		Role: string(constant.ValueOf[constant.Assistant]()),
 		Content: []responses.ResponseOutputMessageContentUnion{{ // responses.ResponseOutputText
 			Text:        content,
 			Type:        "output_text",
@@ -87,7 +87,7 @@ func GetFunctionToolCall(name string, arguments string) responses.ResponseOutput
 		CallID:    "2",
 		Type:      "function_call",
 		Name:      name,
-		Arguments: arguments,
+		Arguments: responses.ResponseOutputItemUnionArguments{OfString: arguments},
 	}
 }
 
@@ -107,7 +107,7 @@ func GetFinalOutputMessage(args string) responses.ResponseOutputItemUnion {
 	return responses.ResponseOutputItemUnion{ // responses.ResponseOutputMessage
 		ID:   "1",
 		Type: "message",
-		Role: constant.ValueOf[constant.Assistant](),
+		Role: string(constant.ValueOf[constant.Assistant]()),
 		Content: []responses.ResponseOutputMessageContentUnion{{ // responses.ResponseOutputText
 			Text:        args,
 			Type:        "output_text",

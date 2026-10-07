@@ -33,7 +33,7 @@ func makeMessage(contentItems ...responses.ResponseOutputMessageContentUnion) ag
 	return agents.TResponseOutputItem{ // responses.ResponseOutputMessage
 		ID:      "msg123",
 		Content: contentItems,
-		Role:    constant.ValueOf[constant.Assistant](),
+		Role:    string(constant.ValueOf[constant.Assistant]()),
 		Status:  "completed",
 		Type:    "message",
 	}
@@ -84,7 +84,7 @@ func TestExtractLastContentNonMessageReturnsEmpty(t *testing.T) {
 	// Construct some other type of output item, e.g. a tool call, to verify non-message returns "".
 	toolCall := agents.TResponseOutputItem{ // responses.ResponseOutputMessage
 		ID:        "tool123",
-		Arguments: "{}",
+		Arguments: responses.ResponseOutputItemUnionArguments{OfString: "{}"},
 		CallID:    "call123",
 		Name:      "func",
 		Type:      "function_call",
@@ -281,7 +281,7 @@ func TestToInputItemsForMessage(t *testing.T) {
 	message := agents.TResponseOutputItem{ // responses.ResponseOutputMessage
 		ID:      "m1",
 		Content: []responses.ResponseOutputMessageContentUnion{content},
-		Role:    constant.ValueOf[constant.Assistant](),
+		Role:    string(constant.ValueOf[constant.Assistant]()),
 		Status:  "completed",
 		Type:    "message",
 	}
@@ -318,7 +318,7 @@ func TestToInputItemsForFunctionCall(t *testing.T) {
 
 	toolCall := responses.ResponseOutputItemUnion{ // responses.ResponseFunctionToolCall
 		ID:        "f1",
-		Arguments: "{}",
+		Arguments: responses.ResponseOutputItemUnionArguments{OfString: "{}"},
 		CallID:    "c1",
 		Name:      "func",
 		Type:      "function_call",
@@ -399,7 +399,7 @@ func TestToInputItemsForWebSearchCall(t *testing.T) {
 				ID: "w1",
 				Action: responses.ResponseFunctionWebSearchActionUnionParam{
 					OfSearch: &responses.ResponseFunctionWebSearchActionSearchParam{
-						Query: "query",
+						Query: param.NewOpt("query"),
 						Type:  constant.ValueOf[constant.Search](),
 					},
 				},

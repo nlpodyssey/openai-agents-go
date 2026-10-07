@@ -125,7 +125,7 @@ func (chatCmplStreamHandler) HandleStream(
 				assistantItem := responses.ResponseOutputItemUnion{ // responses.ResponseOutputMessage
 					ID:      FakeResponsesID,
 					Content: nil,
-					Role:    constant.ValueOf[constant.Assistant](),
+					Role:    string(constant.ValueOf[constant.Assistant]()),
 					Status:  string(responses.ResponseOutputMessageStatusInProgress),
 					Type:    "message",
 				}
@@ -187,7 +187,7 @@ func (chatCmplStreamHandler) HandleStream(
 				assistantItem := responses.ResponseOutputItemUnion{ // responses.ResponseOutputMessage
 					ID:      FakeResponsesID,
 					Content: nil,
-					Role:    constant.ValueOf[constant.Assistant](),
+					Role:    string(constant.ValueOf[constant.Assistant]()),
 					Status:  string(responses.ResponseOutputMessageStatusInProgress),
 					Type:    "message",
 				}
@@ -238,7 +238,7 @@ func (chatCmplStreamHandler) HandleStream(
 			if !ok {
 				tc = &responses.ResponseOutputItemUnion{ // responses.ResponseFunctionToolCall
 					ID:        FakeResponsesID,
-					Arguments: "",
+					Arguments: responses.ResponseOutputItemUnionArguments{},
 					Name:      "",
 					Type:      "function_call",
 					CallID:    "",
@@ -247,7 +247,7 @@ func (chatCmplStreamHandler) HandleStream(
 			}
 			tcFunction := tcDelta.Function
 
-			tc.Arguments += tcFunction.Arguments
+			tc.Arguments.OfString += tcFunction.Arguments
 			tc.Name += tcFunction.Name
 			if len(tcDelta.ID) > 0 {
 				tc.CallID = tcDelta.ID
@@ -309,7 +309,7 @@ func (chatCmplStreamHandler) HandleStream(
 		}
 		// Then, yield the args
 		if err = yield(TResponseStreamEvent{ // responses.ResponseFunctionCallArgumentsDeltaEvent
-			Delta:          functionCall.Arguments,
+			Delta:          functionCall.Arguments.OfString,
 			ItemID:         FakeResponsesID,
 			OutputIndex:    functionCallStartingIndex,
 			Type:           "response.function_call_arguments.delta",
@@ -340,7 +340,7 @@ func (chatCmplStreamHandler) HandleStream(
 		assistantMsg := responses.ResponseOutputItemUnion{ // responses.ResponseOutputMessage
 			ID:      FakeResponsesID,
 			Content: nil,
-			Role:    constant.ValueOf[constant.Assistant](),
+			Role:    string(constant.ValueOf[constant.Assistant]()),
 			Type:    "message",
 			Status:  "completed",
 		}

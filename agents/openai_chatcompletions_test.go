@@ -224,7 +224,7 @@ func TestGetResponseWithToolCall(t *testing.T) {
 	assert.Equal(t, "function_call", fnCallItem.Type)
 	assert.Equal(t, "call-id", fnCallItem.CallID)
 	assert.Equal(t, "do_thing", fnCallItem.Name)
-	assert.Equal(t, `{"x":1}`, fnCallItem.Arguments)
+	assert.Equal(t, `{"x":1}`, fnCallItem.Arguments.OfString)
 }
 
 func TestGetResponseWithNoMessage(t *testing.T) {

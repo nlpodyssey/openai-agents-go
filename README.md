@@ -35,6 +35,8 @@ Explore the [examples](examples) directory to see the SDK in action:
 
 ## Installation
 
+Go 1.25 or later is required.
+
 ```
 go get github.com/nlpodyssey/openai-agents-go
 ```

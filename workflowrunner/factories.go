@@ -53,7 +53,7 @@ func newCodeInterpreterTool(_ context.Context, _ ToolDeclaration, _ ToolFactoryE
 	return agents.CodeInterpreterTool{
 		ToolConfig: responses.ToolCodeInterpreterParam{
 			Container: responses.ToolCodeInterpreterContainerUnionParam{
-				OfCodeInterpreterContainerAuto: &responses.ToolCodeInterpreterContainerCodeInterpreterContainerAutoParam{
+				OfCodeInterpreterToolAuto: &responses.ToolCodeInterpreterContainerCodeInterpreterContainerAutoParam{
 					Type: constant.ValueOf[constant.Auto](),
 				},
 			},

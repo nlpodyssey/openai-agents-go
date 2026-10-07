@@ -410,7 +410,7 @@ func (runImpl) ProcessModelResponse(
 			output := responses.ResponseOutputMessage{
 				ID:      outputUnion.ID,
 				Content: outputUnion.Content,
-				Role:    outputUnion.Role,
+				Role:    constant.Assistant(outputUnion.Role),
 				Status:  responses.ResponseOutputMessageStatus(outputUnion.Status),
 				Type:    constant.ValueOf[constant.Message](),
 			}
@@ -483,9 +483,17 @@ func (runImpl) ProcessModelResponse(
 				ComputerTool: *computerTool,
 			})
 		case "mcp_approval_request":
+			arguments, err := responseOutputItemStringArguments(outputUnion)
+			if err != nil {
+				AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+					Message: "Invalid MCP approval request arguments",
+					Data:    map[string]any{"item_type": outputUnion.Type, "field": "arguments"},
+				})
+				return nil, err
+			}
 			output := responses.ResponseOutputItemMcpApprovalRequest{
 				ID:          outputUnion.ID,
-				Arguments:   outputUnion.Arguments,
+				Arguments:   arguments,
 				Name:        outputUnion.Name,
 				ServerLabel: outputUnion.ServerLabel,
 				Type:        constant.ValueOf[constant.McpApprovalRequest](),
@@ -514,7 +522,7 @@ func (runImpl) ProcessModelResponse(
 			output := responses.ResponseOutputItemMcpListTools{
 				ID:          outputUnion.ID,
 				ServerLabel: outputUnion.ServerLabel,
-				Tools:       outputUnion.Tools,
+				Tools:       outputUnion.Tools.OfResponseOutputItemMcpListToolsTools,
 				Type:        constant.ValueOf[constant.McpListTools](),
 				Error:       outputUnion.Error,
 			}
@@ -524,14 +532,30 @@ func (runImpl) ProcessModelResponse(
 				Type:    "mcp_list_tools_item",
 			})
 		case "mcp_call":
+			arguments, err := responseOutputItemStringArguments(outputUnion)
+			if err != nil {
+				AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+					Message: "Invalid MCP call arguments",
+					Data:    map[string]any{"item_type": outputUnion.Type, "field": "arguments"},
+				})
+				return nil, err
+			}
+			outputValue, err := responseOutputItemStringMCPOutput(outputUnion)
+			if err != nil {
+				AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+					Message: "Invalid MCP call output",
+					Data:    map[string]any{"item_type": outputUnion.Type, "field": "output"},
+				})
+				return nil, err
+			}
 			output := responses.ResponseOutputItemMcpCall{
 				ID:          outputUnion.ID,
-				Arguments:   outputUnion.Arguments,
+				Arguments:   arguments,
 				Name:        outputUnion.Name,
 				ServerLabel: outputUnion.ServerLabel,
 				Type:        constant.ValueOf[constant.McpCall](),
 				Error:       outputUnion.Error,
-				Output:      outputUnion.Output.OfString,
+				Output:      outputValue,
 			}
 			items = append(items, ToolCallItem{
 				Agent:   agent,
@@ -590,8 +614,16 @@ func (runImpl) ProcessModelResponse(
 				LocalShellTool: *localShellTool,
 			})
 		case "function_call":
+			arguments, err := responseOutputItemStringArguments(outputUnion)
+			if err != nil {
+				AttachErrorToCurrentSpan(ctx, tracing.SpanError{
+					Message: "Invalid function call arguments",
+					Data:    map[string]any{"item_type": outputUnion.Type, "field": "arguments"},
+				})
+				return nil, err
+			}
 			output := responses.ResponseFunctionToolCall{
-				Arguments: outputUnion.Arguments,
+				Arguments: arguments,
 				CallID:    outputUnion.CallID,
 				Name:      outputUnion.Name,
 				Type:      constant.ValueOf[constant.FunctionCall](),
@@ -645,6 +677,30 @@ func (runImpl) ProcessModelResponse(
 		ToolsUsed:           toolsUsed,
 		MCPApprovalRequests: mcpApprovalRequests,
 	}, nil
+}
+
+func responseOutputItemStringArguments(output responses.ResponseOutputItemUnion) (string, error) {
+	arguments := output.Arguments
+	if arguments.JSON.OfResponseToolSearchCallArguments.Valid() && !arguments.JSON.OfString.Valid() ||
+		arguments.OfResponseToolSearchCallArguments != nil && !arguments.JSON.OfString.Valid() {
+		return "", ModelBehaviorErrorf("%s arguments must be a string", output.Type)
+	}
+	return arguments.OfString, nil
+}
+
+func responseOutputItemStringMCPOutput(output responses.ResponseOutputItemUnion) (string, error) {
+	value := output.Output
+	if value.JSON.OfOutputContentList.Valid() ||
+		value.JSON.OfResponseFunctionShellToolCallOutputOutputArray.Valid() ||
+		value.JSON.Type.Valid() ||
+		len(value.OfOutputContentList) != 0 ||
+		len(value.OfResponseFunctionShellToolCallOutputOutputArray) != 0 ||
+		value.OfOutputContentList != nil ||
+		value.OfResponseFunctionShellToolCallOutputOutputArray != nil ||
+		value.Type != "" || value.FileID != "" || value.ImageURL != "" {
+		return "", ModelBehaviorErrorf("%s output must be a string", output.Type)
+	}
+	return value.OfString, nil
 }
 
 type FunctionToolResult struct {

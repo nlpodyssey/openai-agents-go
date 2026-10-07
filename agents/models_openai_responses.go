@@ -472,10 +472,10 @@ func (conv responsesConverter) convertTool(
 		}
 
 		convertedTool = &responses.ToolUnionParam{
-			OfComputerUsePreview: &responses.ComputerToolParam{
+			OfComputerUsePreview: &responses.ComputerUsePreviewToolParam{
 				DisplayHeight: dimensions.Height,
 				DisplayWidth:  dimensions.Width,
-				Environment:   responses.ComputerToolEnvironment(environment),
+				Environment:   responses.ComputerUsePreviewToolEnvironment(environment),
 				Type:          constant.ValueOf[constant.ComputerUsePreview](),
 			},
 		}

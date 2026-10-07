@@ -239,10 +239,10 @@ func TestConvertToolsBasicTypesAndIncludes(t *testing.T) {
 				},
 			},
 			{
-				OfComputerUsePreview: &responses.ComputerToolParam{
+				OfComputerUsePreview: &responses.ComputerUsePreviewToolParam{
 					DisplayHeight: 600,
 					DisplayWidth:  800,
-					Environment:   responses.ComputerToolEnvironmentLinux,
+					Environment:   responses.ComputerUsePreviewToolEnvironmentLinux,
 					Type:          constant.ValueOf[constant.ComputerUsePreview](),
 				},
 			},

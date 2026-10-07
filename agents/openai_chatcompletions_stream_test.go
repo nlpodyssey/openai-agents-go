@@ -312,7 +312,7 @@ func TestStreamResponseYieldsEventsForToolCall(t *testing.T) {
 	addedFn := outputEvents[1].Item
 	assert.Equal(t, "function_call", addedFn.Type)
 	assert.Equal(t, "my_func", addedFn.Name) // Name should be concatenation of both chunks.
-	assert.Equal(t, "arg1arg2", addedFn.Arguments)
+	assert.Equal(t, "arg1arg2", addedFn.Arguments.OfString)
 	assert.Equal(t, "response.function_call_arguments.delta", outputEvents[2].Type)
 	assert.Equal(t, "arg1arg2", outputEvents[2].Delta)
 	assert.Equal(t, "response.output_item.done", outputEvents[3].Type)

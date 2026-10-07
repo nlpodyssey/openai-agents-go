@@ -15,7 +15,6 @@
 package agents
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -24,9 +23,10 @@ import (
 	"net/http"
 
 	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/packages/param"
 )
 
-const DefaultOpenAITTSModelVoice = openai.AudioSpeechNewParamsVoiceAsh
+const DefaultOpenAITTSModelVoice = "ash"
 
 // OpenAITTSModel is a text-to-speech model for OpenAI.
 type OpenAITTSModel struct {
@@ -47,9 +47,13 @@ func (m *OpenAITTSModel) ModelName() string {
 }
 
 func (m *OpenAITTSModel) Run(ctx context.Context, text string, settings TTSModelSettings) TTSModelRunResult {
+	voice := settings.Voice
+	if voice == "" {
+		voice = DefaultOpenAITTSModelVoice
+	}
 	resp, err := m.client.Audio.Speech.New(ctx, openai.AudioSpeechNewParams{
 		Model:          m.model,
-		Voice:          cmp.Or(openai.AudioSpeechNewParamsVoice(settings.Voice), DefaultOpenAITTSModelVoice),
+		Voice:          openai.AudioSpeechNewParamsVoiceUnion{OfString: param.NewOpt(string(voice))},
 		Input:          text,
 		Instructions:   settings.Instructions,
 		Speed:          settings.Speed,

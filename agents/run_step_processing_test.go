@@ -16,6 +16,7 @@ package agents
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/computer"
@@ -66,6 +67,130 @@ func TestNoToolCalls(t *testing.T) {
 
 	assert.Nil(t, result.Handoffs)
 	assert.Nil(t, result.Functions)
+}
+
+func TestProcessModelResponsePreservesMCPSubunions(t *testing.T) {
+	rawItems := []string{
+		`{"id":"approval","type":"mcp_approval_request","arguments":"{\"city\":\"Tokyo\"}","name":"weather","server_label":"server"}`,
+		`{"id":"list","type":"mcp_list_tools","server_label":"server","tools":[{"name":"weather","description":"Weather","input_schema":{"type":"object"},"annotations":null}],"error":null}`,
+		`{"id":"call","type":"mcp_call","arguments":"{\"city\":\"Tokyo\"}","name":"weather","server_label":"server","output":"sunny","error":null,"status":"completed"}`,
+	}
+	output := make([]TResponseOutputItem, len(rawItems))
+	for index, raw := range rawItems {
+		require.NoError(t, json.Unmarshal([]byte(raw), &output[index]))
+	}
+	agent := &Agent{Name: "test", Tools: []Tool{HostedMCPTool{
+		ToolConfig: responses.ToolMcpParam{ServerLabel: "server"},
+	}}}
+	allTools, err := agent.GetAllTools(t.Context())
+	require.NoError(t, err)
+	result, err := RunImpl().ProcessModelResponse(
+		t.Context(), agent, allTools,
+		ModelResponse{Output: output, Usage: usage.NewUsage()}, nil,
+	)
+	require.NoError(t, err)
+	require.Len(t, result.NewItems, 3)
+	approval, ok := result.NewItems[0].(MCPApprovalRequestItem)
+	require.True(t, ok)
+	require.Equal(t, `{"city":"Tokyo"}`, approval.RawItem.Arguments)
+	list, ok := result.NewItems[1].(MCPListToolsItem)
+	require.True(t, ok)
+	require.Len(t, list.RawItem.Tools, 1)
+	require.Equal(t, "weather", list.RawItem.Tools[0].Name)
+	call, ok := result.NewItems[2].(ToolCallItem)
+	require.True(t, ok)
+	mcpCall, ok := call.RawItem.(ResponseOutputItemMcpCall)
+	require.True(t, ok)
+	require.Equal(t, `{"city":"Tokyo"}`, mcpCall.Arguments)
+}
+
+func TestProcessModelResponseRejectsNonStringToolFields(t *testing.T) {
+	tests := []struct {
+		name        string
+		rawItem     string
+		agent       *Agent
+		errorSubstr string
+	}{
+		{
+			name:        "function call arguments",
+			rawItem:     `{"id":"call","type":"function_call","arguments":{"city":"Tokyo"},"call_id":"call","name":"test","status":"completed"}`,
+			agent:       &Agent{Name: "test", Tools: []Tool{getFunctionTool("test", "")}},
+			errorSubstr: "function_call arguments must be a string",
+		},
+		{
+			name:        "MCP approval request arguments",
+			rawItem:     `{"id":"approval","type":"mcp_approval_request","arguments":{"city":"Tokyo"},"name":"weather","server_label":"server"}`,
+			agent:       &Agent{Name: "test", Tools: []Tool{HostedMCPTool{ToolConfig: responses.ToolMcpParam{ServerLabel: "server"}}}},
+			errorSubstr: "mcp_approval_request arguments must be a string",
+		},
+		{
+			name:        "MCP call arguments",
+			rawItem:     `{"id":"call","type":"mcp_call","arguments":{"city":"Tokyo"},"name":"weather","server_label":"server","output":"sunny","status":"completed"}`,
+			agent:       &Agent{Name: "test"},
+			errorSubstr: "mcp_call arguments must be a string",
+		},
+		{
+			name:        "MCP call output",
+			rawItem:     `{"id":"call","type":"mcp_call","arguments":"{}","name":"weather","server_label":"server","output":[{"type":"output_text","text":"sunny"}],"status":"completed"}`,
+			agent:       &Agent{Name: "test"},
+			errorSubstr: "mcp_call output must be a string",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var output TResponseOutputItem
+			require.NoError(t, json.Unmarshal([]byte(tt.rawItem), &output))
+			allTools, err := tt.agent.GetAllTools(t.Context())
+			require.NoError(t, err)
+
+			result, err := RunImpl().ProcessModelResponse(
+				t.Context(), tt.agent, allTools,
+				ModelResponse{Output: []TResponseOutputItem{output}, Usage: usage.NewUsage()}, nil,
+			)
+
+			require.Nil(t, result)
+			assert.ErrorAs(t, err, &ModelBehaviorError{})
+			assert.ErrorContains(t, err, tt.errorSubstr)
+		})
+	}
+}
+
+func TestProcessModelResponseRejectsDirectNonStringArguments(t *testing.T) {
+	tests := []struct {
+		name      string
+		arguments any
+	}{
+		{name: "map", arguments: map[string]string{"city": "Tokyo"}},
+		{name: "struct", arguments: struct{ City string }{City: "Tokyo"}},
+		{name: "slice", arguments: []string{"Tokyo"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			agent := &Agent{Name: "test", Tools: []Tool{getFunctionTool("test", "")}}
+			allTools, err := agent.GetAllTools(t.Context())
+			require.NoError(t, err)
+			output := TResponseOutputItem{
+				ID:     "call",
+				Type:   "function_call",
+				CallID: "call",
+				Name:   "test",
+				Arguments: responses.ResponseOutputItemUnionArguments{
+					OfResponseToolSearchCallArguments: tt.arguments,
+				},
+			}
+
+			result, err := RunImpl().ProcessModelResponse(
+				t.Context(), agent, allTools,
+				ModelResponse{Output: []TResponseOutputItem{output}, Usage: usage.NewUsage()}, nil,
+			)
+
+			require.Nil(t, result)
+			assert.ErrorAs(t, err, &ModelBehaviorError{})
+			assert.ErrorContains(t, err, "function_call arguments must be a string")
+		})
+	}
 }
 
 func TestSingleToolCall(t *testing.T) {

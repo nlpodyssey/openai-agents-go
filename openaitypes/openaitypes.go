@@ -263,7 +263,7 @@ func ResponseOutputItemUnionFromResponseOutputMessage(
 	return responses.ResponseOutputItemUnion{
 		ID:      input.ID,
 		Content: input.Content,
-		Role:    input.Role,
+		Role:    string(input.Role),
 		Status:  string(input.Status),
 		Type:    "message",
 	}
@@ -277,7 +277,7 @@ func ResponseInputItemUnionParamFromResponseOutputItemUnion(
 		return ResponseInputItemUnionParamFromResponseOutputMessage(responses.ResponseOutputMessage{
 			ID:      input.ID,
 			Content: input.Content,
-			Role:    input.Role,
+			Role:    constant.Assistant(input.Role),
 			Status:  responses.ResponseOutputMessageStatus(input.Status),
 			Type:    constant.ValueOf[constant.Message](),
 		})
@@ -291,7 +291,7 @@ func ResponseInputItemUnionParamFromResponseOutputItemUnion(
 		})
 	case "function_call":
 		return ResponseInputItemUnionParamFromResponseFunctionToolCall(responses.ResponseFunctionToolCall{
-			Arguments: input.Arguments,
+			Arguments: input.Arguments.OfString,
 			CallID:    input.CallID,
 			Name:      input.Name,
 			Type:      constant.ValueOf[constant.FunctionCall](),
@@ -420,10 +420,23 @@ func ResponseFunctionWebSearchActionUnionToParam(
 ) responses.ResponseFunctionWebSearchActionUnionParam {
 	switch input.Type {
 	case "search":
+		query := param.Opt[string]{}
+		if input.Query != "" {
+			query = param.NewOpt(input.Query)
+		}
+		var sources []responses.ResponseFunctionWebSearchActionSearchSourceParam
+		if len(input.Sources) != 0 {
+			sources = make([]responses.ResponseFunctionWebSearchActionSearchSourceParam, len(input.Sources))
+			for index, source := range input.Sources {
+				sources[index] = responses.ResponseFunctionWebSearchActionSearchSourceParam{
+					URL: source.URL, Type: constant.ValueOf[constant.URL](),
+				}
+			}
+		}
 		return responses.ResponseFunctionWebSearchActionUnionParam{
 			OfSearch: &responses.ResponseFunctionWebSearchActionSearchParam{
-				Query: input.Query,
-				Type:  constant.ValueOf[constant.Search](),
+				Query: query, Queries: input.Queries, Sources: sources,
+				Type: constant.ValueOf[constant.Search](),
 			},
 		}
 	case "open_page":
@@ -433,7 +446,7 @@ func ResponseFunctionWebSearchActionUnionToParam(
 				Type: constant.ValueOf[constant.OpenPage](),
 			},
 		}
-	case "find":
+	case "find_in_page":
 		return responses.ResponseFunctionWebSearchActionUnionParam{
 			OfFind: &responses.ResponseFunctionWebSearchActionFindParam{
 				Pattern: input.Pattern,
@@ -451,6 +464,8 @@ func ResponseFunctionWebSearchActionUnionFromResponseOutputItemUnionAction(
 ) responses.ResponseFunctionWebSearchActionUnion {
 	return responses.ResponseFunctionWebSearchActionUnion{
 		Query:   input.Query,
+		Queries: input.Queries,
+		Sources: input.Sources,
 		Type:    input.Type,
 		URL:     input.URL,
 		Pattern: input.Pattern,
@@ -769,7 +784,7 @@ func ResponseOutputMessageFromResponseOutputItemUnion(
 	return responses.ResponseOutputMessage{
 		ID:      input.ID,
 		Content: input.Content,
-		Role:    input.Role,
+		Role:    constant.Assistant(input.Role),
 		Status:  responses.ResponseOutputMessageStatus(input.Status),
 		Type:    constant.ValueOf[constant.Message](),
 	}

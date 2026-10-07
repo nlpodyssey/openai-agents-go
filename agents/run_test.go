@@ -87,4 +87,3 @@ func TestStreamHandlesPanicInModel(t *testing.T) {
 		t.Fatal("Stream blocked forever - panic was not properly handled")
 	}
 }
-

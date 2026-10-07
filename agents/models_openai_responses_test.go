@@ -16,7 +16,9 @@ package agents
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/nlpodyssey/openai-agents-go/modelsettings"
@@ -60,6 +62,40 @@ func TestOpenAIResponsesModel_prepareRequest(t *testing.T) {
 			Model: "model-name",
 		}, params)
 		assert.Nil(t, opts)
+	})
+
+	t.Run("with typed explicit prompt cache fields", func(t *testing.T) {
+		m := NewOpenAIResponsesModel("model-name", NewOpenaiClient(param.Opt[string]{}, param.Opt[string]{}))
+		params, _, err := m.prepareRequest(
+			t.Context(), param.Opt[string]{}, InputString("boundary"),
+			modelsettings.ModelSettings{CustomizeResponsesRequest: func(
+				_ context.Context,
+				params *responses.ResponseNewParams,
+				opts []option.RequestOption,
+			) (*responses.ResponseNewParams, []option.RequestOption, error) {
+				message := params.Input.OfInputItemList[0].OfMessage
+				message.Content = responses.EasyInputMessageContentUnionParam{
+					OfInputItemContentList: responses.ResponseInputMessageContentListParam{{
+						OfInputText: &responses.ResponseInputTextParam{
+							Text:                  "boundary",
+							PromptCacheBreakpoint: responses.NewResponseInputTextPromptCacheBreakpointParam(),
+						},
+					}},
+				}
+				params.PromptCacheKey = param.NewOpt("cache-key")
+				params.PromptCacheOptions = responses.ResponseNewParamsPromptCacheOptions{
+					Mode: "explicit", Ttl: "30m",
+				}
+				return params, opts, nil
+			}}, nil, nil, nil, "", false, responses.ResponsePromptParam{},
+		)
+		require.NoError(t, err)
+		encoded, err := json.Marshal(params)
+		require.NoError(t, err)
+		wire := string(encoded)
+		assert.True(t, strings.Contains(wire, `"prompt_cache_key":"cache-key"`), wire)
+		assert.True(t, strings.Contains(wire, `"prompt_cache_options":{"mode":"explicit","ttl":"30m"}`), wire)
+		assert.True(t, strings.Contains(wire, `"prompt_cache_breakpoint":{"mode":"explicit"}`), wire)
 	})
 
 	t.Run("with ModelSettings.CustomizeResponsesRequest returning values", func(t *testing.T) {
