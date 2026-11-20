@@ -207,13 +207,14 @@ func SafeNewFunctionTool[T, R any](name string, description string, handler func
 	}
 
 	// Add description at the top level if provided
-	if description != "" && schemaMap != nil {
-		schemaMap["description"] = description
-	}
+	//if description != "" && schemaMap != nil {
+	//	schemaMap["description"] = description
+	//}
 
 	return FunctionTool{
 		Name:             name,
 		ParamsJSONSchema: schemaMap,
+		Description: description
 		StrictJSONSchema: param.NewOpt(true),
 		OnInvokeTool: func(ctx context.Context, arguments string) (any, error) {
 			var args T
