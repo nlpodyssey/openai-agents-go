@@ -61,15 +61,16 @@ type MCPServer interface {
 // MCPServerWithClientSession is a base type for MCP servers that uses an
 // mcp.ClientSession to communicate with the server.
 type MCPServerWithClientSession struct {
-	transport            mcp.Transport
-	session              *mcp.ClientSession
-	cleanupMu            sync.Mutex
-	cacheToolsList       bool
-	cacheDirty           bool
-	toolsList            []*mcp.Tool
-	toolFilter           MCPToolFilter
-	name                 string
-	useStructuredContent bool
+	transport             mcp.Transport
+	session               *mcp.ClientSession
+	cleanupMu             sync.Mutex
+	cacheToolsList        bool
+	cacheDirty            bool
+	toolsList             []*mcp.Tool
+	toolFilter            MCPToolFilter
+	toolProxyOrchestrator MCPToolProxyOrchestrator
+	name                  string
+	useStructuredContent  bool
 }
 
 type MCPServerWithClientSessionParams struct {
@@ -87,6 +88,9 @@ type MCPServerWithClientSessionParams struct {
 	// The tool filter to use for filtering tools.
 	ToolFilter MCPToolFilter
 
+	// TODO
+	ToolProxyOrchestrator MCPToolProxyOrchestrator
+
 	// Whether to use `StructuredContent` when calling an MCP tool.
 	// Defaults to false for backwards compatibility - most MCP servers still include
 	// the structured content in `Content`, and using it by default will cause duplicate
@@ -100,10 +104,11 @@ func NewMCPServerWithClientSession(params MCPServerWithClientSessionParams) *MCP
 		transport:      params.Transport,
 		cacheToolsList: params.CacheToolsList,
 		// The cache is always dirty at startup, so that we fetch tools at least once
-		cacheDirty:           true,
-		toolFilter:           params.ToolFilter,
-		name:                 params.Name,
-		useStructuredContent: params.UseStructuredContent,
+		cacheDirty:            true,
+		toolFilter:            params.ToolFilter,
+		toolProxyOrchestrator: params.ToolProxyOrchestrator,
+		name:                  params.Name,
+		useStructuredContent:  params.UseStructuredContent,
 	}
 }
 
@@ -181,12 +186,24 @@ func (s *MCPServerWithClientSession) ListTools(ctx context.Context, agent *Agent
 		}
 		filteredTools = ApplyMCPToolFilter(ctx, filterContext, s.toolFilter, filteredTools, agent)
 	}
+	err := s.toolProxyOrchestrator.Process(filteredTools)
+	if err != nil {
+		return nil, err
+	}
+
 	return filteredTools, nil
 }
 
 func (s *MCPServerWithClientSession) CallTool(ctx context.Context, toolName string, arguments map[string]any) (*mcp.CallToolResult, error) {
 	if s.session == nil {
 		return nil, NewUserError("server not initialized: make sure you call `Connect()` first")
+	}
+	if arguments == nil {
+		arguments = make(map[string]any)
+	}
+	err := s.toolProxyOrchestrator.ProcessArguments(toolName, arguments)
+	if err != nil {
+		return nil, err
 	}
 	return s.session.CallTool(ctx, &mcp.CallToolParams{
 		Name:      toolName,
@@ -247,6 +264,9 @@ type MCPServerStdioParams struct {
 	// Optional tool filter to use for filtering tools
 	ToolFilter MCPToolFilter
 
+	// The tool proxy orchestrator to use for intercepting tools.
+	ToolProxyOrchestrator MCPToolProxyOrchestrator
+
 	// Whether to use `StructuredContent` when calling an MCP tool.
 	// Defaults to false for backwards compatibility - most MCP servers still include
 	// the structured content in `Content`, and using it by default will cause duplicate
@@ -271,11 +291,12 @@ func NewMCPServerStdio(params MCPServerStdioParams) *MCPServerStdio {
 
 	return &MCPServerStdio{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
-			Name:                 name,
-			Transport:            &mcp.CommandTransport{Command: params.Command},
-			CacheToolsList:       params.CacheToolsList,
-			ToolFilter:           params.ToolFilter,
-			UseStructuredContent: params.UseStructuredContent,
+			Name:                  name,
+			Transport:             &mcp.CommandTransport{Command: params.Command},
+			CacheToolsList:        params.CacheToolsList,
+			ToolFilter:            params.ToolFilter,
+			ToolProxyOrchestrator: params.ToolProxyOrchestrator,
+			UseStructuredContent:  params.UseStructuredContent,
 		}),
 	}
 }
@@ -297,6 +318,9 @@ type MCPServerSSEParams struct {
 
 	// Optional tool filter to use for filtering tools
 	ToolFilter MCPToolFilter
+
+	// The tool proxy orchestrator to use for intercepting tools.
+	ToolProxyOrchestrator MCPToolProxyOrchestrator
 
 	// Whether to use `StructuredContent` when calling an MCP tool.
 	// Defaults to false for backwards compatibility - most MCP servers still include
@@ -339,11 +363,12 @@ func NewMCPServerSSE(params MCPServerSSEParams) *MCPServerSSE {
 	}
 	return &MCPServerSSE{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
-			Name:                 name,
-			Transport:            transport,
-			CacheToolsList:       params.CacheToolsList,
-			ToolFilter:           params.ToolFilter,
-			UseStructuredContent: params.UseStructuredContent,
+			Name:                  name,
+			Transport:             transport,
+			CacheToolsList:        params.CacheToolsList,
+			ToolFilter:            params.ToolFilter,
+			ToolProxyOrchestrator: params.ToolProxyOrchestrator,
+			UseStructuredContent:  params.UseStructuredContent,
 		}),
 	}
 }
@@ -362,6 +387,9 @@ type MCPServerStreamableHTTPParams struct {
 
 	// A readable name for the server. If not provided, we'll create one from the URL.
 	Name string
+
+	// TODO
+	ToolProxyOrchestrator MCPToolProxyOrchestrator
 
 	// Optional tool filter to use for filtering tools
 	ToolFilter MCPToolFilter
@@ -399,11 +427,12 @@ func NewMCPServerStreamableHTTP(params MCPServerStreamableHTTPParams) *MCPServer
 	}
 	return &MCPServerStreamableHTTP{
 		MCPServerWithClientSession: NewMCPServerWithClientSession(MCPServerWithClientSessionParams{
-			Name:                 name,
-			Transport:            transport,
-			CacheToolsList:       params.CacheToolsList,
-			ToolFilter:           params.ToolFilter,
-			UseStructuredContent: params.UseStructuredContent,
+			Name:                  name,
+			Transport:             transport,
+			CacheToolsList:        params.CacheToolsList,
+			ToolFilter:            params.ToolFilter,
+			ToolProxyOrchestrator: params.ToolProxyOrchestrator,
+			UseStructuredContent:  params.UseStructuredContent,
 		}),
 	}
 }
