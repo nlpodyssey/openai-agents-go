@@ -119,6 +119,27 @@ const (
 	MCPToolProxyRemoveRequiredBehaviourRemove
 )
 
+func proxyInputSchema(tool *mcp.Tool) (*jsonschema.Schema, error) {
+	if schema, ok := tool.InputSchema.(*jsonschema.Schema); ok && schema != nil {
+		return schema, nil
+	}
+	if tool.InputSchema == nil {
+		schema := &jsonschema.Schema{Type: "object"}
+		tool.InputSchema = schema
+		return schema, nil
+	}
+	data, err := json.Marshal(tool.InputSchema)
+	if err != nil {
+		return nil, fmt.Errorf("marshal input schema: %w", err)
+	}
+	var schema jsonschema.Schema
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return nil, fmt.Errorf("decode input schema: %w", err)
+	}
+	tool.InputSchema = &schema
+	return &schema, nil
+}
+
 type MCPToolProxyRemoveInputParamsProcessor struct {
 	Params                  []string
 	RemoveRequiredBehaviour MCPToolProxyRemoveRequiredBehaviour
@@ -129,8 +150,13 @@ func (p *MCPToolProxyRemoveInputParamsProcessor) ProcessSchema(tool *mcp.Tool) e
 		return nil
 	}
 
+	schema, err := proxyInputSchema(tool)
+	if err != nil {
+		return err
+	}
+
 	for _, paramName := range p.Params {
-		isRequired := slices.Contains(tool.InputSchema.Required, paramName)
+		isRequired := slices.Contains(schema.Required, paramName)
 		if isRequired {
 			switch p.RemoveRequiredBehaviour {
 			case MCPToolProxyRemoveRequiredBehaviourError:
@@ -138,13 +164,13 @@ func (p *MCPToolProxyRemoveInputParamsProcessor) ProcessSchema(tool *mcp.Tool) e
 			case MCPToolProxyRemoveRequiredBehaviourSkip:
 				continue
 			case MCPToolProxyRemoveRequiredBehaviourRemove:
-				delete(tool.InputSchema.Properties, paramName)
-				tool.InputSchema.Required = slices.DeleteFunc(tool.InputSchema.Required, func(s string) bool {
+				delete(schema.Properties, paramName)
+				schema.Required = slices.DeleteFunc(schema.Required, func(s string) bool {
 					return s == paramName
 				})
 			}
 		} else {
-			delete(tool.InputSchema.Properties, paramName)
+			delete(schema.Properties, paramName)
 		}
 	}
 
@@ -273,13 +299,12 @@ func (p *MCPToolProxyForceResetInputParamsProcessor) ProcessSchema(tool *mcp.Too
 	if tool == nil {
 		return nil
 	}
-	if tool.InputSchema == nil {
-		tool.InputSchema = &jsonschema.Schema{
-			Type: "object",
-		}
+	schema, err := proxyInputSchema(tool)
+	if err != nil {
+		return err
 	}
-	if tool.InputSchema.Properties == nil {
-		tool.InputSchema.Properties = make(map[string]*jsonschema.Schema)
+	if schema.Properties == nil {
+		schema.Properties = make(map[string]*jsonschema.Schema)
 	}
 
 	keys := make([]string, 0, len(p.Params))
@@ -292,7 +317,7 @@ func (p *MCPToolProxyForceResetInputParamsProcessor) ProcessSchema(tool *mcp.Too
 	case MCPToolProxyResetAdaptSchemaBehaviourHide:
 		for _, paramName := range keys {
 			expectedType := p.types[paramName]
-			prop, exists := tool.InputSchema.Properties[paramName]
+			prop, exists := schema.Properties[paramName]
 
 			if !exists {
 				switch p.ResetNotFoundBehaviour {
@@ -310,8 +335,8 @@ func (p *MCPToolProxyForceResetInputParamsProcessor) ProcessSchema(tool *mcp.Too
 				}
 			}
 
-			delete(tool.InputSchema.Properties, paramName)
-			tool.InputSchema.Required = slices.DeleteFunc(tool.InputSchema.Required, func(s string) bool {
+			delete(schema.Properties, paramName)
+			schema.Required = slices.DeleteFunc(schema.Required, func(s string) bool {
 				return s == paramName
 			})
 		}
@@ -320,7 +345,7 @@ func (p *MCPToolProxyForceResetInputParamsProcessor) ProcessSchema(tool *mcp.Too
 	case MCPToolProxyResetAdaptSchemaBehaviourKeep:
 		for _, paramName := range keys {
 			expectedType := p.types[paramName]
-			prop, exists := tool.InputSchema.Properties[paramName]
+			prop, exists := schema.Properties[paramName]
 
 			if !exists {
 				switch p.ResetNotFoundBehaviour {
@@ -347,7 +372,7 @@ func (p *MCPToolProxyForceResetInputParamsProcessor) ProcessSchema(tool *mcp.Too
 		for _, paramName := range keys {
 			value := p.Params[paramName]
 			expectedType := p.types[paramName]
-			prop, exists := tool.InputSchema.Properties[paramName]
+			prop, exists := schema.Properties[paramName]
 
 			if !exists {
 				switch p.ResetNotFoundBehaviour {
@@ -362,7 +387,7 @@ func (p *MCPToolProxyForceResetInputParamsProcessor) ProcessSchema(tool *mcp.Too
 					if valBytes, err := json.Marshal(value); err == nil {
 						newProp.Default = valBytes
 					}
-					tool.InputSchema.Properties[paramName] = newProp
+					schema.Properties[paramName] = newProp
 					prop = newProp
 				}
 			} else if !isTypeMatched(prop.Type, prop.Types, expectedType) {
@@ -385,7 +410,7 @@ func (p *MCPToolProxyForceResetInputParamsProcessor) ProcessSchema(tool *mcp.Too
 			}
 
 			// Remove from required since it is already preset
-			tool.InputSchema.Required = slices.DeleteFunc(tool.InputSchema.Required, func(s string) bool {
+			schema.Required = slices.DeleteFunc(schema.Required, func(s string) bool {
 				return s == paramName
 			})
 

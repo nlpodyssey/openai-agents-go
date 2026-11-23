@@ -524,7 +524,7 @@ func (runImpl) ProcessModelResponse(
 				ServerLabel: outputUnion.ServerLabel,
 				Tools:       outputUnion.Tools.OfResponseOutputItemMcpListToolsTools,
 				Type:        constant.ValueOf[constant.McpListTools](),
-				Error:       outputUnion.Error,
+				Error:       outputUnion.Error.OfString,
 			}
 			items = append(items, MCPListToolsItem{
 				Agent:   agent,
@@ -548,13 +548,17 @@ func (runImpl) ProcessModelResponse(
 				})
 				return nil, err
 			}
+			mcpError := responses.McpToolCallErrorUnion{Code: outputUnion.Error.Code, Message: outputUnion.Error.Message, Type: outputUnion.Error.Type, Content: outputUnion.Error.Content}
+			if outputUnion.RawJSON() != "" {
+				mcpError = outputUnion.AsMcpCall().Error
+			}
 			output := responses.ResponseOutputItemMcpCall{
 				ID:          outputUnion.ID,
 				Arguments:   arguments,
 				Name:        outputUnion.Name,
 				ServerLabel: outputUnion.ServerLabel,
 				Type:        constant.ValueOf[constant.McpCall](),
-				Error:       outputUnion.Error,
+				Error:       mcpError,
 				Output:      outputValue,
 			}
 			items = append(items, ToolCallItem{

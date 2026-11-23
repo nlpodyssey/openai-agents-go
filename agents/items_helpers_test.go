@@ -260,7 +260,7 @@ func TestToolCallOutputItemConstructsFunctionCallOutput(t *testing.T) {
 
 	payload := agents.ItemHelpers().ToolCallOutputItem(call, "result-string")
 	assert.Equal(t, constant.ValueOf[constant.FunctionCallOutput](), payload.Type)
-	assert.Equal(t, "call-abc", payload.CallID)
+	assert.Equal(t, param.NewOpt("call-abc"), payload.CallID)
 	require.True(t, payload.Output.OfString.Valid())
 	assert.Equal(t, "result-string", payload.Output.OfString.Value)
 }

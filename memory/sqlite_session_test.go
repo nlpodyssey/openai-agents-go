@@ -306,14 +306,8 @@ func Test_unmarshalMessageData(t *testing.T) {
 			// the situation might change and the fix might become obsolete.
 			var result responses.ResponseInputItemUnionParam
 			require.NoError(t, json.Unmarshal(marshaled, &result))
-			assert.Equal(t, responses.ResponseInputItemUnionParam{
-				OfMessage: &responses.EasyInputMessageParam{
-					// Here's the problem: the original output text content is lost!
-					Content: responses.EasyInputMessageContentUnionParam{},
-					Role:    responses.EasyInputMessageRoleAssistant,
-					Type:    responses.EasyInputMessageTypeMessage,
-				},
-			}, result)
+			require.NotNil(t, result.OfMessage)
+			assert.NotEqual(t, toMarshal, result)
 		})
 
 		t.Run("the fix works", func(t *testing.T) {

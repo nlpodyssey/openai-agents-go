@@ -54,7 +54,7 @@ func makeFunctionToolResult(agent *Agent, output string, toolName string) Functi
 		RunItem: ToolCallOutputItem{
 			Agent: agent,
 			RawItem: ResponseInputItemFunctionCallOutputParam{
-				CallID: "1",
+				CallID: param.NewOpt("1"),
 				Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 					OfString: param.NewOpt(output),
 				},

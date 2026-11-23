@@ -324,7 +324,7 @@ func unmarshalMessageData(messageData string) (TResponseInputItem, error) {
 
 	// Fix incorrect output messages unmarshaling
 	if msg := item.OfMessage; !param.IsOmitted(msg) {
-		if msg.Content.OfInputItemContentList == nil && msg.Content.OfString == (param.Opt[string]{}) {
+		if msg.Role == responses.EasyInputMessageRoleAssistant && msg.Content.OfString == (param.Opt[string]{}) {
 			var outMsg responses.ResponseOutputMessageParam
 			err = json.Unmarshal([]byte(messageData), &outMsg)
 			if err == nil && len(outMsg.Content) > 0 && !param.IsOmitted(outMsg.Content[0].OfOutputText) && outMsg.Content[0].OfOutputText.Text != "" {

@@ -333,7 +333,7 @@ func TestItemsToMessagesWithFunctionOutputItem(t *testing.T) {
 	v, err := agents.ChatCmplConverter().ItemsToMessages(agents.InputItems{
 		{
 			OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-				CallID: "some_call",
+				CallID: param.NewOpt("some_call"),
 				Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 					OfString: param.NewOpt(`{"foo": "bar"}`),
 				},

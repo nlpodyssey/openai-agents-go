@@ -46,7 +46,7 @@ func getMessageInputItem(content string) agents.TResponseInputItem {
 func getFunctionResultInputItem(content string) agents.TResponseInputItem {
 	return agents.TResponseInputItem{
 		OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-			CallID: "1",
+			CallID: param.NewOpt("1"),
 			Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 				OfString: param.NewOpt(content),
 			},
@@ -77,7 +77,7 @@ func getToolOutputRunItem(content string) agents.ToolCallOutputItem {
 	return agents.ToolCallOutputItem{
 		Agent: newFakeAgent(),
 		RawItem: agents.ResponseInputItemFunctionCallOutputParam{
-			CallID: "1",
+			CallID: param.NewOpt("1"),
 			Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 				OfString: param.NewOpt(content),
 			},
@@ -91,7 +91,7 @@ func getToolOutputRunItem(content string) agents.ToolCallOutputItem {
 func getHandoffInputItem(content string) agents.TResponseInputItem {
 	return agents.TResponseInputItem{
 		OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-			CallID: "1",
+			CallID: param.NewOpt("1"),
 			Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 				OfString: param.NewOpt(content),
 			},
@@ -105,7 +105,7 @@ func getHandoffOutputRunItem(content string) agents.HandoffOutputItem {
 		Agent: newFakeAgent(),
 		RawItem: agents.TResponseInputItem{
 			OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-				CallID: "1",
+				CallID: param.NewOpt("1"),
 				Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 					OfString: param.NewOpt(content),
 				},

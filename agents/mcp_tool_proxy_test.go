@@ -75,7 +75,7 @@ func TestMCPToolProxyForceResetInputParamsProcessor_NotFound(t *testing.T) {
 
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
-		_, exists := tool.InputSchema.Properties["missingParam"]
+		_, exists := tool.InputSchema.(*jsonschema.Schema).Properties["missingParam"]
 		assert.False(t, exists)
 	})
 
@@ -101,7 +101,7 @@ func TestMCPToolProxyForceResetInputParamsProcessor_NotFound(t *testing.T) {
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
 
-		propStr := tool.InputSchema.Properties["newString"]
+		propStr := tool.InputSchema.(*jsonschema.Schema).Properties["newString"]
 		require.NotNil(t, propStr)
 		assert.Equal(t, "string", propStr.Type)
 		var strVal string
@@ -109,11 +109,11 @@ func TestMCPToolProxyForceResetInputParamsProcessor_NotFound(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "val", strVal)
 
-		propNum := tool.InputSchema.Properties["newNumber"]
+		propNum := tool.InputSchema.(*jsonschema.Schema).Properties["newNumber"]
 		require.NotNil(t, propNum)
 		assert.Equal(t, "integer", propNum.Type)
 
-		propBool := tool.InputSchema.Properties["newBool"]
+		propBool := tool.InputSchema.(*jsonschema.Schema).Properties["newBool"]
 		require.NotNil(t, propBool)
 		assert.Equal(t, "boolean", propBool.Type)
 	})
@@ -164,8 +164,8 @@ func TestMCPToolProxyForceResetInputParamsProcessor_NotMatchedTypes(t *testing.T
 
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
-		assert.Equal(t, "string", tool.InputSchema.Properties["param"].Type)
-		assert.Nil(t, tool.InputSchema.Properties["param"].Default)
+		assert.Equal(t, "string", tool.InputSchema.(*jsonschema.Schema).Properties["param"].Type)
+		assert.Nil(t, tool.InputSchema.(*jsonschema.Schema).Properties["param"].Default)
 	})
 
 	t.Run("NotMatched_Reset", func(t *testing.T) {
@@ -189,8 +189,8 @@ func TestMCPToolProxyForceResetInputParamsProcessor_NotMatchedTypes(t *testing.T
 
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
-		assert.Equal(t, "integer", tool.InputSchema.Properties["param"].Type)
-		assert.NotNil(t, tool.InputSchema.Properties["param"].Default)
+		assert.Equal(t, "integer", tool.InputSchema.(*jsonschema.Schema).Properties["param"].Type)
+		assert.NotNil(t, tool.InputSchema.(*jsonschema.Schema).Properties["param"].Default)
 	})
 
 	t.Run("Matched_NumberAndInteger", func(t *testing.T) {
@@ -214,8 +214,8 @@ func TestMCPToolProxyForceResetInputParamsProcessor_NotMatchedTypes(t *testing.T
 
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
-		assert.Equal(t, "number", tool.InputSchema.Properties["param"].Type)
-		assert.NotNil(t, tool.InputSchema.Properties["param"].Default)
+		assert.Equal(t, "number", tool.InputSchema.(*jsonschema.Schema).Properties["param"].Type)
+		assert.NotNil(t, tool.InputSchema.(*jsonschema.Schema).Properties["param"].Default)
 	})
 
 	t.Run("Matched_BoolAndBoolean", func(t *testing.T) {
@@ -239,8 +239,8 @@ func TestMCPToolProxyForceResetInputParamsProcessor_NotMatchedTypes(t *testing.T
 
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
-		assert.Equal(t, "boolean", tool.InputSchema.Properties["param"].Type)
-		assert.NotNil(t, tool.InputSchema.Properties["param"].Default)
+		assert.Equal(t, "boolean", tool.InputSchema.(*jsonschema.Schema).Properties["param"].Type)
+		assert.NotNil(t, tool.InputSchema.(*jsonschema.Schema).Properties["param"].Default)
 	})
 }
 
@@ -268,10 +268,10 @@ func TestMCPToolProxyForceResetInputParamsProcessor_AdaptSchemaBehaviour(t *test
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
 
-		_, exists := tool.InputSchema.Properties["secret"]
+		_, exists := tool.InputSchema.(*jsonschema.Schema).Properties["secret"]
 		assert.False(t, exists)
-		assert.NotContains(t, tool.InputSchema.Required, "secret")
-		assert.Contains(t, tool.InputSchema.Required, "other")
+		assert.NotContains(t, tool.InputSchema.(*jsonschema.Schema).Required, "secret")
+		assert.Contains(t, tool.InputSchema.(*jsonschema.Schema).Required, "other")
 	})
 
 	t.Run("Default_ZeroValue_Is_Hide", func(t *testing.T) {
@@ -296,9 +296,9 @@ func TestMCPToolProxyForceResetInputParamsProcessor_AdaptSchemaBehaviour(t *test
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
 
-		_, exists := tool.InputSchema.Properties["secret"]
+		_, exists := tool.InputSchema.(*jsonschema.Schema).Properties["secret"]
 		assert.False(t, exists)
-		assert.NotContains(t, tool.InputSchema.Required, "secret")
+		assert.NotContains(t, tool.InputSchema.(*jsonschema.Schema).Required, "secret")
 	})
 
 	t.Run("Keep_PreservesSchemaAsIs", func(t *testing.T) {
@@ -323,11 +323,11 @@ func TestMCPToolProxyForceResetInputParamsProcessor_AdaptSchemaBehaviour(t *test
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
 
-		prop, exists := tool.InputSchema.Properties["param"]
+		prop, exists := tool.InputSchema.(*jsonschema.Schema).Properties["param"]
 		assert.True(t, exists)
 		assert.Equal(t, "original description", prop.Description)
 		assert.Nil(t, prop.Default)
-		assert.Contains(t, tool.InputSchema.Required, "param")
+		assert.Contains(t, tool.InputSchema.(*jsonschema.Schema).Required, "param")
 	})
 
 	t.Run("Annotate_SetsDefaultAndAnnotatesDescriptionAndRemovesRequired", func(t *testing.T) {
@@ -352,7 +352,7 @@ func TestMCPToolProxyForceResetInputParamsProcessor_AdaptSchemaBehaviour(t *test
 		err := proc.ProcessSchema(tool)
 		require.NoError(t, err)
 
-		prop, exists := tool.InputSchema.Properties["param"]
+		prop, exists := tool.InputSchema.(*jsonschema.Schema).Properties["param"]
 		assert.True(t, exists)
 		assert.NotNil(t, prop.Default)
 		var defaultVal string
@@ -360,7 +360,7 @@ func TestMCPToolProxyForceResetInputParamsProcessor_AdaptSchemaBehaviour(t *test
 		require.NoError(t, err)
 		assert.Equal(t, "admin", defaultVal)
 		assert.Contains(t, prop.Description, "[preset: admin]")
-		assert.NotContains(t, tool.InputSchema.Required, "param")
+		assert.NotContains(t, tool.InputSchema.(*jsonschema.Schema).Required, "param")
 	})
 }
 
@@ -402,10 +402,10 @@ func TestMCPToolProxyOrchestrator(t *testing.T) {
 	err := orchestrator.Process([]*mcp.Tool{tool1, tool2})
 	require.NoError(t, err)
 
-	_, exists1 := tool1.InputSchema.Properties["extra"]
+	_, exists1 := tool1.InputSchema.(*jsonschema.Schema).Properties["extra"]
 	assert.False(t, exists1)
 
-	_, exists2 := tool2.InputSchema.Properties["extra"]
+	_, exists2 := tool2.InputSchema.(*jsonschema.Schema).Properties["extra"]
 	assert.True(t, exists2)
 }
 
@@ -462,4 +462,21 @@ func TestMCPToolProxyProcessArguments(t *testing.T) {
 		_, hasForced := args["forced"]
 		assert.False(t, hasForced)
 	})
+}
+
+func TestMCPToolProxyJSONInputSchema(t *testing.T) {
+	tool := &mcp.Tool{InputSchema: map[string]any{
+		"type": "object", "x-custom": "preserved",
+		"properties": map[string]any{"secret": map[string]any{"type": "string"}, "name": map[string]any{"type": "string"}},
+		"required":   []any{"secret", "name"},
+	}}
+	processor := &agents.MCPToolProxyRemoveInputParamsProcessor{Params: []string{"secret"}, RemoveRequiredBehaviour: agents.MCPToolProxyRemoveRequiredBehaviourRemove}
+	require.NoError(t, processor.ProcessSchema(tool))
+	data, err := json.Marshal(tool.InputSchema)
+	require.NoError(t, err)
+	var schema map[string]any
+	require.NoError(t, json.Unmarshal(data, &schema))
+	assert.Equal(t, "preserved", schema["x-custom"])
+	assert.NotContains(t, schema["properties"], "secret")
+	assert.Equal(t, []any{"name"}, schema["required"])
 }

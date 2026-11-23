@@ -531,7 +531,7 @@ func (conv chatCmplConverter) itemsToMessages(items []TResponseInputItem) ([]ope
 					Content: openai.ChatCompletionToolMessageParamContentUnion{
 						OfString: param.NewOpt(outputStr),
 					},
-					ToolCallID: funcOutput.CallID,
+					ToolCallID: funcOutput.CallID.Value,
 					Role:       constant.ValueOf[constant.Tool](),
 				},
 			}

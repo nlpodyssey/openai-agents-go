@@ -103,7 +103,7 @@ func runServer(addr string) {
 
 	handler := mcp.NewSSEHandler(func(request *http.Request) *mcp.Server {
 		return server
-	})
+	}, nil)
 
 	fmt.Printf("Starting SSE server at %s ...\n", addr)
 	err := http.ListenAndServe(addr, handler)

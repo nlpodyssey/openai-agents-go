@@ -389,7 +389,7 @@ func assertItemIsFunctionToolCallOutput(t *testing.T, item RunItem, agent *Agent
 		Agent: agent,
 		RawItem: ResponseInputItemFunctionCallOutputParam{
 			ID:     param.Opt[string]{},
-			CallID: cmp.Or(callID, "2"),
+			CallID: param.NewOpt(cmp.Or(callID, "2")),
 			Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 				OfString: param.NewOpt(output),
 			},

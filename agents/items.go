@@ -140,7 +140,7 @@ func (itemHelpers) ToolCallOutputItem(
 	output string,
 ) responses.ResponseInputItemFunctionCallOutputParam {
 	return responses.ResponseInputItemFunctionCallOutputParam{
-		CallID: toolCall.CallID,
+		CallID: param.NewOpt(toolCall.CallID),
 		Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 			OfString: param.NewOpt(output),
 		},
