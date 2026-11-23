@@ -36,7 +36,7 @@ func TestTResponseInputItemFromToolCallItemType_WebSearchCallPreservesQueriesAnd
 	out := TResponseInputItemFromToolCallItemType(input)
 	search := out.OfWebSearchCall.Action.OfSearch
 	require.NotNil(t, search)
-	require.False(t, search.Query.Valid())
+	require.False(t, search.Query.Valid()) //nolint:staticcheck // Verify legacy field is omitted
 	require.Equal(t, []string{"first", "second"}, search.Queries)
 	require.Equal(t, "https://example.com/source", search.Sources[0].URL)
 	encoded, err := json.Marshal(search)
@@ -73,6 +73,6 @@ func TestTResponseInputItemFromToolCallItemType_WebSearchCall(t *testing.T) {
 		require.NotNil(t, out.OfWebSearchCall)
 		require.Equal(t, "ws_1", out.OfWebSearchCall.ID)
 		require.NotNil(t, out.OfWebSearchCall.Action.OfSearch)
-		require.Equal(t, "hello", out.OfWebSearchCall.Action.OfSearch.Query.Or(""))
+		require.Equal(t, "hello", out.OfWebSearchCall.Action.OfSearch.Query.Or("")) //nolint:staticcheck // Verify legacy field is preserved
 	})
 }

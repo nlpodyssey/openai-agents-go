@@ -32,7 +32,8 @@ func main() {
 
 	time.Sleep(2 * time.Second) // Give it 2 seconds to start
 
-	server := agents.NewMCPServerSSE(agents.MCPServerSSEParams{
+	// This example demonstrates the deprecated SSE transport
+	server := agents.NewMCPServerSSE(agents.MCPServerSSEParams{ //nolint:staticcheck
 		Name:    "SSE Go Server",
 		BaseURL: "http://localhost:8000",
 	})

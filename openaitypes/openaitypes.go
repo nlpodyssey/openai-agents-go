@@ -435,7 +435,7 @@ func ResponseFunctionWebSearchActionUnionToParam(
 		}
 		return responses.ResponseFunctionWebSearchActionUnionParam{
 			OfSearch: &responses.ResponseFunctionWebSearchActionSearchParam{
-				Query: query, Queries: input.Queries, Sources: sources,
+				Query: query, Queries: input.Queries, Sources: sources, //nolint:staticcheck // Preserve legacy responses
 				Type: constant.ValueOf[constant.Search](),
 			},
 		}

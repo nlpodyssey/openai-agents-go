@@ -219,7 +219,7 @@ func main() {
 					case agents.ReasoningItem:
 						fmt.Printf("%s: Skipping item: ReasoningItem\n", newItem.Agent.Name)
 					default:
-						panic(fmt.Errorf("unexpected item type %T\n", newItem))
+						panic(fmt.Errorf("unexpected item type %T", newItem))
 					}
 				}
 

@@ -109,7 +109,7 @@ func createStructOptions() dwarfreflect.StructOptions {
 	return dwarfreflect.StructOptions{
 		FieldNamer: func(paramName string) string {
 			// Capitalize first letter for exported fields
-			return strings.Title(paramName)
+			return strings.Title(paramName) //nolint:staticcheck // Preserve existing parameter names
 		},
 		TagBuilder: func(paramName string, paramType reflect.Type) string {
 			jsonName := transforms.ToCase(paramName)
@@ -143,7 +143,10 @@ func generateJSONSchema(structType reflect.Type, functionName string, descriptio
 
 	schemaBytes, _ := json.Marshal(schema)
 	var schemaMap map[string]any
-	json.Unmarshal(schemaBytes, &schemaMap)
+	err := json.Unmarshal(schemaBytes, &schemaMap)
+	if err != nil {
+		return nil
+	}
 
 	// Add description at the top level if provided
 	if description != "" && schemaMap != nil {

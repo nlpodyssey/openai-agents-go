@@ -65,7 +65,7 @@ func voiceModelsOpenAIWaitForEvent(
 ) (map[string]any, error) {
 	startTime := time.Now()
 	for {
-		remaining := timeout - (time.Now().Sub(startTime))
+		remaining := timeout - (time.Since(startTime))
 		if remaining <= 0 {
 			return nil, voiceModelsOpenAITimeoutError{error: fmt.Errorf("timeout waiting for event(s): %v", expectedTypes)}
 		}
@@ -416,7 +416,8 @@ func (s *OpenAISTTTranscriptionSession) processWebsocketConnection(ctx context.C
 	}
 	header.Set("OpenAI-Beta", "realtime=v1")
 	header.Set("OpenAI-Log-Session", "1")
-	c, _, err := websocket.DefaultDialer.Dial(s.websocketURL, header)
+	// The dialer owns the handshake response; its body does not need closing
+	c, _, err := websocket.DefaultDialer.Dial(s.websocketURL, header) //nolint:bodyclose
 	if err != nil {
 		return fmt.Errorf("websocket connection error: %w", err)
 	}
@@ -489,7 +490,7 @@ func (s *OpenAISTTTranscriptionSession) Close(context.Context) (err error) {
 	}
 
 	s.cleanupTasks()
-	return nil
+	return err
 }
 
 type openAISTTTranscriptionSessionTranscribeTurns struct {

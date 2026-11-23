@@ -170,7 +170,7 @@ func isStruct[T any]() bool {
 	var zero T
 	val := reflect.ValueOf(zero)
 	kind := val.Type().Kind()
-	return (kind == reflect.Struct) || (kind == reflect.Ptr && val.Elem().Kind() == reflect.Struct)
+	return (kind == reflect.Struct) || (kind == reflect.Pointer && val.Elem().Kind() == reflect.Struct)
 }
 
 func (t outputTypeImpl[T]) IsPlainText() bool        { return t.isPlainText }

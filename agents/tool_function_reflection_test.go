@@ -214,7 +214,7 @@ func TestNewFunctionToolAny_WithError(t *testing.T) {
 	}
 
 	// Test error case
-	result, err = tool.OnInvokeTool(ctx, `{"input": "error"}`)
+	_, err = tool.OnInvokeTool(ctx, `{"input": "error"}`)
 	if err == nil {
 		t.Fatal("Expected error, got none")
 	}

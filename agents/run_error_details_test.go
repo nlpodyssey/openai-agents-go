@@ -30,7 +30,7 @@ func TestRunErrorIncludesData(t *testing.T) {
 
 	var target agents.MaxTurnsExceededError
 	require.ErrorAs(t, err, &target)
-	data := target.AgentsError.RunData
+	data := target.RunData
 	require.NotNil(t, data)
 	assert.Same(t, agent, data.LastAgent)
 	assert.Len(t, data.RawResponses, 1)
@@ -61,7 +61,7 @@ func TestStreamedRunErrorIncludesData(t *testing.T) {
 
 	var target agents.MaxTurnsExceededError
 	require.ErrorAs(t, err, &target)
-	data := target.AgentsError.RunData
+	data := target.RunData
 	require.NotNil(t, data)
 	assert.Same(t, agent, data.LastAgent)
 	assert.Len(t, data.RawResponses, 1)

@@ -98,7 +98,7 @@ func ToCamelCase(name string) string {
 		result := strings.ToLower(parts[0])
 		for i := 1; i < len(parts); i++ {
 			if parts[i] != "" {
-				result += strings.Title(strings.ToLower(parts[i]))
+				result += strings.Title(strings.ToLower(parts[i])) //nolint:staticcheck // Preserve existing name conversion
 			}
 		}
 		return result

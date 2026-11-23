@@ -119,9 +119,11 @@ func TestFakeMCPPromptServer(t *testing.T) {
 
 		// Test getting each prompt
 		reviewResult, err := server.GetPrompt(ctx, "generate_code_review_instructions", nil)
+		require.NoError(t, err)
 		assert.Equal(t, &mcp.TextContent{Text: "You are a code reviewer."}, reviewResult.Messages[0].Content)
 
 		testingResult, err := server.GetPrompt(ctx, "generate_testing_instructions", nil)
+		require.NoError(t, err)
 		assert.Equal(t, &mcp.TextContent{Text: "You are a test engineer."}, testingResult.Messages[0].Content)
 	})
 

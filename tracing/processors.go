@@ -419,7 +419,7 @@ func (b *BatchTraceProcessor) exportBatches(ctx context.Context, force bool) err
 		for {
 			b.queueMu.Lock()
 			queueSize := b.queueSize
-			if !(queueSize > 0 && (force || len(itemsToExport) < b.maxBatchSize)) {
+			if queueSize <= 0 || (!force && len(itemsToExport) >= b.maxBatchSize) {
 				b.queueMu.Unlock()
 				break queueLoop
 			}

@@ -42,5 +42,8 @@ func runServer(port int) {
 		return server
 	}, nil)
 
-	http.ListenAndServe(":"+strconv.Itoa(port), handler)
+	err := http.ListenAndServe(":"+strconv.Itoa(port), handler)
+	if err != nil {
+		panic(err)
+	}
 }

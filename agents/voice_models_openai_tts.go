@@ -51,7 +51,7 @@ func (m *OpenAITTSModel) Run(ctx context.Context, text string, settings TTSModel
 	if voice == "" {
 		voice = DefaultOpenAITTSModelVoice
 	}
-	resp, err := m.client.Audio.Speech.New(ctx, openai.AudioSpeechNewParams{
+	resp, err := m.client.Audio.Speech.New(ctx, openai.AudioSpeechNewParams{ //nolint:bodyclose
 		Model:          m.model,
 		Voice:          openai.AudioSpeechNewParamsVoiceUnion{OfString: param.NewOpt(string(voice))},
 		Input:          text,

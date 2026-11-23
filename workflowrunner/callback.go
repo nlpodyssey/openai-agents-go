@@ -54,7 +54,7 @@ func (p *HTTPCallbackPublisher) Publish(ctx context.Context, event CallbackEvent
 	if err != nil {
 		return fmt.Errorf("post callback: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("callback returned status %s", resp.Status)
 	}

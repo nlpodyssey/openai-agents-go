@@ -399,7 +399,7 @@ func TestToInputItemsForWebSearchCall(t *testing.T) {
 				ID: "w1",
 				Action: responses.ResponseFunctionWebSearchActionUnionParam{
 					OfSearch: &responses.ResponseFunctionWebSearchActionSearchParam{
-						Query: param.NewOpt("query"),
+						Query: param.NewOpt("query"), //nolint:staticcheck // Test legacy responses
 						Type:  constant.ValueOf[constant.Search](),
 					},
 				},

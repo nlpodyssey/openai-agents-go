@@ -53,6 +53,6 @@ func TestQueue(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 6, v)
 
-	v, ok = q.GetNoWait()
+	_, ok = q.GetNoWait()
 	assert.False(t, ok)
 }

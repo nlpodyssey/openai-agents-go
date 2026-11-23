@@ -175,9 +175,6 @@ func (r *RunResultStreaming) setCurrentTurn(v uint64) { r.currentTurn.Store(v) }
 func (r *RunResultStreaming) MaxTurns() uint64     { return r.maxTurns.Load() }
 func (r *RunResultStreaming) setMaxTurns(v uint64) { r.maxTurns.Store(v) }
 
-func (r *RunResultStreaming) getCurrentAgentOutputType() OutputTypeInterface {
-	return *r.currentAgentOutputType.Load()
-}
 func (r *RunResultStreaming) setCurrentAgentOutputType(v OutputTypeInterface) {
 	r.currentAgentOutputType.Store(&v)
 }
@@ -320,7 +317,7 @@ func (r *RunResultStreaming) createErrorDetails() *RunErrorDetails {
 func (r *RunResultStreaming) checkErrors() error {
 	if r.CurrentTurn() > r.MaxTurns() {
 		maxTurnsErr := MaxTurnsExceededErrorf("Max turns (%d) exceeded", r.MaxTurns())
-		maxTurnsErr.AgentsError.RunData = r.createErrorDetails()
+		maxTurnsErr.RunData = r.createErrorDetails()
 		r.setStoredError(maxTurnsErr)
 	}
 
@@ -329,7 +326,7 @@ func (r *RunResultStreaming) checkErrors() error {
 		guardrailResult, ok := r.inputGuardrailQueue.GetNoWait()
 		if ok && guardrailResult.Output.TripwireTriggered {
 			tripwireErr := NewInputGuardrailTripwireTriggeredError(guardrailResult)
-			tripwireErr.AgentsError.RunData = r.createErrorDetails()
+			tripwireErr.RunData = r.createErrorDetails()
 			r.setStoredError(tripwireErr)
 		}
 	}

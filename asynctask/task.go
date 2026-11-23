@@ -35,9 +35,9 @@ type Result[T any] struct {
 	Error error
 }
 
-var taskCanceledErr = errors.New("task has been canceled")
+var errTaskCanceled = errors.New("task has been canceled")
 
-func TaskCanceledErr() error { return taskCanceledErr }
+func TaskCanceledErr() error { return errTaskCanceled }
 
 func (t *Task[T]) Await() Result[T] {
 	t.cond.L.Lock()

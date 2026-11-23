@@ -1543,9 +1543,7 @@ func (r Runner) getNewResponse(
 
 func (Runner) getHandoffs(ctx context.Context, agent *Agent) ([]Handoff, error) {
 	handoffs := make([]Handoff, 0, len(agent.Handoffs)+len(agent.AgentHandoffs))
-	for _, h := range agent.Handoffs {
-		handoffs = append(handoffs, h)
-	}
+	handoffs = append(handoffs, agent.Handoffs...)
 	for _, a := range agent.AgentHandoffs {
 		h, err := SafeHandoffFromAgent(HandoffFromAgentParams{Agent: a})
 		if err != nil {

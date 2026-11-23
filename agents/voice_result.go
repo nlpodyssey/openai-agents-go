@@ -514,7 +514,6 @@ func (r *StreamedAudioResult) Stream(ctx context.Context) *StreamedAudioResultSt
 type StreamedAudioResultStream struct {
 	ctx context.Context
 	r   *StreamedAudioResult
-	err error
 }
 
 func (s *StreamedAudioResultStream) Seq() iter.Seq[VoiceStreamEvent] {
